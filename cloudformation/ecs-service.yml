@@ -1,0 +1,220 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Django ECS Service'
+
+Parameters:
+  ImageUrl:
+    Type: String
+    Description: The URL of the Docker image to run
+    Default: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/django-ecs-app:latest
+
+  ContainerCpu:
+    Type: Number
+    Description: CPU units for the container
+    Default: 256
+
+  ContainerMemory:
+    Type: Number
+    Description: Memory for the container in MiB
+    Default: 512
+
+  DesiredCount:
+    Type: Number
+    Description: How many instances of the task to run
+    Default: 1
+
+Resources:
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: django-app
+      Cpu: !Ref ContainerCpu
+      Memory: !Ref ContainerMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-ECSTaskExecutionRole'
+      TaskRoleArn:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-ECSTaskExecutionRole'
+      ContainerDefinitions:
+        - Name: django-app
+          Image: !Ref ImageUrl
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8000
+              HostPort: 8000
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/django-app
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: django-app
+          Environment:
+            - Name: DEBUG
+              Value: '0'
+            - Name: ALLOWED_HOSTS
+              Value: '*'
+
+  # ECS Service
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn: LoadBalancerRule
+    Properties:
+      ServiceName: django-ecs-service
+      Cluster:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-ECSCluster'
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-ECSSecurityGroup'
+          Subnets:
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-PublicSubnet1'
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-PublicSubnet2'
+      LoadBalancers:
+        - ContainerName: django-app
+          ContainerPort: 8000
+          TargetGroupArn:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-TargetGroup'
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      HealthCheckGracePeriodSeconds: 60
+
+  # ALB Rule
+  LoadBalancerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-ALBListener'
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /*
+      Actions:
+        - Type: forward
+          TargetGroupArn:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-TargetGroup'
+
+  # Auto Scaling
+  ScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 5
+      ResourceId: !Join
+        - /
+        - - service
+          - Fn::ImportValue:
+              !Sub 'django-ecs-cluster-ECSCluster'
+          - !GetAtt Service.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
+
+  ScalingPolicyUp:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ScaleUp
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: ChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            ScalingAdjustment: 1
+
+  ScalingPolicyDown:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ScaleDown
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: ChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+          - MetricIntervalUpperBound: 0
+            ScalingAdjustment: -1
+
+  # CloudWatch Alarms
+  CPUUtilizationHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: CPU-Utilization-High
+      AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 70
+      AlarmActions:
+        - !Ref ScalingPolicyUp
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-ECSCluster'
+        - Name: ServiceName
+          Value: !GetAtt Service.Name
+      ComparisonOperator: GreaterThanThreshold
+
+  CPUUtilizationLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: CPU-Utilization-Low
+      AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      Threshold: 30
+      AlarmActions:
+        - !Ref ScalingPolicyDown
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-ECSCluster'
+        - Name: ServiceName
+          Value: !GetAtt Service.Name
+      ComparisonOperator: LessThanThreshold
+
+Outputs:
+  Service:
+    Description: The ECS Service
+    Value: !Ref Service
+    Export:
+      Name: !Sub "${AWS::StackName}-Service"
+
+  ServiceName:
+    Description: The name of the ECS Service
+    Value: !GetAtt Service.Name
+    Export:
+      Name: !Sub "${AWS::StackName}-ServiceName"
+
+  TaskDefinition:
+    Description: The Task Definition
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub "${AWS::StackName}-TaskDefinition" 
