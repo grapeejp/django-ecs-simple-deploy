@@ -157,6 +157,12 @@ django-ecs-simple-deploy/
 4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
 5. プルリクエストを作成
 
+## 参考リソース
+
+- [AWS Fargate公式ドキュメント](https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/AWS_Fargate.html)
+- [Django on AWS ECSのベストプラクティス](https://testdriven.io/blog/deploying-django-to-ecs-with-terraform/)
+- [CloudFormation Template Reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-reference.html)
+
 ## ライセンス
 
 MITライセンスに基づいて配布されています。詳細は[LICENSE](LICENSE)ファイルをご覧ください。
