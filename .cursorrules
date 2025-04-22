@@ -92,6 +92,7 @@ AWS ECS（Elastic Container Service）を使用してDjangoアプリケーショ
 - PRテンプレートの「重要度チェック」を必ず確認する
 - 「重要な変更」に該当する場合は、レビュー必須
 - Cursorの設定で自動fetch/pull機能を有効にすること
+- **保護ブランチのコミット防止フックを設定**: `bash scripts/setup-git-hooks.sh`
 
 ## GitHubでのPR作成時の注意点
 - PRタイトルは変更内容が明確に分かるよう具体的に記述
