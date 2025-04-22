@@ -1,4 +1,4 @@
-FROM python:3.11-slim as builder
+FROM --platform=linux/amd64 python:3.11-slim as builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN apt-get update && \
 COPY app/requirements.txt .
 RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
-FROM python:3.11-slim
+FROM --platform=linux/amd64 python:3.11-slim
 
 WORKDIR /app
 

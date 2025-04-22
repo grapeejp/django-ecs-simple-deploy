@@ -58,6 +58,10 @@ Resources:
               Value: '0'
             - Name: ALLOWED_HOSTS
               Value: '*'
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'config.settings'
+            - Name: SECRET_KEY
+              Value: '{{resolve:secretsmanager:django-ecs-secrets:SecretString:SECRET_KEY}}'
 
   # ECS Service
   Service:
