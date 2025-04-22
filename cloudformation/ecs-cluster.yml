@@ -254,6 +254,12 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-TargetGroup"
 
+  ALBListener:
+    Description: ALB Listener ARN
+    Value: !Ref ALBListener
+    Export:
+      Name: !Sub "${AWS::StackName}-ALBListener"
+
   ApplicationLoadBalancer:
     Description: ALB ARN
     Value: !Ref ApplicationLoadBalancer
