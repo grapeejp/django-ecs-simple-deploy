@@ -57,7 +57,7 @@ Resources:
             - Name: DEBUG
               Value: '0'
             - Name: ALLOWED_HOSTS
-              Value: '*'
+              Value: '*,*.elb.amazonaws.com,*.ap-northeast-1.elb.amazonaws.com'
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'config.settings'
             - Name: SECRET_KEY
