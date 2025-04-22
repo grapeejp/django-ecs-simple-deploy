@@ -17,8 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from health_check import health_check
+import sys, os
+
+# welcome_viewをインポートするためにappディレクトリをパスに追加
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from welcome_view import welcome
 
 urlpatterns = [
+    path('', welcome, name='welcome'),  # ルートURLにウェルカムページを追加
     path('admin/', admin.site.urls),
     path('health/', health_check, name='health_check'),
 ]
