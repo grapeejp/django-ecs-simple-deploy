@@ -1,6 +1,6 @@
 import pytest
 from django.test import RequestFactory
-from health_check import health_check
+from app.health_check import health_check
 
 
 def test_health_check_status_code():
