@@ -29,7 +29,7 @@ jobs:
       run: |
         echo "ECR_REPOSITORY=django-ecs-app" >> $GITHUB_ENV
         echo "IMAGE_TAG=sha-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
-        echo "AWS_ACCOUNT_ID=123456789012" >> $GITHUB_ENV
+        echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
         echo "AWS_REGION=ap-northeast-1" >> $GITHUB_ENV
         
     - name: Build, tag, and push image to Amazon ECR
