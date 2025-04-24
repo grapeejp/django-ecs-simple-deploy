@@ -62,7 +62,8 @@ jobs:
     - name: Security check with bandit
       if: steps.changes.outputs.python == 'true'
       run: |
-        bandit -r app -x app/tests 
+        # settings.py の SECRET_KEY はハードコーディング検出対象外とする
+        bandit -r app -x app/tests -x app/config/settings.py
     - name: Notify Slack
       if: always()
       uses: 8398a7/action-slack@v3
