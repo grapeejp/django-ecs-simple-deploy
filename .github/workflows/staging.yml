@@ -53,7 +53,6 @@ jobs:
           --stack-name django-ecs-cluster-staging-new \
           --template-file cloudformation/ecs-cluster.yml \
           --capabilities CAPABILITY_IAM \
-          --parameter-overrides Environment=staging \
           --no-fail-on-empty-changeset
           
     - name: Deploy ECS Service
