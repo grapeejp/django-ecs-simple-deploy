@@ -20,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # .envファイルから環境変数を読み込む
 env = environ.Env()
-env.read_env(BASE_DIR / '.env')
-SECRET_KEY = env('SECRET_KEY')
+env.read_env(BASE_DIR / ".env")
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
