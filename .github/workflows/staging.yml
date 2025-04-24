@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: staging
     
     steps:
     - uses: actions/checkout@v3
@@ -57,10 +58,9 @@ jobs:
       run: |
         aws cloudformation deploy \
           --stack-name django-ecs-service-staging \
-          --template-file cloudformation/ecs-service.yml \
+          --template-file cloudformation/ecs-service-staging.yml \
           --parameter-overrides \
             ImageUrl=$IMAGE_URI \
-            Environment=staging \
           --no-fail-on-empty-changeset
           
     - name: Get Application URL
