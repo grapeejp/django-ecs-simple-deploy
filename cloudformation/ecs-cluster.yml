@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Django ECS Cluster'
 
+Parameters:
+  Environment:
+    Type: String
+    Description: Deployment environment (staging or production)
+    Default: staging
+
 Resources:
   # VPC and Network Configuration
   VPC:

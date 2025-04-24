@@ -22,6 +22,11 @@ Parameters:
     Description: How many instances of the task to run
     Default: 1
 
+  Environment:
+    Type: String
+    Description: Deployment environment (staging or production)
+    Default: production
+
 Resources:
   # ECS Task Definition
   TaskDefinition:
