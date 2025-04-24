@@ -133,7 +133,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: django-ecs-cluster-new
+      ClusterName: django-ecs-cluster-staging
       CapacityProviders:
         - FARGATE
         - FARGATE_SPOT
@@ -196,7 +196,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/django-app-new
+      LogGroupName: /ecs/django-app-staging
       RetentionInDays: 14
 
 Outputs:
