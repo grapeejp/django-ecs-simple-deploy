@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:8000"
     command: >
-      bash -c "pip install django gunicorn &&
+      bash -c "pip install django gunicorn django-environ &&
                if [ ! -f manage.py ]; then django-admin startproject config . && python manage.py migrate; fi &&
                python manage.py runserver 0.0.0.0:8000"
     environment:
