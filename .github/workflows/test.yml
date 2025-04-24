@@ -40,7 +40,7 @@ jobs:
 
     - name: Apply auto-format with ruff
       if: steps.changes.outputs.python == 'true'
-      run: ruff --fix app
+      run: ruff fix app
 
     - name: Run tests
       if: steps.changes.outputs.python == 'true'
