@@ -50,7 +50,7 @@ jobs:
     - name: Deploy ECS Cluster
       run: |
         aws cloudformation deploy \
-          --stack-name django-ecs-cluster-staging-new \
+          --stack-name django-ecs-cluster-staging \
           --template-file cloudformation/ecs-cluster.yml \
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset
@@ -66,7 +66,7 @@ jobs:
           
     - name: Get Application URL
       run: |
-        ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-new --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
+        ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
         echo "::notice ::ステージング環境URL: http://$ALB_DNS"
         
     - name: Notify Slack
