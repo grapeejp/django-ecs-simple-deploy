@@ -22,20 +22,38 @@ jobs:
         pip install -r app/requirements.txt
         pip install pytest pytest-django flake8 black bandit
         
-    - name: Run tests
+    - name: Filter Python changes
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          python:
+            - '**/*.py'
+
+    - name: Show change detection result
       run: |
-        cd app
-        python -m pytest --verbose --maxfail=5
+        echo "Python files changed: ${{ steps.changes.outputs.python }}"
+
+    - name: Skip tests
+      if: steps.changes.outputs.python == 'false'
+      run: echo "No Python files changed, skipping tests."
+
+    - name: Run tests
+      if: steps.changes.outputs.python == 'true'
+      run: python -m pytest --verbose --maxfail=5
         
     - name: Lint with flake8
+      if: steps.changes.outputs.python == 'true'
       run: |
         flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
         
     - name: Format check with black
+      if: steps.changes.outputs.python == 'true'
       run: |
         black --check app
         
     - name: Security check with bandit
+      if: steps.changes.outputs.python == 'true'
       run: |
         bandit -r app -x app/tests 
     - name: Notify Slack

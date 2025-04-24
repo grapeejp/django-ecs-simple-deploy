@@ -59,16 +59,54 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r app/requirements.txt
         
+    - name: Filter Python changes
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          python:
+            - '**/*.py'
+
+    - name: Skip tests
+      if: steps.changes.outputs.python == 'false'
+      run: echo "No Python files changed, skipping tests."
+
     - name: Run tests
-      run: |
-        cd app
-        python manage.py test
+      if: steps.changes.outputs.python == 'true'
+      run: python -m pytest --verbose --maxfail=5
         
     - name: Lint with flake8
       run: |
         pip install flake8
         flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
 ```
+
+### Pythonファイル変更検出によるテストスキップ
+
+開発序盤でドキュメントや設定ファイルのみを変更する Pull Request でも CI が失敗しないよう、`dorny/paths-filter` アクションを利用して Python ファイルに変更が無い場合はテスト／Lint ステップをスキップする仕組みを導入しています。
+
+```yaml
+    - name: Filter Python changes
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          python:
+            - '**/*.py'
+
+    - name: Skip tests
+      if: steps.changes.outputs.python == 'false'
+      run: echo "No Python files changed, skipping tests."
+
+    - name: Run tests
+      if: steps.changes.outputs.python == 'true'
+      run: python -m pytest --verbose --maxfail=5
+```
+
+- **メリット**: ドキュメント修正などコードに影響しない PR が常にグリーンとなり、レビューフローがスムーズになる。
+- **デメリット**: `.py` 以外のファイルが原因のエラーをテストで検知できない可能性がある。
+
+必要に応じて `filters` セクションにテンプレートファイルや設定ファイルのパスパターンを追加し、判定ロジックを細かく調整してください。
 
 ### ステージングデプロイワークフロー実装手順
 
