@@ -31,5 +31,30 @@ var/
 .installed.cfg
 *.egg
 
+# Django
+staticfiles/
+.static_root/
+media/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
 # AWS
 task-def*.json
+
+# Cache
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/

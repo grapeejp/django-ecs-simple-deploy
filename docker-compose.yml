@@ -8,15 +8,18 @@ services:
       - ./app:/app
     working_dir: /app
     ports:
-      - "8080:8000"
+      - "8000:8000"
     command: >
       bash -c "pip install django gunicorn django-environ &&
                if [ ! -f manage.py ]; then django-admin startproject config . && python manage.py migrate; fi &&
+               python manage.py migrate &&
+               python manage.py collectstatic --noinput &&
                python manage.py runserver 0.0.0.0:8000"
     environment:
       - DEBUG=1
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - ALLOWED_HOSTS=*
+      - DJANGO_SETTINGS_MODULE=config.settings
     env_file:
       - .env
