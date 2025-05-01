@@ -109,11 +109,11 @@ Resources:
       ListenerArn:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-staging-ALBListener'
-      Priority: 2
+      Priority: !Sub '${TimestampSuffix}'
       Conditions:
         - Field: path-pattern
           Values:
-            - /staging/*
+            - !Sub '/staging/${TimestampSuffix}/*'
       Actions:
         - Type: forward
           TargetGroupArn:
