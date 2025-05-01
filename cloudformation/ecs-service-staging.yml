@@ -9,13 +9,13 @@ Parameters:
 
   ContainerCpu:
     Type: Number
-    Description: CPU units for the container (128 = 0.125 vCPU)
-    Default: 128
+    Description: CPU units for the container (256 = 0.25 vCPU)
+    Default: 256
 
   ContainerMemory:
     Type: Number
     Description: Memory for the container in MiB
-    Default: 256
+    Default: 512
 
   DesiredCount:
     Type: Number
