@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Django ECS Cluster'
 
+Parameters:
+  Environment:
+    Type: String
+    Description: Deployment environment (staging or production)
+    Default: staging
+
 Resources:
   # VPC and Network Configuration
   VPC:
@@ -127,7 +133,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: django-ecs-cluster
+      ClusterName: !Sub django-ecs-cluster-${Environment}
       CapacityProviders:
         - FARGATE
         - FARGATE_SPOT
@@ -166,7 +172,7 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckPath: /health/
+      HealthCheckPath: /
       HealthCheckIntervalSeconds: 30
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -190,7 +196,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/django-app
+      LogGroupName: !Sub /ecs/django-app-${Environment}
       RetentionInDays: 14
 
 Outputs:

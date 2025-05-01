@@ -12,6 +12,9 @@ if [ -z "$AWS_REGION" ]; then
   exit 1
 fi
 
+# 環境の設定（デフォルトはproduction）
+ENVIRONMENT=${ENVIRONMENT:-production}
+
 # ECRへのログイン
 echo "ECRにログインしています..."
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
@@ -33,8 +36,8 @@ echo "ECRにイメージをプッシュしています..."
 docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:latest
 
 # CloudFormationスタックのデプロイ
-CLUSTER_STACK_NAME="django-ecs-cluster"
-SERVICE_STACK_NAME="django-ecs-service"
+CLUSTER_STACK_NAME="django-ecs-cluster-$ENVIRONMENT"
+SERVICE_STACK_NAME="django-ecs-service-$ENVIRONMENT"
 
 # クラスタースタックが存在するか確認
 CLUSTER_EXISTS=$(aws cloudformation describe-stacks --stack-name $CLUSTER_STACK_NAME 2>/dev/null || echo "not_exists")
@@ -44,6 +47,7 @@ if [[ $CLUSTER_EXISTS == "not_exists" ]]; then
   aws cloudformation create-stack \
     --stack-name $CLUSTER_STACK_NAME \
     --template-body file://cloudformation/ecs-cluster.yml \
+    --parameters ParameterKey=Environment,ParameterValue=$ENVIRONMENT \
     --capabilities CAPABILITY_IAM
 
   echo "スタックの作成が完了するまで待機しています..."
@@ -53,6 +57,7 @@ else
   aws cloudformation update-stack \
     --stack-name $CLUSTER_STACK_NAME \
     --template-body file://cloudformation/ecs-cluster.yml \
+    --parameters ParameterKey=Environment,ParameterValue=$ENVIRONMENT \
     --capabilities CAPABILITY_IAM || echo "更新の必要はありません"
 fi
 
@@ -66,7 +71,7 @@ if [[ $SERVICE_EXISTS == "not_exists" ]]; then
   aws cloudformation create-stack \
     --stack-name $SERVICE_STACK_NAME \
     --template-body file://cloudformation/ecs-service.yml \
-    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URL
+    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URL ParameterKey=Environment,ParameterValue=$ENVIRONMENT
 
   echo "スタックの作成が完了するまで待機しています..."
   aws cloudformation wait stack-create-complete --stack-name $SERVICE_STACK_NAME
@@ -75,7 +80,7 @@ else
   aws cloudformation update-stack \
     --stack-name $SERVICE_STACK_NAME \
     --template-body file://cloudformation/ecs-service.yml \
-    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URL || echo "更新の必要はありません"
+    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URL ParameterKey=Environment,ParameterValue=$ENVIRONMENT || echo "更新の必要はありません"
 fi
 
 # ALBのDNS名を取得して表示

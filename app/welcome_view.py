@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 
+
 def welcome(request):
     """
     シンプルなウェルカムページを表示するビュー
@@ -88,4 +89,4 @@ def welcome(request):
     </body>
     </html>
     """
-    return HttpResponse(html) 
+    return HttpResponse(html)

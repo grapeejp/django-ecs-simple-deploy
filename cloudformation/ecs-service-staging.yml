@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Django ECS Service'
+Description: 'Django ECS Service for Staging Environment (Lower Resource Configuration)'
 
 Parameters:
   ImageUrl:
@@ -9,30 +9,25 @@ Parameters:
 
   ContainerCpu:
     Type: Number
-    Description: CPU units for the container
-    Default: 256
+    Description: CPU units for the container (128 = 0.125 vCPU)
+    Default: 128
 
   ContainerMemory:
     Type: Number
     Description: Memory for the container in MiB
-    Default: 512
+    Default: 256
 
   DesiredCount:
     Type: Number
     Description: How many instances of the task to run
     Default: 1
 
-  Environment:
-    Type: String
-    Description: Deployment environment (staging or production)
-    Default: production
-
 Resources:
   # ECS Task Definition
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: django-app
+      Family: django-app-staging
       Cpu: !Ref ContainerCpu
       Memory: !Ref ContainerMemory
       NetworkMode: awsvpc
@@ -40,13 +35,13 @@ Resources:
         - FARGATE
       ExecutionRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-staging-ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-staging-ECSTaskExecutionRole'
       ContainerDefinitions:
         - Name: django-app
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/django-ecs-app:latest'
+          Image: !Ref ImageUrl
           Essential: true
           PortMappings:
             - ContainerPort: 8000
@@ -55,12 +50,12 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "/ecs/django-app-${Environment}"
+              awslogs-group: /ecs/django-app-staging
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: django-app
+              awslogs-stream-prefix: django-app-staging
           Environment:
             - Name: DEBUG
-              Value: '0'
+              Value: '1'
             - Name: ALLOWED_HOSTS
               Value: '*,*.elb.amazonaws.com,*.ap-northeast-1.elb.amazonaws.com'
             - Name: DJANGO_SETTINGS_MODULE
@@ -73,10 +68,10 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: !Sub django-ecs-service-${Environment}
+      ServiceName: django-ecs-service-staging
       Cluster:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
+          !Sub 'django-ecs-cluster-staging-ECSCluster'
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: !Ref DesiredCount
       LaunchType: FARGATE
@@ -85,18 +80,18 @@ Resources:
           AssignPublicIp: ENABLED
           SecurityGroups:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-${Environment}-ECSSecurityGroup'
+                !Sub 'django-ecs-cluster-staging-ECSSecurityGroup'
           Subnets:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-${Environment}-PublicSubnet1'
+                !Sub 'django-ecs-cluster-staging-PublicSubnet1'
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-${Environment}-PublicSubnet2'
+                !Sub 'django-ecs-cluster-staging-PublicSubnet2'
       LoadBalancers:
         - ContainerName: django-app
           ContainerPort: 8000
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-${Environment}-TargetGroup'
+              !Sub 'django-ecs-cluster-staging-TargetGroup'
       DeploymentConfiguration:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
@@ -108,29 +103,29 @@ Resources:
     Properties:
       ListenerArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-${Environment}-ALBListener'
-      Priority: 1
+          !Sub 'django-ecs-cluster-staging-ALBListener'
+      Priority: 2
       Conditions:
         - Field: path-pattern
           Values:
-            - /*
+            - /staging/*
       Actions:
         - Type: forward
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-${Environment}-TargetGroup'
+              !Sub 'django-ecs-cluster-staging-TargetGroup'
 
-  # Auto Scaling
+  # Auto Scaling - 制限されたスケーリング設定
   ScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MinCapacity: 1
-      MaxCapacity: 5
+      MaxCapacity: 2
       ResourceId: !Join
         - /
         - - service
           - Fn::ImportValue:
-              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
           - !GetAtt Service.Name
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
@@ -139,12 +134,12 @@ Resources:
   ScalingPolicyUp:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: ScaleUp-${Environment}
+      PolicyName: StageScaleUp
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: ChangeInCapacity
-        Cooldown: 60
+        Cooldown: 120
         MetricAggregationType: Average
         StepAdjustments:
           - MetricIntervalLowerBound: 0
@@ -153,36 +148,36 @@ Resources:
   ScalingPolicyDown:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: ScaleDown-${Environment}
+      PolicyName: StageScaleDown
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: ChangeInCapacity
-        Cooldown: 60
+        Cooldown: 120
         MetricAggregationType: Average
         StepAdjustments:
           - MetricIntervalUpperBound: 0
             ScalingAdjustment: -1
 
-  # CloudWatch Alarms
+  # CloudWatch Alarms - 高いしきい値設定
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-High-${Environment}'
-      AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
+      AlarmName: CPU-Utilization-High-Staging
+      AlarmDescription: Scale up when CPU exceeds 80% for 3 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
       Statistic: Average
       Period: 60
-      EvaluationPeriods: 2
-      Threshold: 70
+      EvaluationPeriods: 3
+      Threshold: 80
       AlarmActions:
         - !Ref ScalingPolicyUp
       Dimensions:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: GreaterThanThreshold
@@ -190,28 +185,28 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}'
-      AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
+      AlarmName: CPU-Utilization-Low-Staging
+      AlarmDescription: Scale down when CPU is less than 20% for 10 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
       Statistic: Average
       Period: 60
-      EvaluationPeriods: 5
-      Threshold: 30
+      EvaluationPeriods: 10
+      Threshold: 20
       AlarmActions:
         - !Ref ScalingPolicyDown
       Dimensions:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: LessThanThreshold
 
 Outputs:
   Service:
-    Description: The ECS Service
+    Description: The ECS Service for Staging
     Value: !Ref Service
     Export:
       Name: !Sub "${AWS::StackName}-Service"
