@@ -5,7 +5,7 @@ Parameters:
   ImageUrl:
     Type: String
     Description: The URL of the Docker image to run
-    Default: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/django-ecs-app:latest
+    Default: "026090540679.dkr.ecr.ap-northeast-1.amazonaws.com/django-ecs-app:latest"
 
   ContainerCpu:
     Type: Number
