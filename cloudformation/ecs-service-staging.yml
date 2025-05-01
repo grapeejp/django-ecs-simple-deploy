@@ -22,6 +22,11 @@ Parameters:
     Description: How many instances of the task to run
     Default: 1
 
+  TimestampSuffix:
+    Type: String
+    Description: Timestamp suffix for unique service names
+    Default: ''
+
 Resources:
   # ECS Task Definition
   TaskDefinition:
@@ -68,7 +73,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: django-ecs-service-staging
+      ServiceName: !Sub 'django-ecs-service-staging-${TimestampSuffix}'
       Cluster:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-staging-ECSCluster'
