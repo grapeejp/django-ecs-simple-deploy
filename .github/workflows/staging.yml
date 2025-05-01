@@ -58,7 +58,7 @@ jobs:
     - name: Deploy ECS Service
       run: |
         aws cloudformation deploy \
-          --stack-name django-ecs-service-staging-new \
+          --stack-name django-ecs-service-staging-$(date +%Y%m%d%H%M%S) \
           --template-file cloudformation/ecs-service-staging.yml \
           --parameter-overrides \
             ImageUrl=$IMAGE_URI \
