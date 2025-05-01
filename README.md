@@ -283,6 +283,199 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM
 ```
 
+### CI/CD設定の詳細
+
+このプロジェクトでは、GitHub Actionsを使用して3つの主要なワークフローを設定しています：
+
+#### 1. テスト実行ワークフロー (test.yml)
+
+```yaml
+name: Run Tests
+
+on:
+  pull_request:
+    branches: [ develop, main ]  # developとmainへのPR時に実行
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install pytest pytest-django ruff flake8 bandit
+          
+      - name: Run tests
+        run: pytest
+        
+      - name: Apply auto-format with ruff
+        run: ruff format app
+        
+      - name: Lint with ruff
+        run: ruff check app
+        
+      - name: Security check with bandit
+        run: bandit -r app --exclude app/tests,app/config/settings.py
+```
+
+**主な機能**:
+- Pythonの自動テスト実行（pytest）
+- コード整形（ruff format）
+- 静的解析（ruff check）
+- セキュリティチェック（bandit）
+- PRごとの自動実行で品質保証
+
+#### 2. ステージング環境デプロイワークフロー (staging.yml)
+
+```yaml
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]  # developブランチへのプッシュ時に実行
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      
+      # AWS認証とECRログイン
+      
+      - name: Build and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: django-ecs-app
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest-staging -f docker/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest-staging
+          
+      - name: Deploy ECS Cluster
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-cluster-staging \
+            --template-file cloudformation/ecs-cluster.yml \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides Environment=staging
+            
+      - name: Deploy ECS Service
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-service-staging \
+            --template-file cloudformation/ecs-service-staging.yml \
+            --parameter-overrides ImageUrl=$IMAGE_URI \
+            --capabilities CAPABILITY_NAMED_IAM
+            
+      - name: Get Application URL
+        run: |
+          ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
+          echo "::notice ::ステージング環境URL: http://$ALB_DNS"
+```
+
+**主な機能**:
+- M3チップ（ARM64）からx86_64環境へのクロスプラットフォームビルド
+- ECRへの`latest-staging`タグ付きイメージプッシュ
+- CloudFormationによるインフラスタック作成/更新
+- デプロイ完了後のアクセスURL表示
+
+#### 3. 本番環境デプロイワークフロー (production.yml)
+
+```yaml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]     # mainブランチへのプッシュ時に実行
+  release:
+    types: [created]       # リリース作成時にも実行
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+        if: startsWith(github.ref, 'refs/tags/')
+      
+      # AWS認証とECRログイン
+      
+      - name: Build and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: django-ecs-app
+          VERSION: ${{ steps.get_version.outputs.VERSION || 'latest' }}
+        run: |
+          # バージョンタグとlatestタグの両方でプッシュ
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f docker/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+      - name: Deploy ECS Cluster
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-cluster-production \
+            --template-file cloudformation/ecs-cluster.yml \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides Environment=production
+            
+      - name: Deploy ECS Service
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-service-production \
+            --template-file cloudformation/ecs-service.yml \
+            --parameter-overrides \
+              ImageUrl=$IMAGE_URI \
+              Environment=production \
+            --capabilities CAPABILITY_NAMED_IAM
+```
+
+**主な機能**:
+- バージョンタグ（v1.2.3など）と`latest`タグの併用
+- 本番環境用パラメータでのデプロイ
+- リリース作成時の自動デプロイ
+
+#### CI/CD環境設定（GitHub Secrets）
+
+GitHub Repositoryに以下のSecretsを設定する必要があります：
+
+| Secret名 | 説明 | 用途 |
+|---------|------|------|
+| `AWS_ACCESS_KEY_ID` | AWSアクセスキー | AWS APIの認証 |
+| `AWS_SECRET_ACCESS_KEY` | AWSシークレットキー | AWS APIの認証 |
+| `AWS_REGION` | AWSリージョン（例: ap-northeast-1） | デプロイ先のリージョン指定 |
+| `AWS_ACCOUNT_ID` | AWSアカウントID | ECRリポジトリのフルパス生成 |
+| `SECRET_KEY` | Django SECRET_KEY | テスト実行時に使用 |
+| `SLACK_WEBHOOK_URL` | Slack通知用WebhookURL | デプロイ結果の通知（オプション） |
+
+#### デプロイ時の環境分離
+
+環境ごとに分離されたデプロイパラメータを使用しています：
+
+- **ステージング**: `Environment=staging`
+  - 専用のALB、ターゲットグループ
+  - `latest-staging`タグのイメージ
+  - CloudFormationスタック名に`-staging`サフィックス
+
+- **本番**: `Environment=production`
+  - 専用のALB、ターゲットグループ
+  - `latest`タグのイメージ（およびバージョンタグ）
+  - CloudFormationスタック名に`-production`サフィックス
+
 ### ブランチ戦略とCI/CD連携フロー
 
 本プロジェクトでは、以下のブランチ戦略とCI/CDパイプラインを採用しています：
