@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}校正AIシステム{% endblock %}</title>
+    {% load static %}
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        grape: {
+                            100: '#f4f1fa',
+                            200: '#e9e2f5',
+                            300: '#d4c6eb',
+                            400: '#b99ddc',
+                            500: '#9e74cd',
+                            600: '#8657c5',
+                            700: '#7348b3',
+                            800: '#5e3a91',
+                            900: '#4c2f74'
+                        }
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(76, 47, 116, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(76, 47, 116, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 8px 32px 0 rgba(76, 47, 116, 0.25),
+                0 2px 10px 0 rgba(255, 255, 255, 0.6) inset,
+                0 -2px 10px 0 rgba(0, 0, 0, 0.15) inset;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.8s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 15px 40px 0 rgba(76, 47, 116, 0.3),
+                0 2px 10px 0 rgba(255, 255, 255, 0.6) inset,
+                0 -2px 10px 0 rgba(0, 0, 0, 0.15) inset;
+        }
+        
+        .glass-card:hover::before {
+            left: 100%;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #7348b3 0%, #4c2f74 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        /* テーブルのグラスモーフィズム効果 */
+        .glass-table thead {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .glass-table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .glass-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        /* ステータスバッジ */
+        .status-badge {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.15);
+        }
+        
+        /* グレイプスタイルのロゴ */
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            font-size: 1.0rem;
+            margin-right: 0.5rem;
+        }
+        
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
+    <!-- サイドバーナビゲーション -->
+    <div class="flex h-screen overflow-hidden">
+        <div class="glass-dark text-white w-64 flex-shrink-0 hidden md:block">
+            <div class="p-4">
+                <div class="logo flex justify-center">
+                    <img src="/static/images/grape_logo.png" alt="校正AI" class="logo-img">
+                </div>
+                <p class="text-lg text-purple-100 mt-2 text-center">グレイプ社内効率化ツール</p>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="{% url 'dashboard' %}" class="flex items-center">
+                            <i class="fas fa-home mr-3"></i>
+                            <span>ダッシュボード</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="{% url 'corrections:list' %}" class="flex items-center">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span>文章校正</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="{% url 'tags:list' %}" class="flex items-center">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span>タグ推薦</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="#" class="flex items-center">
+                            <i class="fas fa-history mr-3"></i>
+                            <span>履歴</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="#" class="flex items-center">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span>設定</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <div class="flex-1 overflow-auto">
+            <!-- ヘッダー -->
+            <header class="glass sticky top-0 z-10">
+                <div class="flex items-center justify-between p-4">
+                    <button class="md:hidden text-white" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <button class="flex items-center text-white focus:outline-none">
+                                <span class="mr-2">ユーザー名</span>
+                                <i class="fas fa-user-circle text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- コンテンツエリア -->
+            <main class="p-6">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- モバイルメニュー -->
+    <div class="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity hidden" id="mobile-menu-overlay">
+        <div class="glass-dark absolute inset-y-0 left-0 w-64 text-white transform -translate-x-full transition-transform duration-300" id="mobile-menu">
+            <!-- モバイルメニューの内容 -->
+            <div class="p-4">
+                <div class="logo flex justify-center">
+                    <img src="/static/images/grape_logo.png" alt="校正AI" class="logo-img">
+                </div>
+                <p class="text-sm text-purple-100 mt-2 text-center">社内効率化ツール</p>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="{% url 'dashboard' %}" class="flex items-center">
+                            <i class="fas fa-home mr-3"></i>
+                            <span>ダッシュボード</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="{% url 'corrections:list' %}" class="flex items-center">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span>文章校正</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="{% url 'tags:list' %}" class="flex items-center">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span>タグ推薦</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // モバイルメニュートグル
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const menu = document.getElementById('mobile-menu');
+            overlay.classList.toggle('hidden');
+            menu.classList.toggle('-translate-x-full');
+        });
+
+        document.getElementById('mobile-menu-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.getElementById('mobile-menu').classList.add('-translate-x-full');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

@@ -1,0 +1,137 @@
+{% extends "base/base.html" %}
+
+{% block title %}ダッシュボード - 校正AIシステム{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-white drop-shadow-lg">ダッシュボード</h1>
+    
+    <!-- システム概要カード -->
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900">社内効率化ツール</h2>
+        <p class="text-gray-800">
+            このシステムはAI技術を活用して社内業務の効率化を支援します。文章校正やタグ推薦機能を通じて、
+            より質の高いコンテンツ作成をサポートします。
+        </p>
+    </div>
+    
+    <!-- ツールカード一覧 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 文章校正ツールカード -->
+        <div class="glass-card overflow-hidden">
+            <div class="bg-grape-600/90 backdrop-blur-md p-4 text-white">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    文章校正ツール
+                </h3>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-800 mb-4">
+                    AIを活用して文章の校正を行います。文法的誤り、表現の統一性、
+                    より適切な表現の提案などを自動で行います。
+                </p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-700 bg-grape-100/70 px-2 py-1 rounded-full font-medium shadow-sm">最近の利用: 25件</span>
+                    </div>
+                    <a href="{% url 'corrections:list' %}" class="bg-grape-600 hover:bg-grape-700 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-medium">
+                        利用する
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- タグ推薦ツールカード -->
+        <div class="glass-card overflow-hidden">
+            <div class="bg-grape-500/90 backdrop-blur-md p-4 text-white">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-tags mr-2"></i>
+                    タグ推薦ツール
+                </h3>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-800 mb-4">
+                    文章内容を分析し、最適なタグを自動推薦します。
+                    記事や資料の分類、検索性向上に役立ちます。
+                </p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-700 bg-grape-100/70 px-2 py-1 rounded-full font-medium shadow-sm">最近の利用: 18件</span>
+                    </div>
+                    <a href="{% url 'tags:list' %}" class="bg-grape-500 hover:bg-grape-600 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-medium">
+                        利用する
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- システム状態カード -->
+        <div class="glass-card overflow-hidden">
+            <div class="bg-grape-700/90 backdrop-blur-md p-4 text-white">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-server mr-2"></i>
+                    システム状態
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center p-2 bg-white/50 rounded-lg backdrop-blur-sm shadow-sm">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2 shadow-md"></div>
+                        <span class="text-gray-800 font-medium">AI処理サービス: 正常稼働中</span>
+                    </div>
+                    <div class="flex items-center p-2 bg-white/50 rounded-lg backdrop-blur-sm shadow-sm">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2 shadow-md"></div>
+                        <span class="text-gray-800 font-medium">データベース: 正常接続中</span>
+                    </div>
+                    <div class="flex items-center p-2 bg-white/50 rounded-lg backdrop-blur-sm shadow-sm">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2 shadow-md"></div>
+                        <span class="text-gray-800 font-medium">キャッシュサーバー: 正常接続中</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近の利用履歴 -->
+    <div class="mt-8">
+        <h2 class="text-xl font-semibold mb-4 text-white drop-shadow-lg">最近の利用履歴</h2>
+        <div class="glass-card overflow-hidden">
+            <table class="min-w-full glass-table">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 text-left text-gray-900 font-bold">ID</th>
+                        <th class="py-3 px-4 text-left text-gray-900 font-bold">ツール</th>
+                        <th class="py-3 px-4 text-left text-gray-900 font-bold">ステータス</th>
+                        <th class="py-3 px-4 text-left text-gray-900 font-bold">作成日時</th>
+                        <th class="py-3 px-4 text-left text-gray-900 font-bold">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-300/50">
+                    <!-- サンプルデータ -->
+                    <tr>
+                        <td class="py-3 px-4 text-gray-800 font-medium">#1001</td>
+                        <td class="py-3 px-4 text-gray-800">文章校正</td>
+                        <td class="py-3 px-4"><span class="status-badge bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow">完了</span></td>
+                        <td class="py-3 px-4 text-gray-800">2023-06-15 10:30</td>
+                        <td class="py-3 px-4"><a href="#" class="text-grape-700 hover:text-grape-900 hover:underline transition-colors font-medium">詳細</a></td>
+                    </tr>
+                    <tr>
+                        <td class="py-3 px-4 text-gray-800 font-medium">#1002</td>
+                        <td class="py-3 px-4 text-gray-800">タグ推薦</td>
+                        <td class="py-3 px-4"><span class="status-badge bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold shadow">完了</span></td>
+                        <td class="py-3 px-4 text-gray-800">2023-06-14 15:45</td>
+                        <td class="py-3 px-4"><a href="#" class="text-grape-700 hover:text-grape-900 hover:underline transition-colors font-medium">詳細</a></td>
+                    </tr>
+                    <tr>
+                        <td class="py-3 px-4 text-gray-800 font-medium">#1003</td>
+                        <td class="py-3 px-4 text-gray-800">文章校正</td>
+                        <td class="py-3 px-4"><span class="status-badge bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold shadow">処理中</span></td>
+                        <td class="py-3 px-4 text-gray-800">2023-06-14 09:15</td>
+                        <td class="py-3 px-4"><a href="#" class="text-grape-700 hover:text-grape-900 hover:underline transition-colors font-medium">詳細</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

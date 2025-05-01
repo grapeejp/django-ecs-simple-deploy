@@ -275,7 +275,7 @@ jobs:
           docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
       
-      - name: Deploy to ECS
+      - name: Deploy まずto ECS
         run: |
           aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
             --stack-name django-ecs-service-production \

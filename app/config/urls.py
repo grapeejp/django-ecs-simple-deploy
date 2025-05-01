@@ -16,7 +16,8 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.views.generic import RedirectView
 from health_check import health_check
 import sys
 import os
@@ -26,7 +27,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from welcome_view import welcome
 
 urlpatterns = [
-    path("", welcome, name="welcome"),  # ルートURLにウェルカムページを追加
+    # path("", welcome, name="welcome"),  # コメントアウト
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
+    path('', include('core.urls')),  # ダッシュボード
+    path('corrections/', include('corrections.urls')),  # 校正アプリ
+    path('tags/', include('tags.urls')),  # タグ推薦アプリ
 ]
