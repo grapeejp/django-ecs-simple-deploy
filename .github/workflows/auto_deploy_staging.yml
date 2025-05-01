@@ -1,0 +1,53 @@
+name: Auto Deploy to Staging
+
+on:
+  workflow_run:
+    workflows:
+      - "Run Tests"
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'ap-northeast-1'
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Set up variables
+        run: |
+          echo "ECR_REPOSITORY=django-ecs-app" >> $GITHUB_ENV
+          echo "IMAGE_TAG=sha-$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
+          echo "AWS_REGION=ap-northeast-1" >> $GITHUB_ENV
+      - name: Build, tag, and push image
+        run: |
+          docker build -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+      - name: Deploy ECS Cluster
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-cluster-staging \
+            --template-file cloudformation/ecs-cluster.yml \
+            --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+      - name: Deploy ECS Service
+        run: |
+          aws cloudformation deploy \
+            --stack-name django-ecs-service-staging-$(date +%Y%m%d%H%M%S) \
+            --template-file cloudformation/ecs-service-staging.yml \
+            --parameter-overrides ImageUrl=$IMAGE_URI \
+            --no-fail-on-empty-changeset
+      - name: Announce URL
+        run: |
+          ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
+          echo "::notice ::ステージングURL: http://$ALB_DNS" 
