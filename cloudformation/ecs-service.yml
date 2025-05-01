@@ -26,6 +26,11 @@ Parameters:
     Type: String
     Description: Deployment environment (staging or production)
     Default: production
+    
+  TimestampSuffix:
+    Type: String
+    Description: Timestamp suffix for unique service names
+    Default: ''
 
 Resources:
   # ECS Task Definition
@@ -46,7 +51,7 @@ Resources:
           !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
       ContainerDefinitions:
         - Name: django-app
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/django-ecs-app:latest'
+          Image: !Ref ImageUrl
           Essential: true
           PortMappings:
             - ContainerPort: 8000
@@ -73,7 +78,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: !Sub django-ecs-service-${Environment}
+      ServiceName: !Sub django-ecs-service-${Environment}${TimestampSuffix}
       Cluster:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
