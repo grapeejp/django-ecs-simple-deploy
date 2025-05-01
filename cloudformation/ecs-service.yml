@@ -55,7 +55,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/django-app-${Environment}
+              awslogs-group: !Sub "/ecs/django-app-${Environment}"
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: django-app
           Environment:
