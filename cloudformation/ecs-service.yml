@@ -40,10 +40,10 @@ Resources:
         - FARGATE
       ExecutionRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
       ContainerDefinitions:
         - Name: django-app
           Image: !Ref ImageUrl
@@ -55,7 +55,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/django-app
+              awslogs-group: /ecs/django-app-${Environment}
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: django-app
           Environment:
@@ -73,10 +73,10 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: django-ecs-service
+      ServiceName: django-ecs-service-${Environment}
       Cluster:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-ECSCluster'
+          !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: !Ref DesiredCount
       LaunchType: FARGATE
@@ -85,18 +85,18 @@ Resources:
           AssignPublicIp: ENABLED
           SecurityGroups:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-ECSSecurityGroup'
+                !Sub 'django-ecs-cluster-${Environment}-ECSSecurityGroup'
           Subnets:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-PublicSubnet1'
+                !Sub 'django-ecs-cluster-${Environment}-PublicSubnet1'
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-PublicSubnet2'
+                !Sub 'django-ecs-cluster-${Environment}-PublicSubnet2'
       LoadBalancers:
         - ContainerName: django-app
           ContainerPort: 8000
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-TargetGroup'
+              !Sub 'django-ecs-cluster-${Environment}-TargetGroup'
       DeploymentConfiguration:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
@@ -108,7 +108,7 @@ Resources:
     Properties:
       ListenerArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-ALBListener'
+          !Sub 'django-ecs-cluster-${Environment}-ALBListener'
       Priority: 1
       Conditions:
         - Field: path-pattern
@@ -118,7 +118,7 @@ Resources:
         - Type: forward
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-TargetGroup'
+              !Sub 'django-ecs-cluster-${Environment}-TargetGroup'
 
   # Auto Scaling
   ScalableTarget:
@@ -130,7 +130,7 @@ Resources:
         - /
         - - service
           - Fn::ImportValue:
-              !Sub 'django-ecs-cluster-ECSCluster'
+              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
           - !GetAtt Service.Name
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
@@ -139,7 +139,7 @@ Resources:
   ScalingPolicyUp:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: ScaleUp
+      PolicyName: ScaleUp-${Environment}
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
@@ -153,7 +153,7 @@ Resources:
   ScalingPolicyDown:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: ScaleDown
+      PolicyName: ScaleDown-${Environment}
       PolicyType: StepScaling
       ScalingTargetId: !Ref ScalableTarget
       StepScalingPolicyConfiguration:
@@ -168,7 +168,7 @@ Resources:
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: CPU-Utilization-High
+      AlarmName: CPU-Utilization-High-${Environment}
       AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -182,7 +182,7 @@ Resources:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-ECSCluster'
+              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: GreaterThanThreshold
@@ -190,7 +190,7 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: CPU-Utilization-Low
+      AlarmName: CPU-Utilization-Low-${Environment}
       AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -204,7 +204,7 @@ Resources:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-ECSCluster'
+              !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: LessThanThreshold
