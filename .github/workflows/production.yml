@@ -3,6 +3,8 @@ name: Deploy to Production
 on:
   release:
     types: [created]
+  push:
+    branches: [ main ]
 
 jobs:
   deploy:
