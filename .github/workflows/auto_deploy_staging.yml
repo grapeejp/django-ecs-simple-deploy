@@ -99,7 +99,7 @@ jobs:
             --template-file cloudformation/ecs-service-staging.yml \
             --parameter-overrides \
               ImageUrl=$IMAGE_URI \
-              TimestampSuffix= \
+              TimestampSuffix=${{ env.TIMESTAMP }} \
             --no-fail-on-empty-changeset \
             --debug 2>&1 | tee logs/service-deploy.log
           

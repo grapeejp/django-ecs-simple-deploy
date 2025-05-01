@@ -86,43 +86,38 @@ echo ""
 # CloudFormationスタックのデプロイ
 echo -e "${GREEN}[6/7] CloudFormationスタックをデプロイ中...${NC}"
 
-# ECSクラスタースタックの確認
-if ! aws cloudformation describe-stacks --stack-name django-ecs-cluster --region $AWS_REGION &> /dev/null; then
-  echo "ECSクラスタースタックをデプロイ中..."
+# タイムスタンプの生成
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+
+# ステージング環境のECSクラスタースタックの確認
+if ! aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --region $AWS_REGION &> /dev/null; then
+  echo "ステージング用ECSクラスタースタックをデプロイ中..."
   aws cloudformation create-stack \
-    --stack-name django-ecs-cluster \
+    --stack-name django-ecs-cluster-staging \
     --template-body file://cloudformation/ecs-cluster.yml \
     --capabilities CAPABILITY_IAM \
     --region $AWS_REGION
   
   echo "スタックの作成を待機中... (約5分かかります)"
-  aws cloudformation wait stack-create-complete --stack-name django-ecs-cluster --region $AWS_REGION
-  echo -e "${GREEN}ECSクラスタースタックのデプロイが完了しました✓${NC}"
+  aws cloudformation wait stack-create-complete --stack-name django-ecs-cluster-staging --region $AWS_REGION
+  echo -e "${GREEN}ステージング用ECSクラスタースタックのデプロイが完了しました✓${NC}"
 else
-  echo -e "${GREEN}ECSクラスタースタックは既に存在します✓${NC}"
+  echo -e "${GREEN}ステージング用ECSクラスタースタックは既に存在します✓${NC}"
 fi
 
-# ECSサービススタックの確認
-if ! aws cloudformation describe-stacks --stack-name django-ecs-service --region $AWS_REGION &> /dev/null; then
-  echo "ECSサービススタックをデプロイ中..."
-  aws cloudformation create-stack \
-    --stack-name django-ecs-service \
-    --template-body file://cloudformation/ecs-service.yml \
-    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI \
-    --region $AWS_REGION
-  
-  echo "スタックの作成を待機中... (約3分かかります)"
-  aws cloudformation wait stack-create-complete --stack-name django-ecs-service --region $AWS_REGION
-  echo -e "${GREEN}ECSサービススタックのデプロイが完了しました✓${NC}"
-else
-  echo "ECSサービススタックを更新中..."
-  aws cloudformation update-stack \
-    --stack-name django-ecs-service \
-    --template-body file://cloudformation/ecs-service.yml \
-    --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI \
-    --region $AWS_REGION || echo -e "${YELLOW}更新できる変更がないか、エラーが発生しました${NC}"
-fi
-echo ""
+# ステージング環境のECSサービススタックの作成
+echo "ステージング用ECSサービススタックをデプロイ中..."
+aws cloudformation create-stack \
+  --stack-name django-ecs-service-staging-${TIMESTAMP} \
+  --template-body file://cloudformation/ecs-service-staging.yml \
+  --parameters \
+    ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI \
+    ParameterKey=TimestampSuffix,ParameterValue=${TIMESTAMP} \
+  --region $AWS_REGION
+
+echo "スタックの作成を待機中... (約3分かかります)"
+aws cloudformation wait stack-create-complete --stack-name django-ecs-service-staging-${TIMESTAMP} --region $AWS_REGION
+echo -e "${GREEN}ステージング用ECSサービススタックのデプロイが完了しました✓${NC}"
 
 # ALB DNS名の取得とアクセス方法の表示
 echo -e "${GREEN}[7/7] デプロイ情報を取得中...${NC}"
