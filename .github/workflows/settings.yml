@@ -1,0 +1,30 @@
+name: Sync GitHub Settings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/settings.yml
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      repository-projects: write
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GitHub Settings
+        uses: hubot/settings@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        with:
+          path: .github/settings.yml 
