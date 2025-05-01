@@ -1,8 +1,9 @@
 from django.urls import path
+from . import views
 
 app_name = 'tags'
 
 urlpatterns = [
     # 後ほどこの部分に実際のパターンを追加する
-    path('', lambda request: None, name='list'),
+    path('', views.tag_list, name='list'),
 ] 

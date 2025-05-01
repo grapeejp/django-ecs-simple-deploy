@@ -1,0 +1,48 @@
+{% extends "base/base.html" %}
+
+{% block title %}タグ推薦 - 校正AIシステム{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-white drop-shadow-lg">タグ推薦ツール</h1>
+    
+    <div class="glass-card p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900">テキストコンテンツからタグを自動推薦</h2>
+        <p class="text-gray-800 mb-4">
+            テキスト内容を分析し、最適なタグを自動的に推薦します。コンテンツの分類や検索性向上に役立ちます。
+        </p>
+        
+        <div class="mt-8">
+            <form method="post" action="{% url 'tags:list' %}" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label for="content" class="block text-gray-800 font-medium mb-2">テキストコンテンツ</label>
+                    <textarea id="content" name="content" rows="8" 
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-grape-500"
+                        placeholder="ここにタグを抽出したいテキストを入力してください。"></textarea>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit" 
+                        class="bg-grape-600 hover:bg-grape-700 text-white font-medium py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                        タグを生成
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if tags %}
+    <div class="glass-card p-6">
+        <h2 class="text-xl font-semibold mb-4 text-gray-900">推薦タグ</h2>
+        <div class="flex flex-wrap gap-2">
+            {% for tag in tags %}
+            <span class="bg-grape-100 text-grape-800 px-3 py-1 rounded-full text-sm font-medium shadow">
+                {{ tag }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
