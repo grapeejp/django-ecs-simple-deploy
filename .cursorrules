@@ -85,6 +85,13 @@ AWS ECS（Elastic Container Service）を使用してDjangoアプリケーショ
 - `bugfix/*`: バグ修正用
 - `hotfix/*`: 緊急のバグ修正用
 
+## マージフロー（重要）
+1. **feature → develop**: 開発ブランチから開発環境へのマージ（開発環境での検証用）
+2. **develop → staging**: 開発環境からステージング環境へのマージ（ステージング環境での検証用）
+3. **staging → main**: ステージング環境から本番環境へのマージ（本番環境へのデプロイ用）
+
+**絶対に feature ブランチから直接 main ブランチにマージしないでください！**
+
 ## 重要なワークフローのルール
 - **必ず作業前に `docs/ブランチ戦略.md` と `docs/GitHub設定手順.md` を読むこと**
 - developブランチからfeatureブランチを作成して作業する
@@ -93,6 +100,12 @@ AWS ECS（Elastic Container Service）を使用してDjangoアプリケーショ
 - 「重要な変更」に該当する場合は、レビュー必須
 - Cursorの設定で自動fetch/pull機能を有効にすること
 - **保護ブランチのコミット防止フックを設定**: `bash scripts/setup-git-hooks.sh`
+
+## マージにおける注意点
+- feature → develop へのマージはPull Requestを使用
+- ブランチのマージ順序を必ず守ること: feature→develop→staging→main
+- ガイドラインに従わないマージは、後でリバートが必要になる可能性がある
+- 分からない場合は、マージ前にチームメンバーに確認すること
 
 ## GitHubでのPR作成時の注意点
 - PRタイトルは変更内容が明確に分かるよう具体的に記述
