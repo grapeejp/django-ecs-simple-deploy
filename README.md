@@ -171,9 +171,345 @@ http://django-Appli-Eel6airECEW2-1499847413.ap-northeast-1.elb.amazonaws.com
 - [Django on AWS ECSのベストプラクティス](https://testdriven.io/blog/deploying-django-to-ecs-with-terraform/)
 - [CloudFormation Template Reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-reference.html)
 
-## ライセンス
+## 開発〜デプロイの流れ
 
-MITライセンスに基づいて配布されています。詳細は[LICENSE](LICENSE)ファイルをご覧ください。
+### 開発環境とプロダクション環境
+
+このプロジェクトでは以下の2つの環境をサポートしています：
+
+- **開発環境（Staging）**: `django-ecs-service-staging`
+- **本番環境（Production）**: `django-ecs-service-production`
+
+各環境は分離されており、独自のECSサービス、タスク定義、およびCloudWatchアラームを持ちます。
+
+### 開発ワークフロー
+
+1. **ローカル開発**
+   ```bash
+   # ローカル環境起動
+   docker-compose up -d
+   
+   # コードの変更
+   # http://localhost:8000 で動作確認
+   ```
+
+2. **ステージング環境へのデプロイ**
+   ```bash
+   # 環境変数設定
+   export AWS_ACCOUNT_ID=<あなたのAWSアカウントID>
+   export AWS_REGION=ap-northeast-1
+   
+   # イメージビルドとプッシュ
+   docker build --platform=linux/amd64 -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/django-ecs-app:staging .
+   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/django-ecs-app:staging
+   
+   # ステージング環境へのデプロイ
+   aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+     --stack-name django-ecs-service-staging \
+     --parameter-overrides Environment=staging \
+     --capabilities CAPABILITY_NAMED_IAM
+   ```
+
+3. **テストと検証**
+   ```bash
+   # ステージング環境のURLを取得
+   aws elbv2 describe-load-balancers --names django-Appli-21kFlF5Lv7wZ
+   
+   # ブラウザでアクセスしてテスト
+   # http://django-Appli-XXXXX.ap-northeast-1.elb.amazonaws.com
+   ```
+
+4. **本番環境へのデプロイ**
+   ```bash
+   # latestタグでイメージビルド
+   docker build --platform=linux/amd64 -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/django-ecs-app:latest .
+   docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/django-ecs-app:latest
+   
+   # 本番環境へのデプロイ
+   aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+     --stack-name django-ecs-service-production \
+     --parameter-overrides Environment=production \
+     --capabilities CAPABILITY_NAMED_IAM
+   ```
+
+### CI/CD自動化
+
+GitHub Actionsを使用して自動デプロイを設定できます：
+
+1. `.github/workflows/deploy.yml`を設定
+2. リポジトリに以下のGitHub Secretsを追加
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_REGION`
+
+設定例：
+```yaml
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [ main ]  # mainブランチにプッシュされたら実行
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Build and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: django-ecs-app
+        run: |
+          docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      
+      - name: Deploy to ECS
+        run: |
+          aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+            --stack-name django-ecs-service-production \
+            --parameter-overrides Environment=production \
+            --capabilities CAPABILITY_NAMED_IAM
+```
+
+### ブランチ戦略とCI/CD連携フロー
+
+本プロジェクトでは、以下のブランチ戦略とCI/CDパイプラインを採用しています：
+
+```
+feature/* → develop → main
+   ↓           ↓        ↓
+  テスト    ステージング  本番
+```
+
+#### 1. 開発フロー（feature ブランチ）
+
+1. **新規ブランチ作成**
+   ```bash
+   git checkout develop
+   git pull
+   git checkout -b feature/new-awesome-feature
+   ```
+
+2. **開発作業**
+   - ローカルでの開発とテスト
+   - コミットとプッシュ
+   ```bash
+   git add .
+   git commit -m "feat: 素晴らしい機能を追加"
+   git push origin feature/new-awesome-feature
+   ```
+
+3. **プルリクエスト（PR）作成**
+   - GitHubでfeature/new-awesome-feature → develop へのPRを作成
+   - 自動テストが実行される（PR作成時）
+   ```yaml
+   # .github/workflows/test.yml の例
+   name: Test
+   
+   on:
+     pull_request:
+       branches: [ develop, main ]
+   
+   jobs:
+     test:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         - name: Set up Python
+           uses: actions/setup-python@v2
+           with:
+             python-version: '3.11'
+         - name: Install dependencies
+           run: |
+             python -m pip install --upgrade pip
+             pip install -r requirements.txt
+         - name: Run tests
+           run: |
+             pytest
+   ```
+
+#### 2. ステージング環境へのデプロイ（develop ブランチ）
+
+1. **developへのマージ**
+   - テスト通過後、PRをdevelopブランチにマージ
+   - マージ後、自動的にステージング環境へのデプロイが開始
+
+2. **自動デプロイ設定**
+   ```yaml
+   # .github/workflows/deploy-staging.yml の例
+   name: Deploy to Staging
+   
+   on:
+     push:
+       branches: [ develop ]
+   
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         
+         - name: Configure AWS credentials
+           uses: aws-actions/configure-aws-credentials@v1
+           with:
+             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             aws-region: ${{ secrets.AWS_REGION }}
+         
+         - name: Login to Amazon ECR
+           id: login-ecr
+           uses: aws-actions/amazon-ecr-login@v1
+         
+         - name: Build and push image to ECR
+           env:
+             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+             ECR_REPOSITORY: django-ecs-app
+           run: |
+             docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:staging .
+             docker push $ECR_REGISTRY/$ECR_REPOSITORY:staging
+         
+         - name: Deploy to ECS Staging
+           run: |
+             aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+               --stack-name django-ecs-service-staging \
+               --parameter-overrides Environment=staging \
+               --capabilities CAPABILITY_NAMED_IAM
+   ```
+
+3. **ステージング環境でのテスト確認**
+   - 自動テストだけでなく、ステージング環境で手動テストも実施
+   - 問題があれば、新たなfixブランチを作成して修正
+
+#### 3. 本番環境へのデプロイ（main ブランチ）
+
+1. **mainへのマージ**
+   - ステージング環境での確認が完了したら、develop → main へのPRを作成
+   - コードレビュー後、mainブランチにマージ
+   - タグを付与（リリースバージョン管理のため）
+   ```bash
+   git checkout main
+   git pull
+   git tag -a v1.2.3 -m "バージョン1.2.3をリリース"
+   git push origin v1.2.3
+   ```
+
+2. **自動デプロイ設定**
+   ```yaml
+   # .github/workflows/deploy-production.yml の例
+   name: Deploy to Production
+   
+   on:
+     push:
+       branches: [ main ]
+       tags:
+         - 'v*'  # タグがプッシュされた場合も実行
+   
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         
+         - name: Get version from tag
+           id: get_version
+           run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+           if: startsWith(github.ref, 'refs/tags/')
+         
+         - name: Configure AWS credentials
+           uses: aws-actions/configure-aws-credentials@v1
+           with:
+             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             aws-region: ${{ secrets.AWS_REGION }}
+         
+         - name: Login to Amazon ECR
+           id: login-ecr
+           uses: aws-actions/amazon-ecr-login@v1
+         
+         - name: Build and push image to ECR
+           env:
+             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+             ECR_REPOSITORY: django-ecs-app
+             VERSION: ${{ steps.get_version.outputs.VERSION || 'latest' }}
+           run: |
+             # タグバージョンとlatestタグの両方でプッシュ
+             docker build --platform=linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
+             docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+         
+         - name: Deploy to ECS Production
+           run: |
+             aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+               --stack-name django-ecs-service-production \
+               --parameter-overrides Environment=production \
+               --capabilities CAPABILITY_NAMED_IAM
+   ```
+
+3. **デプロイ後の確認**
+   - 本番環境でのサービス状態を確認
+   - CloudWatchでログとメトリクスをモニタリング
+   - 問題が発生した場合は、ロールバックを検討
+
+#### CI/CD連携図
+
+```
+┌───────────┐      ┌───────┐      ┌───────┐      ┌───────────┐
+│ feature/* │─────▶│develop│─────▶│ main  │─────▶│ リリース  │
+└───────────┘      └───────┘      └───────┘      └───────────┘
+       │               │              │                │
+       ▼               ▼              ▼                ▼
+┌───────────┐      ┌───────┐      ┌───────┐      ┌───────────┐
+│自動テスト │      │自動デプロイ │ │自動デプロイ │ │タグリリース │
+│ (PR時)    │      │(ステージング)│ │ (本番)    │ │ (v1.2.3)  │
+└───────────┘      └───────┘      └───────┘      └───────────┘
+```
+
+この流れにより、コード品質を保ちながら、段階的かつ安全にデプロイを実現できます。
+
+### トラブルシューティング
+
+デプロイ中に問題が発生した場合：
+
+1. **CloudFormationのスタック状態確認**
+   ```bash
+   aws cloudformation describe-stack-events --stack-name django-ecs-service-production
+   ```
+
+2. **ECSサービスのステータス確認**
+   ```bash
+   aws ecs describe-services --cluster django-ecs-cluster-production --services django-ecs-service-production
+   ```
+
+3. **CloudWatchログの確認**
+   ```bash
+   aws logs get-log-events --log-group-name /ecs/django-app-production --log-stream-name <最新のストリーム名>
+   ```
+
+4. **エラー発生時のスタック削除と再デプロイ**
+   ```bash
+   # ROLLBACK_COMPLETE状態のスタックは更新できないため削除が必要
+   aws cloudformation delete-stack --stack-name django-ecs-service-production
+   aws cloudformation wait stack-delete-complete --stack-name django-ecs-service-production
+   
+   # 削除完了後に再デプロイ
+   aws cloudformation deploy --template-file cloudformation/ecs-service.yml \
+     --stack-name django-ecs-service-production \
+     --parameter-overrides Environment=production \
+     --capabilities CAPABILITY_NAMED_IAM
+   ```
+
 
 ## 連絡先
 

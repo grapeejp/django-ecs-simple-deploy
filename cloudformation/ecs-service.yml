@@ -46,7 +46,7 @@ Resources:
           !Sub 'django-ecs-cluster-${Environment}-ECSTaskExecutionRole'
       ContainerDefinitions:
         - Name: django-app
-          Image: !Ref ImageUrl
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/django-ecs-app:latest'
           Essential: true
           PortMappings:
             - ContainerPort: 8000
@@ -168,7 +168,7 @@ Resources:
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: CPU-Utilization-High-${Environment}
+      AlarmName: !Sub 'CPU-Utilization-High-${Environment}'
       AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -190,7 +190,7 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: CPU-Utilization-Low-${Environment}
+      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}'
       AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
