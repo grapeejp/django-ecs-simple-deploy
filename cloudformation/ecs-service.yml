@@ -73,7 +73,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: django-ecs-service-${Environment}
+      ServiceName: !Sub django-ecs-service-${Environment}
       Cluster:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
