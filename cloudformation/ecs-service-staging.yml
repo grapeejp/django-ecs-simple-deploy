@@ -10,17 +10,17 @@ Parameters:
   ContainerCpu:
     Type: Number
     Description: CPU units for the container (256 = 0.25 vCPU)
-    Default: 256
+    Default: "256"
 
   ContainerMemory:
     Type: Number
     Description: Memory for the container in MiB
-    Default: 512
+    Default: "512"
 
   DesiredCount:
     Type: Number
     Description: How many instances of the task to run
-    Default: 1
+    Default: "1"
 
   DeploymentId:
     Type: String
