@@ -1,114 +1,38 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Django ECS Service for Staging Environment (Lower Resource Configuration)'
+Description: 'Django ECS Service for Staging Environment'
 
 Parameters:
   ImageUrl:
     Type: String
     Description: The URL of the Docker image to run
-    Default: "026090540679.dkr.ecr.ap-northeast-1.amazonaws.com/django-ecs-app:latest"
+    Default: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/django-ecs-app:latest
 
   ContainerCpu:
     Type: Number
-    Description: CPU units for the container (256 = 0.25 vCPU)
-    Default: "256"
+    Description: CPU units for the container
+    Default: 256
 
   ContainerMemory:
     Type: Number
     Description: Memory for the container in MiB
-    Default: "512"
+    Default: 512
 
   DesiredCount:
     Type: Number
     Description: How many instances of the task to run
-    Default: "1"
-
-  DeploymentTimestamp:
+    Default: 1
+    
+  TimestampSuffix:
     Type: String
-    Description: Timestamp for this deployment
-    Default: !Join ["", !Split ["-", !Select [2, !Split ["/", !Ref "AWS::StackId"]]]]
+    Description: Timestamp suffix for unique service names
+    Default: ''
 
 Resources:
-  # Custom Resource to cleanup old rules
-  RuleCleanup:
-    Type: Custom::RuleCleanup
-    Properties:
-      ServiceToken: !GetAtt RuleCleanupFunction.Arn
-      ListenerArn:
-        Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-ALBListener'
-      StackName: !Ref "AWS::StackName"
-
-  RuleCleanupFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Handler: index.handler
-      Role: !GetAtt RuleCleanupRole.Arn
-      Code:
-        ZipFile: |
-          import boto3
-          import cfnresponse
-          import logging
-
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-
-          def handler(event, context):
-              try:
-                  if event['RequestType'] in ['Create', 'Update']:
-                      elbv2 = boto3.client('elbv2')
-                      stack_name = event['ResourceProperties']['StackName']
-                      listener_arn = event['ResourceProperties']['ListenerArn']
-                      
-                      # Get all rules for the listener
-                      rules = elbv2.describe_rules(ListenerArn=listener_arn)['Rules']
-                      
-                      # Delete rules that belong to old versions of this stack
-                      for rule in rules:
-                          if rule.get('Priority') != 'default':
-                              tags = elbv2.describe_rules(RuleArns=[rule['RuleArn']])['Rules'][0].get('Tags', [])
-                              for tag in tags:
-                                  if tag['Key'] == 'StackName' and tag['Value'].startswith(stack_name):
-                                      logger.info(f"Deleting old rule: {rule['RuleArn']}")
-                                      elbv2.delete_rule(RuleArn=rule['RuleArn'])
-                      
-                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
-              except Exception as e:
-                  logger.error(f"Error: {str(e)}")
-                  cfnresponse.send(event, context, cfnresponse.FAILED, {})
-
-      Runtime: python3.9
-      Timeout: 300
-      MemorySize: 128
-
-  RuleCleanupRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: ELBRuleManagement
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - elasticloadbalancing:DescribeRules
-                  - elasticloadbalancing:DeleteRule
-                  - elasticloadbalancing:DescribeTags
-                Resource: '*'
-
   # ECS Task Definition
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${AWS::StackName}-${DeploymentTimestamp}
+      Family: django-app-staging
       Cpu: !Ref ContainerCpu
       Memory: !Ref ContainerMemory
       NetworkMode: awsvpc
@@ -131,27 +55,25 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub /ecs/${AWS::StackName}
+              awslogs-group: "/ecs/django-app-staging"
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Ref DeploymentTimestamp
+              awslogs-stream-prefix: django-app
           Environment:
             - Name: DEBUG
               Value: '1'
             - Name: ALLOWED_HOSTS
-              Value: '*.elb.amazonaws.com'
+              Value: '*,*.elb.amazonaws.com,*.ap-northeast-1.elb.amazonaws.com'
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'config.settings'
-            - Name: DEPLOYMENT_ID
-              Value: !Ref DeploymentTimestamp
             - Name: SECRET_KEY
               Value: '{{resolve:secretsmanager:django-ecs-secrets:SecretString:SECRET_KEY}}'
 
   # ECS Service
   Service:
     Type: AWS::ECS::Service
-    DependsOn: LoadBalancerRule
+    DependsOn: StagingECSLoadBalancerRule
     Properties:
-      ServiceName: !Sub ${AWS::StackName}-${DeploymentTimestamp}
+      ServiceName: !Sub django-ecs-service-staging${TimestampSuffix}
       Cluster:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-staging-ECSCluster'
@@ -172,66 +94,147 @@ Resources:
       LoadBalancers:
         - ContainerName: django-app
           ContainerPort: 8000
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-staging-TargetGroup'
       DeploymentConfiguration:
-        MinimumHealthyPercent: 50
+        MinimumHealthyPercent: 100
         MaximumPercent: 200
       HealthCheckGracePeriodSeconds: 60
 
-  # Target Group for this deployment
-  TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: !Sub ${AWS::StackName}-${DeploymentTimestamp}
-      HealthCheckPath: /health/
-      HealthCheckIntervalSeconds: 30
-      HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
-      Port: 8000
-      Protocol: HTTP
-      TargetType: ip
-      VpcId:
-        Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-VPC'
-      Tags:
-        - Key: Name
-          Value: !Sub ${AWS::StackName}-${DeploymentTimestamp}
-
   # ALB Rule
-  LoadBalancerRule:
+  StagingECSLoadBalancerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-staging-ALBListener'
-      Priority: !Join ["", !Split ["-", !Ref DeploymentTimestamp]]
+      Priority: 150
       Conditions:
         - Field: path-pattern
           Values:
-            - !Sub /v/${DeploymentTimestamp}/*
+            - /*
       Actions:
         - Type: forward
-          TargetGroupArn: !Ref TargetGroup
-      Tags:
-        - Key: StackName
-          Value: !Ref AWS::StackName
+          TargetGroupArn:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-staging-TargetGroup'
+
+  # Auto Scaling
+  ScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 3
+      ResourceId: !Join
+        - /
+        - - service
+          - Fn::ImportValue:
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
+          - !GetAtt Service.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"
+
+  ScalingPolicyUp:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ScaleUp-Staging
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: ChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            ScalingAdjustment: 1
+
+  ScalingPolicyDown:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: ScaleDown-Staging
+      PolicyType: StepScaling
+      ScalingTargetId: !Ref ScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: ChangeInCapacity
+        Cooldown: 60
+        MetricAggregationType: Average
+        StepAdjustments:
+          - MetricIntervalUpperBound: 0
+            ScalingAdjustment: -1
+
+  # CloudWatch Alarms
+  CPUUtilizationHighAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'CPU-Utilization-High-Staging${TimestampSuffix}'
+      AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 70
+      AlarmActions:
+        - !Ref ScalingPolicyUp
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
+        - Name: ServiceName
+          Value: !GetAtt Service.Name
+      ComparisonOperator: GreaterThanThreshold
+
+  CPUUtilizationLowAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'CPU-Utilization-Low-Staging${TimestampSuffix}'
+      AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
+      MetricName: CPUUtilization
+      Namespace: AWS/ECS
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 5
+      Threshold: 30
+      AlarmActions:
+        - !Ref ScalingPolicyDown
+      Dimensions:
+        - Name: ClusterName
+          Value:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-staging-ECSCluster'
+        - Name: ServiceName
+          Value: !GetAtt Service.Name
+      ComparisonOperator: LessThanThreshold
 
 Outputs:
+  Service:
+    Description: The ECS Service
+    Value: !Ref Service
+    Export:
+      Name: !Sub "${AWS::StackName}-Service"
+
+  ServiceName:
+    Description: The name of the ECS Service
+    Value: !GetAtt Service.Name
+    Export:
+      Name: !Sub "${AWS::StackName}-ServiceName"
+
+  TaskDefinition:
+    Description: The Task Definition
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub "${AWS::StackName}-TaskDefinition"
+      
   ServiceUrl:
     Description: The URL of the service
-    Value: !Sub http://${ALBDnsName}/v/${DeploymentTimestamp}/
+    Value: 
+      Fn::Join: 
+        - ''
+        - - 'http://'
+          - Fn::ImportValue: 'django-ecs-cluster-staging-ALBDNS'
+          - '/'
     Export:
-      Name: !Sub ${AWS::StackName}-ServiceUrl
-
-  ALBDnsName:
-    Description: The DNS name of the load balancer
-    Value: !Sub django-Appli-VSNxHzXCt8uR-72974778.ap-northeast-1.elb.amazonaws.com
-    Export:
-      Name: !Sub ${AWS::StackName}-ALBDnsName
-
-  DeploymentTimestamp:
-    Description: The deployment timestamp
-    Value: !Ref DeploymentTimestamp
-    Export:
-      Name: !Sub ${AWS::StackName}-DeploymentTimestamp 
+      Name: !Sub ${AWS::StackName}-ServiceUrl 

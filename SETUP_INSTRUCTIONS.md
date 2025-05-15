@@ -1,83 +1,260 @@
-# Django ECS リポジトリセットアップ手順
+# Django ECS Simple Deploy - セットアップ手順
 
-## GitHubリポジトリ作成
+このドキュメントでは、Django ECS Simple Deployプロジェクトの環境構築とデプロイ手順を詳しく説明します。
 
-1. GitHubの[grapeejp](https://github.com/grapeejp)組織アカウントにアクセス
-2. 「New repository」ボタンをクリック
-3. 以下の設定でリポジトリを作成
-   - Repository name: `django-ecs-simple-deploy`
-   - Description: AWS ECSでDjangoアプリケーションを簡単にデプロイするためのテンプレート
-   - Visibility: Public
-   - Initialize with README: チェックしない
-   - Add .gitignore: None
-   - License: MIT
+## 前提条件
 
-## ローカルリポジトリと連携
+* AWSアカウント
+* AWS CLIのインストールと設定
+* Docker
+* Python 3.11以上
+* Git
+
+## 1. 初期セットアップ
+
+### リポジトリのクローン
 
 ```bash
-# ローカルで作成したリポジトリをGitHubにプッシュ
-cd ~/Desktop/django-ecs-simple-deploy
-git remote add origin https://github.com/grapeejp/django-ecs-simple-deploy.git
-git branch -M main
-git push -u origin main
+git clone https://github.com/yourusername/django-ecs-simple-deploy.git
+cd django-ecs-simple-deploy
 ```
 
-## 追加で必要な設定
+### 仮想環境のセットアップ
 
-### GitHub Secrets設定
+```bash
+# 仮想環境の作成
+python -m venv .venv
 
-GitHubリポジトリの「Settings」→「Secrets and variables」→「Actions」から以下のシークレットを追加
+# 仮想環境の有効化
+# Linux/Mac
+source .venv/bin/activate
+# Windows
+.venv\Scripts\activate
 
-- `AWS_ACCESS_KEY_ID`: AWS IAMユーザーのアクセスキーID
-- `AWS_SECRET_ACCESS_KEY`: AWS IAMユーザーのシークレットアクセスキー
-- `AWS_REGION`: AWSリージョン（例：ap-northeast-1）
-- `AWS_ACCOUNT_ID`: AWSアカウントID
+# 依存パッケージのインストール
+pip install -r app/requirements.txt
+```
 
-### アプリケーション実装
+### AWS認証情報の設定
 
-1. ヘルスチェックエンドポイントの追加 (完了済み)
-2. Djangoプロジェクトの初期設定
-   - Djangoプロジェクトに以下を追加:
-     - `app/config/urls.py`にヘルスチェックエンドポイントのルーティング
-     - S3静的ファイル設定
-     - CloudWatch Logs設定
-     - PostgreSQL接続設定
+ステージング環境と本番環境それぞれに対応する環境変数ファイルを作成します。
 
-## 今後の開発作業
+#### `.env.staging`ファイルの作成
 
-### 優先度の高いタスク
+```
+AWS_ACCOUNT_ID=your_aws_account_id
+AWS_REGION=ap-northeast-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+```
 
-1. **Djangoプロジェクトの実装**
-   - `app/config/settings.py`のカスタマイズ（環境変数対応）
-   - RDS PostgreSQL連携
-   - S3静的ファイル連携
-   - X-Rayトレース機能追加
+#### `.env.production`ファイルの作成
 
-2. **RDS設定の追加**
-   - CloudFormationテンプレートにRDS設定を追加
-   - DBマイグレーション用のデプロイスクリプト拡張
+```
+AWS_ACCOUNT_ID=your_aws_account_id
+AWS_REGION=ap-northeast-1
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+```
 
-3. **ドキュメント強化**
-   - アーキテクチャ図の改善
-   - トラブルシューティングセクション追加
-   - AWS費用最適化ガイド
+**注意**: `.env.*`ファイルに含まれる認証情報はGitに公開しないよう注意してください。`.gitignore`に記載されていることを確認してください。
 
-### 中期的なタスク
+### IAMユーザーの権限設定
 
-1. **監視体制の強化**
-   - CloudWatchダッシュボード自動作成
-   - アラート設定の詳細化
+デプロイ用のIAMユーザーに必要な権限：
 
-2. **セキュリティ強化**
-   - WAF設定の追加
-   - セキュアヘッダーの実装
+* AmazonECR-FullAccess
+* AmazonECS-FullAccess
+* CloudWatchFullAccess
+* AmazonS3FullAccess
+* AmazonSecretsManagerReadWrite
+* AmazonRDSFullAccess
+* CloudFormationFullAccess
+* IAMFullAccess
+* ElasticLoadBalancingFullAccess
+* EC2FullAccess
 
-3. **CI/CD改善**
-   - テスト自動化
-   - ブルー/グリーンデプロイ対応
+**注意**: 本番環境では、最小権限の原則に従い、より限定的な権限設定をすることをお勧めします。
 
-## 参考情報
+## 2. ローカル開発環境の構築
 
-- [AWS Fargate公式ドキュメント](https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/AWS_Fargate.html)
-- [Django on AWS ECSのベストプラクティス](https://testdriven.io/blog/deploying-django-to-ecs-with-terraform/)
-- [CloudFormation Template Reference](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-reference.html) 
+### Djangoアプリケーションの実行
+
+```bash
+cd app
+python manage.py migrate
+python manage.py runserver
+```
+
+ブラウザで http://localhost:8000 にアクセスして動作確認ができます。
+
+### Dockerによるローカル実行
+
+```bash
+# Dockerイメージのビルド
+docker build -t django-ecs-app -f docker/Dockerfile .
+
+# コンテナの実行
+docker run -p 8000:8000 django-ecs-app
+```
+
+## 3. AWS環境へのデプロイ
+
+### ステージング環境へのデプロイ
+
+```bash
+./deploy.sh staging
+```
+
+### 本番環境へのデプロイ
+
+```bash
+./deploy.sh production
+```
+
+## 4. デプロイスクリプトの仕組み
+
+`deploy.sh`スクリプトは以下の処理を実行します：
+
+1. **環境変数の読み込み**
+   - ステージングまたは本番用の`.env.*`ファイルから設定を読み込み
+
+2. **ECRへのログイン**
+   - AWS ECRにDockerクライアントからログイン
+
+3. **ECRリポジトリの確認/作成**
+   - リポジトリが存在しない場合は新規作成
+
+4. **Dockerイメージのビルドとプッシュ**
+   - ARM64→x86_64のクロスプラットフォームビルド
+   - ECRへのイメージプッシュ
+
+5. **AWS Secrets Managerの設定**
+   - シークレットの確認/作成（例: Django SECRET_KEY）
+
+6. **CloudFormationスタックのデプロイ**
+   - ECSクラスタースタックの確認/作成
+   - ECSサービススタックの作成
+
+7. **デプロイ情報の表示**
+   - アプリケーションのアクセスURL表示
+
+## 5. CloudFormationスタックの詳細
+
+### ecs-cluster.yml
+
+基本インフラストラクチャを定義するスタック：
+
+* VPC、サブネット、インターネットゲートウェイ
+* セキュリティグループ
+* Application Load Balancer (ALB)
+* ECSクラスター
+* IAMロール
+
+### ecs-service.yml / ecs-service-staging.yml
+
+アプリケーションサービスを定義するスタック：
+
+* ECSタスク定義
+* ECSサービス
+* ALBリスナールール
+* CloudWatchアラーム
+* Auto Scaling設定
+
+## 6. デプロイ後の確認と監視
+
+1. CloudFormationコンソールでスタックのステータス確認
+2. ECSコンソールでタスクの状態確認
+3. CloudWatch Logsでアプリケーションログの確認
+4. ALBのターゲットグループでヘルスチェック状態確認
+
+## 7. アーキテクチャ対応の重要ポイント
+
+Apple Silicon Mac（M1/M2/M3 - ARM64アーキテクチャ）からデプロイする場合の注意点：
+
+* Dockerイメージビルド時に`--platform=linux/amd64`オプションを必ず指定（deploy.shに組み込み済み）
+* `exec format error`が発生した場合はプラットフォーム指定を確認
+
+## 8. よくあるトラブルとその対処法
+
+### CloudFormationスタックのデプロイ失敗
+
+* スタックイベントでエラー原因を確認
+```bash
+aws cloudformation describe-stack-events --stack-name <スタック名> --region <リージョン>
+```
+
+* ROLLBACK_COMPLETE状態のスタックは再デプロイ前に削除が必要
+```bash
+aws cloudformation delete-stack --stack-name <スタック名> --region <リージョン>
+```
+
+### ECSタスクが起動しない
+
+* CloudWatch Logsでコンテナログを確認
+* タスク定義のリソース設定（CPU/メモリ）を確認
+* セキュリティグループの設定を確認
+
+### アラーム名の競合エラー
+
+* CloudFormationテンプレートのアラーム名に一意の識別子（TimestampSuffix）が追加されていることを確認
+
+## 9. セキュリティ強化のポイント
+
+* IAMロールの最小権限設定
+* セキュリティグループの最小限のポート公開
+* ALBでのHTTPS設定
+* S3とCloudFrontによる静的ファイル配信
+* AWS WAFによるウェブアプリケーション保護
+* RDSのプライベートサブネット配置
+
+## 10. CI/CD構築のポイント
+
+GitHubActionsでCI/CDを構築する場合の設定例：
+
+```yaml
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Build and push image to ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: django-ecs-app
+        ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest --platform=linux/amd64 -f docker/Dockerfile .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+    
+    - name: Deploy to ECS
+      env:
+        ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      run: |
+        ./deploy.sh $ENVIRONMENT
+```
+
+必要なGitHub Secrets:
+* AWS_ACCESS_KEY_ID
+* AWS_SECRET_ACCESS_KEY
+* AWS_REGION
+* AWS_ACCOUNT_ID 

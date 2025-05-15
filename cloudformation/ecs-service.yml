@@ -76,7 +76,7 @@ Resources:
   # ECS Service
   Service:
     Type: AWS::ECS::Service
-    DependsOn: LoadBalancerRule
+    DependsOn: ProductionLoadBalancerRule
     Properties:
       ServiceName: !Sub django-ecs-service-${Environment}${TimestampSuffix}
       Cluster:
@@ -108,13 +108,13 @@ Resources:
       HealthCheckGracePeriodSeconds: 60
 
   # ALB Rule
-  LoadBalancerRule:
+  ProductionLoadBalancerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-${Environment}-ALBListener'
-      Priority: 1
+      Priority: 150
       Conditions:
         - Field: path-pattern
           Values:
@@ -173,7 +173,7 @@ Resources:
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-High-${Environment}'
+      AlarmName: !Sub 'CPU-Utilization-High-${Environment}${TimestampSuffix}'
       AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -195,7 +195,7 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}'
+      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}${TimestampSuffix}'
       AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
