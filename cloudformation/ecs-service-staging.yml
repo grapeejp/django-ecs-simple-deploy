@@ -109,7 +109,7 @@ Resources:
       ListenerArn:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-staging-ALBListener'
-      Priority: 150
+      Priority: 190
       Conditions:
         - Field: path-pattern
           Values:
