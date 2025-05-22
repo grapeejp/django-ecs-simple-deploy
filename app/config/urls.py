@@ -31,7 +31,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
     path('', include('core.urls')),  # ダッシュボード
-    path('corrections/', include('corrections.urls')),  # 校正アプリ
+    path('proofreading_ai/', include('proofreading_ai.urls')),  # 校正AIアプリ
     path('tags/', include('tags.urls')),  # タグ推薦アプリ
     path('grapecheck/', include('grapecheck.urls')),  # グレイプらしさチェッカー
 ]

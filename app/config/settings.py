@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 自作アプリケーション
     "core",
-    "corrections",
+    "proofreading_ai",
     "tags",
     "grapecheck",  # グレイプらしさチェッカー
 ]

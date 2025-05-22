@@ -1,0 +1,213 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}校正AI{% endblock %}
+
+{% block extra_css %}
+<style>
+  .input-area, .output-area {
+    min-height: 300px;
+    height: 100%;
+    resize: vertical;
+  }
+  
+  #result-container {
+    display: none;
+  }
+  
+  .diff-removed {
+    background-color: #ffdddd;
+    text-decoration: line-through;
+    color: #990000;
+  }
+  
+  .diff-added {
+    background-color: #ddffdd;
+    color: #009900;
+  }
+  
+  .diff-unchanged {
+    color: #333333;
+  }
+  
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+  }
+  
+  .correction-info {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .btn-proofread {
+    background-color: #6c38a8;
+    border-color: #6c38a8;
+    color: white;
+  }
+  
+  .btn-proofread:hover {
+    background-color: #592d8a;
+    border-color: #592d8a;
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">校正AI</h2>
+      <div class="alert alert-info">
+        文章を入力して「校正」ボタンをクリックすると、AIが文章を校正します。HTMLタグは保持されます。
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <form id="proofreadForm">
+        <div class="form-group">
+          <label for="inputText">校正したい文章を入力してください：</label>
+          <textarea 
+            class="form-control input-area" 
+            id="inputText" 
+            rows="10" 
+            placeholder="ここに文章を入力してください。HTMLタグは保持されます。"></textarea>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-proofread">校正する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="loading-spinner" id="loadingSpinner">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">校正中...</span>
+    </div>
+    <p class="mt-2">校正中です。少々お待ちください...</p>
+  </div>
+
+  <div id="result-container" class="mt-4">
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="correction-info">
+              <div><strong>処理時間:</strong> <span id="completionTime">0</span> 秒</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">校正結果</h5>
+            <div class="form-group">
+              <textarea class="form-control output-area" id="outputText" rows="10" readonly></textarea>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-secondary" id="copyButton">結果をコピー</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">変更箇所の確認</h5>
+          </div>
+          <div class="card-body">
+            <div id="diffContainer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const proofreadForm = document.getElementById('proofreadForm');
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const resultContainer = document.getElementById('result-container');
+    const diffContainer = document.getElementById('diffContainer');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const completionTime = document.getElementById('completionTime');
+    const copyButton = document.getElementById('copyButton');
+    
+    proofreadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const text = inputText.value.trim();
+      if (!text) {
+        alert('校正する文章を入力してください。');
+        return;
+      }
+      
+      // 読み込み表示
+      loadingSpinner.style.display = 'block';
+      resultContainer.style.display = 'none';
+      
+      // APIリクエスト
+      fetch('{% url "proofreading_ai:proofread" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ text: text })
+      })
+      .then(response => response.json())
+      .then(data => {
+        loadingSpinner.style.display = 'none';
+        
+        if (data.success) {
+          // 結果表示
+          outputText.value = data.corrected_text;
+          diffContainer.innerHTML = data.diff_html;
+          completionTime.textContent = data.completion_time.toFixed(2);
+          resultContainer.style.display = 'block';
+        } else {
+          // エラー表示
+          alert('エラーが発生しました: ' + data.error);
+        }
+      })
+      .catch(error => {
+        loadingSpinner.style.display = 'none';
+        alert('リクエスト中にエラーが発生しました: ' + error);
+      });
+    });
+    
+    // 結果コピーボタン
+    copyButton.addEventListener('click', function() {
+      outputText.select();
+      document.execCommand('copy');
+      alert('校正結果をクリップボードにコピーしました。');
+    });
+    
+    // CSRFトークン取得用ヘルパー関数
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  });
+</script>
+{% endblock %} 
