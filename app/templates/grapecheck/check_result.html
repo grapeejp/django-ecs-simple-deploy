@@ -1,0 +1,85 @@
+{% extends "base/base.html" %}
+
+{% block title %}グレイプらしさチェック結果{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">グレイプらしさ評価結果</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 text-center">
+                        <div class="display-4 fw-bold mb-0">{{ result.total_score }}</div>
+                        <p class="text-muted">総合スコア (0-100点)</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <div class="h3 fw-bold">{{ result.writing_style_score }}</div>
+                            <p class="text-muted">文体スコア</p>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ result.writing_style_score }}%;" 
+                                    aria-valuenow="{{ result.writing_style_score }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="h3 fw-bold">{{ result.structure_score }}</div>
+                            <p class="text-muted">構成スコア</p>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ result.structure_score }}%;" 
+                                    aria-valuenow="{{ result.structure_score }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="h3 fw-bold">{{ result.keyword_score }}</div>
+                            <p class="text-muted">キーワードスコア</p>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ result.keyword_score }}%;" 
+                                    aria-valuenow="{{ result.keyword_score }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h3 class="h5 mb-0">改善提案</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ result.improvement_suggestions|linebreaks }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h3 class="h5 mb-0">評価対象テキスト</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-muted">
+                                <small>カテゴリ: {{ result.category.name }}</small>
+                            </div>
+                            <div class="border rounded p-3 bg-light mt-2">
+                                <pre class="mb-0" style="white-space: pre-wrap;">{{ result.content_text }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'grapecheck:form' %}" class="btn btn-primary">
+                            別のテキストをチェック
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    <small>評価日時: {{ result.created_at|date:"Y年m月d日 H:i" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -33,4 +33,5 @@ urlpatterns = [
     path('', include('core.urls')),  # ダッシュボード
     path('corrections/', include('corrections.urls')),  # 校正アプリ
     path('tags/', include('tags.urls')),  # タグ推薦アプリ
+    path('grapecheck/', include('grapecheck.urls')),  # グレイプらしさチェッカー
 ]
