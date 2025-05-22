@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+
+{% block title %}グレイプらしさチェッカー{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">グレイプらしさチェッカー</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">テキストがどれくらい「グレイプらしさ」を持っているか、AI分析でスコア化します。</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                {{ form.category.label }}
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger">
+                                {% for error in form.category.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            {% if form.category.help_text %}
+                            <div class="form-text text-muted">
+                                {{ form.category.help_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.content_text.id_for_label }}" class="form-label">
+                                {{ form.content_text.label }}
+                            </label>
+                            {{ form.content_text }}
+                            {% if form.content_text.errors %}
+                            <div class="text-danger">
+                                {% for error in form.content_text.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            {% if form.content_text.help_text %}
+                            <div class="form-text text-muted">
+                                {{ form.content_text.help_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-4">
+                                グレイプらしさをチェック
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>※分析には数秒〜数十秒程度かかる場合があります。</small>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'grapecheck:history' %}" class="btn btn-outline-secondary">
+                    過去のチェック履歴を見る
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -10,8 +10,10 @@ services:
     ports:
       - "8000:8000"
     command: >
-      bash -c "pip install django gunicorn django-environ &&
+      bash -c "pip install -r requirements.txt &&
+               pip install django boto3 celery django-environ gunicorn &&
                if [ ! -f manage.py ]; then django-admin startproject config . && python manage.py migrate; fi &&
+               python manage.py makemigrations &&
                python manage.py migrate &&
                python manage.py collectstatic --noinput &&
                python manage.py runserver 0.0.0.0:8000"
@@ -21,5 +23,6 @@ services:
       - PYTHONUNBUFFERED=1
       - ALLOWED_HOSTS=*
       - DJANGO_SETTINGS_MODULE=config.settings
+      - AWS_REGION=ap-northeast-1
     env_file:
       - .env

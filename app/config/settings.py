@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "core",
     "corrections",
     "tags",
+    "grapecheck",  # グレイプらしさチェッカー
 ]
 
 MIDDLEWARE = [
