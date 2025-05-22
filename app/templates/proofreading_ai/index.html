@@ -42,14 +42,17 @@
     .correction-span {
         position: relative;
         display: inline-block;
+        vertical-align: middle;
     }
     
     .correction-text {
-        display: inline;
+        display: inline-block;
         background-color: #ffeb3b; /* 黄色のハイライト */
         border-bottom: 1px dashed #6f42c1; /* 紫色の下線 */
         padding: 0 2px;
         cursor: pointer;
+        border-radius: 5px;
+        margin: 0 3px;
     }
     
     .correction-tooltip {
@@ -57,30 +60,54 @@
         position: absolute;
         top: 100%;
         left: 0;
-        background-color: #ffffff;
-        border: 1px solid #cccccc;
-        border-radius: 4px;
-        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 6px 12px;
         z-index: 1000;
         width: max-content;
-        max-width: 300px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        max-width: 320px;
+        box-shadow: 0 4px 16px 0 rgba(76, 47, 116, 0.12);
+        margin-top: 0;
+        line-height: 1.2;
     }
     
     .correction-span:hover .correction-tooltip {
         display: block;
     }
     
-    .original-text {
-        color: #ef4444; /* 赤色 - 削除/原文 */
-        display: block;
-        margin-bottom: 5px;
+    .original-text, .corrected-text {
+        display: inline-block;
+        min-width: 90px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(76,47,116,0.08);
+        padding: 6px 12px;
+        margin-bottom: 10px;
+        margin-right: 8px;
+        margin-left: 0;
+        line-height: 1.3;
+        cursor: pointer;
+        user-select: none;
+        border: 1.5px solid #fca5a5;
+        background: #fff6f6;
+        color: #ef4444;
+        transition: box-shadow 0.15s, border 0.15s;
     }
-    
+    .original-text {
+        color: #ef4444;
+        background: #fff6f6;
+        border-color: #fca5a5;
+    }
     .corrected-text {
-        color: #22c55e; /* 緑色 - 追加/校正後 */
-        display: block;
-        margin-bottom: 5px;
+        color: #22c55e;
+        background: #f6fff6;
+        border-color: #6ee7b7;
+    }
+    .original-text:hover, .corrected-text:hover {
+        box-shadow: 0 4px 16px rgba(34,197,94,0.12);
+        border-width: 2px;
     }
     
     .reason-text {
@@ -293,12 +320,21 @@
     }
     
     .applied-correction {
-        background-color: #d1fae5; /* 薄い緑色の背景 */
-        color: #10b981; /* 緑色のテキスト */
+        background-color: #d1fae5;
+        color: #10b981;
         border-bottom: 1px solid #10b981;
         padding: 0 2px;
-        display: inline-block; /* インライン要素をブロック化して文字ずれを防止 */
-        line-height: 1.5; /* 行の高さを固定して揃える */
+        display: inline-block;
+        line-height: 1.5;
+        border-radius: 5px;
+        font-weight: bold;
+        margin: 0 1px;
+    }
+    
+    .applied-correction.original {
+        background-color: #fee2e2;
+        color: #ef4444;
+        border-bottom: 1px solid #ef4444;
     }
 </style>
 {% endblock %}
@@ -598,20 +634,11 @@
             // 校正結果をすべてテキストとして<pre>で表示
             correctionResult.innerHTML = '<pre style="white-space: pre-wrap;">' + data.corrected_text + '</pre>';
             
-            // 処理時間の表示
-            const endTime = Date.now();
-            const elapsedTime = (endTime - startTime) / 1000;
-            timeElapsed.textContent = elapsedTime.toFixed(2);
-            processingTime.classList.remove('d-none');
-            
-            // トークン情報の表示
-            inputTokens.textContent = (data.input_tokens ?? 0).toLocaleString();
-            outputTokens.textContent = (data.output_tokens ?? 0).toLocaleString();
-            totalCost.textContent = (data.total_cost ?? 0).toFixed(2);
-            tokenInfo.style.display = 'block';
-            
             // 修正箇所の解析と表示
             displayCorrections(data.corrections);
+            
+            // ハイライトHTML化＋イベントバインド
+            applyHighlights();
             
             // 出力エリアのサイズを自動調整
             autoResizeTextarea(correctionResult);
@@ -690,65 +717,71 @@
         
         // 修正適用ボタンのイベントリスナーを設定
         function setupCorrectionEventListeners() {
-            document.querySelectorAll('.apply-correction').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const span = this.closest('.correction-span');
-                    const correctedText = span.querySelector('.corrected-text').textContent;
-                    
-                    // 修正を適用（ハイライト部分を修正済みテキストに置き換え）
-                    span.outerHTML = `<span class="applied-correction">${correctedText}</span>`;
-                });
-            });
-            
-            // ハイライト部分のクリックイベント処理
             document.querySelectorAll('.correction-span').forEach(span => {
-                span.addEventListener('click', function(e) {
-                    const tooltip = this.querySelector('.correction-tooltip');
-                    const allTooltips = document.querySelectorAll('.correction-tooltip');
-                    
-                    // 他のすべてのツールチップを非表示に
-                    allTooltips.forEach(t => {
-                        if (t !== tooltip) {
-                            t.style.display = 'none';
-                        }
-                    });
-                    
-                    // このツールチップの表示を切り替え
-                    if (tooltip.style.display === 'block') {
-                        tooltip.style.display = 'none';
-                    } else {
+                const tooltip = span.querySelector('.correction-tooltip');
+                let hideTimeout = null;
+                // ポップアップ表示制御
+                span.addEventListener('mouseenter', () => {
+                    if (tooltip) {
+                        clearTimeout(hideTimeout);
                         tooltip.style.display = 'block';
-                        
-                        // ツールチップが画面からはみ出さないように位置調整
-                        const rect = tooltip.getBoundingClientRect();
-                        const viewportWidth = window.innerWidth;
-                        const viewportHeight = window.innerHeight;
-                        
-                        if (rect.right > viewportWidth) {
-                            tooltip.style.left = 'auto';
-                            tooltip.style.right = '0';
-                        }
-                        
-                        if (rect.bottom > viewportHeight) {
-                            tooltip.style.top = 'auto';
-                            tooltip.style.bottom = '100%';
-                        }
                     }
-                    
-                    e.stopPropagation();
                 });
-            });
-            
-            // ドキュメント全体のクリックで開いているツールチップを閉じる
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.correction-span')) {
-                    document.querySelectorAll('.correction-tooltip').forEach(tooltip => {
-                        tooltip.style.display = 'none';
+                span.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        if (tooltip) tooltip.style.display = 'none';
+                    }, 120);
+                });
+                if (tooltip) {
+                    tooltip.addEventListener('mouseenter', () => {
+                        clearTimeout(hideTimeout);
+                        tooltip.style.display = 'block';
+                    });
+                    tooltip.addEventListener('mouseleave', () => {
+                        hideTimeout = setTimeout(() => {
+                            tooltip.style.display = 'none';
+                        }, 120);
                     });
                 }
+                // クリックで修正適用
+                const orig = span.querySelector('.original-text');
+                const corr = span.querySelector('.corrected-text');
+                const highlight = span.querySelector('.correction-text');
+                if (orig) {
+                    orig.onclick = function(e) {
+                        e.stopPropagation();
+                        console.log('original-text clicked!', orig.textContent);
+                        span.outerHTML = `<span class='applied-correction original' data-original-html='${encodeURIComponent(span.outerHTML)}'>${orig.textContent}</span>`;
+                        setupCorrectionEventListeners();
+                    };
+                }
+                if (corr) {
+                    corr.onclick = function(e) {
+                        e.stopPropagation();
+                        console.log('corrected-text clicked!', corr.textContent);
+                        span.outerHTML = `<span class='applied-correction' data-original-html='${encodeURIComponent(span.outerHTML)}'>${corr.textContent}</span>`;
+                        setupCorrectionEventListeners();
+                    };
+                }
+                if (highlight && corr) {
+                    highlight.onclick = function(e) {
+                        e.stopPropagation();
+                        console.log('correction-text clicked!', highlight.textContent);
+                        span.outerHTML = `<span class='applied-correction' data-original-html='${encodeURIComponent(span.outerHTML)}'>${corr.textContent}</span>`;
+                        setupCorrectionEventListeners();
+                    };
+                }
+            });
+            // applied-correctionにもイベントを付与
+            document.querySelectorAll('.applied-correction').forEach(span => {
+                span.onclick = function(e) {
+                    e.stopPropagation();
+                    const originalHtml = span.getAttribute('data-original-html');
+                    if (originalHtml) {
+                        span.outerHTML = decodeURIComponent(originalHtml);
+                        setupCorrectionEventListeners();
+                    }
+                };
             });
         }
         
