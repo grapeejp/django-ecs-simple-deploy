@@ -1,0 +1,54 @@
+# [feature] AWS Bedrock校正AIシステムのDjango+ECS移行
+
+## 目的
+- 現行EC2ベースの「AWS Bedrock Grape Context」校正システムをDjango + AWS ECSアーキテクチャへ移行
+- 運用効率化と保守性の向上
+- 小規模だが安定したサービス提供の実現
+
+## 実装内容
+1. 基本機能移行
+   - Django環境構築
+   - テキスト校正機能（AWS Bedrock連携）
+   - HTMLタグ保持校正処理
+   - 置換辞書による語句統一
+   - 校正前後の差分表示
+   - タグ推薦機能
+   - 最小限のWordPress連携（リダイレクト）
+   
+2. 追加・改善機能
+   - 校正履歴の基本的な保存と表示
+   - 置換辞書の表示と管理者メンテナンス機能
+
+3. インフラ整備
+   - 小規模ECS環境構築（Fargate）
+   - ECR設定
+   - 小規模ALB構成
+   - 小規模RDS(PostgreSQL)設定
+   - CloudFormationテンプレート作成
+
+## 技術的メモ
+- Python 3.11+, Django 5.2
+- AWS Bedrock API (Claude 3 Sonnet)
+- フロントエンド: Django Templates + Bootstrap 5
+- AWS ECS (Fargate) - 小規模
+- 同時5ユーザー程度の処理を想定
+- クロスプラットフォーム対応（M3 Mac → AWS x86_64）
+
+## データベース設計
+- ProofreadingRequest: 校正リクエスト
+- ProofreadingResult: 校正結果
+- Category: カテゴリ情報
+- Tag: タグ情報
+- ReplacementDictionary: 置換辞書
+
+## テスト項目
+- [ ] テキスト校正機能が正常に動作すること
+- [ ] HTMLタグが保持されること
+- [ ] 置換辞書による置換が適切に行われること
+- [ ] WordPressからのリダイレクトが機能すること
+- [ ] 校正履歴が保存・表示されること
+- [ ] 同時5ユーザーの処理が可能なこと
+- [ ] ECS環境でのデプロイが正常に完了すること
+
+## 期限
+2024/06/30 

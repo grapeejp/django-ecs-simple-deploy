@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="googlebot" content="noindex,nofollow">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI校正ツール</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* 新しい変数定義を追加 */
+        :root {
+            --main-color: #E6E6FA;      /* 薄い紫色 */
+            --accent-color: #9370DB;     /* ミディアムパープル */
+            --text-color: #333;
+            --background-color: #F8F8FF; /* ゴーストホワイト */
+        }
+
+        /* 基本スタイルの更新 */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        /* ヘッダーのスタイル更新 */
+        .rich-header {
+            background: linear-gradient(135deg, var(--accent-color), #8a5cd0);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 見出しのスタイル更新 */
+        h1, h2, h3, h4 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--main-color);
+        }
+
+        /* テキストエリアのスタイル更新 */
+        #inputText, #correctedText {
+            border: 2px solid var(--main-color);
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+            min-height: 300px;
+        }
+
+        .text-area-header {
+            background-color: var(--main-color);
+            color: var(--accent-color);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        /* ボタンのスタイル更新 */
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #8A2BE2;
+            border-color: #8A2BE2;
+        }
+
+        /* 校正結果のハイライトスタイル更新 */
+        .correction-span:nth-child(even) .correction-text {
+            background-color: var(--main-color);
+        }
+        .correction-span:nth-child(odd) .correction-text {
+            background-color: #DDA0DD; /* プラムパープル */
+        }
+
+        /* カードのスタイル更新 */
+        .card {
+            border: 1px solid var(--main-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            color: var(--accent-color);
+        }
+
+        /* フッターのスタイル更新 */
+        .rich-footer {
+            background: linear-gradient(135deg, var(--accent-color), #8a5cd0);
+            margin-top: 40px;
+        }
+
+        body { padding-top: 20px; }
+        .correction-span {
+            position: relative;
+            display: inline-block;
+        }
+        .correction-text {
+            display: inline;
+            background-color: #ffeb3b;
+            border-bottom: 1px dashed #6f42c1;
+            padding: 0 2px;
+            cursor: pointer;
+        }
+        .correction-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 10px;
+            z-index: 1000;
+            width: max-content;
+            max-width: 300px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .correction-span:hover .correction-tooltip,
+        .correction-span .correction-tooltip.active {
+            display: block;
+        }
+        .correction-button {
+            display: block;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 5px;
+            border: 1px solid #a6a6a6;
+            background-color: #fff;
+            cursor: pointer;
+            text-align: left;
+        }
+        .correction-button.original {
+            color: #dc3545;
+        }
+        .correction-button.suggested {
+            color: #28a745;
+        }
+        .correction-reason {
+            display: block;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        #inputText {
+            min-height: 300px;
+            height: auto;
+            max-height: none;
+            overflow-y: hidden;
+            resize: none;
+            border: 1px solid #ced4da;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 16px;
+        }
+        .top-p-explanation p {
+            margin: 0;
+            padding: 0;
+        }
+        .indent-1 {
+            padding-left: 20px;
+        }
+        .indent-2 {
+            padding-left: 40px;
+        }
+        #correctedText {
+            min-height: 300px;
+            border: 1px solid #ced4da;
+            padding: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .text-area-header {
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-bottom: none;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-message {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+        }
+        .correction-span:nth-child(even) .correction-text {
+            background-color: #fff9c4; /* 薄い黄色 */
+        }
+        .correction-span:nth-child(odd) .correction-text {
+            background-color: #ffeb3b; /* 濃い黄色 */
+        }
+        .text-area-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #inputText, #correctedText {
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 300px;
+        }
+
+        #correctedText {
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.75rem;
+            background-color: #f8f9fa;
+        }
+
+        @media (max-width: 767px) {
+            .col-md-6 {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* 新しいヘッダースタイル */
+        .rich-header {
+            background: linear-gradient(135deg, #6f42c1, #8a5cd0);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .rich-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .rich-header p {
+            margin: 10px 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* ツールチップの矢印 */
+        .correction-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 10px 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent #cccccc transparent;
+        }
+
+        .correction-tooltip::after {
+            content: '';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 0 9px 9px 9px;
+            border-style: solid;
+            border-color: transparent transparent #ffffff transparent;
+        }
+
+        .rich-footer {
+            background: linear-gradient(135deg, #6f42c1, #8a5cd0);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            margin-top: 40px;
+        }
+        .rich-footer p {
+            margin: 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <!-- 新しいヘッダー -->
+    <header class="rich-header">
+        <div class="container">
+            <h1>AI校正ツール</h1>
+        </div>
+    </header>
+
+    <div class="container mt-5">
+        <div class="text-end mb-3">
+            <a href="/recommend_tags" target="_blank" class="btn btn-info">
+                <i class="fas fa-tags"></i> タグ推薦ツールはこちら
+            </a>
+        </div>
+        <h1 class="mb-4">AI文章校正提案ツール_v1.0.0-beta:リリース版</h1>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">概要</h4>
+                <ol>
+                    <li>生成AIのClaude3.5 sonnetを利用して、誤字・脱字を検知し、修正案を提示します。</li>
+                    <li>統一表記に基づいて変換すべき提案もします。校正辞書に関しては、<a href="/dictionary" target="_blank">こちら</a>をご覧ください。</li>
+                    <li class="text-muted"><del>このツールは、校正AIのパラメーターを調整することで、校正AIの動作を目的に応じて最適化できます。</del></li>
+                </ol>
+                <h4 class="card-title">使い方説明</h4>
+                <ol>
+                    <li>校正したい文章を左側のテキストエリアに入力してください。</li>
+                    <li class="text-muted"><del>必要に応じて、AI設定のTemperatureとTop Pの値を調整します。(使い始めはそのままで大丈夫です)</del></li>
+                        <ul>
+                            <li class="text-muted"><del>Temperature: AIの創造性を調整します（低いほど保守的、高いほど創造的）</del></li>
+                            <li class="text-muted"><del>Top P: AIが考慮する単語の選択肢を制限します（低いほど一般的、高いほど多様）</del></li>
+                        </ul>
+                    </li>
+                    <li>「AI校正する」ボタンをクリックを押すと、校正プロセスを開始されます。しばらくお待ちください。</li>
+                    <li>校正結果が右側に表示されます。<strong><span class="correction-text">黄色でハイライトされた部分</span>にカーソルを乗せると、修正案と理由が表示されます。</span></strong></li>
+                    <li>ハイライトされた部分をクリックすると、修正案を選択できます。</li>
+                    <li>必要に応じて、修正内容を手動で編集することもできます。</li>
+                    <li>校正が完了したら、「修正内容をコピー」ボタンをクリックして、修正済みのテキストをクリップボードにコピーできます。</li>
+                </ol>
+                <h4 class="card-title">要望に基づく機能修正(24年10月15日)</h4>
+                <ul>
+                    <li>HTMLタグのミスに反応し、閉じるタグがない場合（例: &lt;/p&gt;）も指摘できるように修正しました。</li>
+                    <li>校正ツール上で、該当箇所にマーカーを引いて、どこにミスがあるかを分かりやすく、かつ修正が簡単にできるように修正しました。</li>
+                    <li>校正のスピードを向上させました。また、文字数に応じて処理時間の予測秒数を表示するようにしました。</li>
+                    <li>一般的な文法ミス（例: 固い・硬い、測る・量る・図る）を自動的に判別し、適切に指摘するように修正しました。</li>
+                </ul>
+                <h4 class="card-title text-primary">校正辞書ページの機能追加（最新更新日：2024年10月22日）</h4>
+                <ul>
+                    <li>編集部の人でも使えるように、校正辞書を追加、削除、編集できる機能を追加しました。</li>
+                    <li>校正辞書の編集履歴を表示する機能を追加しました。</li>
+                    <li>校正辞書の検索機能を追加し、キーワードによるフィルタリングが可能になりました。</li>
+                    <li>校正辞書の状態（開く/閉じる）がわかるようにする機能を実装しました。</li>
+                </ul>
+                <h4 class="card-title text-danger">現在の注意点 （24年10月24日11時時点)</h4>
+                <ul>
+                    <li class="text-danger">※ 現在テストリリース中で動作が不安定な場合があります。(五回に一回くらいの確率で動かないことがあります。)</li>
+                    <li class="text-danger">※ 基本的には60秒以内に終わります。180秒以上かかる場合はWPの校正ボタンを押す所から再度始めてください。</li>
+                    <li class="text-danger">※ うまくいかない場合は5000文字ごとに前半後半などで分割してWPの校正ボタンを押す所から再度始めてください。</li>
+                    <li class="text-danger">※ 統一表記が合っているのに提案が反対で出てしまう場合があります。改善中です。</li>
+                    <li class="text-danger">※ 校正辞書を表示したい場合は、校正辞書を表示ボタンを押してください。</li>
+                    <li class="text-danger">※ ハイライトの薄い黄色と濃い黄色は、奇数番目と数番目の校正結果を示しています。</li>
+                    <li class="text-danger">※ 質問・ご要望がある場合はサイト一番下の要望フォームから連絡してください。</li>
+                    <li class="text-danger">※ 5回以上やっても動かない場合も要望フォームから連絡してください。</li>
+                </ul>
+                <p class="text-muted">注意: 処理時間は入力テキストの長さによって変わります。長文の場合は少し時間がかかる場合があります。</p>
+            </div>
+        </div>
+        <!-- AI設定セクションをドロップダウン形式に変更 -->
+        <div class="row m-3">
+            <div class="col-12">
+                <button class="btn btn-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#aiSettings" aria-expanded="false" aria-controls="aiSettings">
+                    AI設定を表示/非表示
+                </button>
+                <div class="collapse" id="aiSettings">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3>AI設定</h3>
+                                <h4 class="text-danger">※temperatureとtop_pは、どちらも設定1だとエラーが減るためしばらくはこのままご使用ください。</h4>
+                                <div class="form-group">
+                                    <label for="temperature" class="text-primary">(デフォルト値:1)Temperature: <span id="temperatureValue">1</span></label>
+                                    <input type="range" class="form-range" id="temperature" min="0" max="1" step="0.1" value="1">
+                                    <small class="form-text text-muted">
+                                        <div class="temperature-explanation">
+                                            <p>1. temperature（温度）:</p>
+                                            <p class="indent-1">- 範囲: 0.0 〜 1.0</p>
+                                            <p class="indent-1">- 効果: AIの「創造性」や「ランダム性」を調整します</p>
+                                            <p class="indent-1">- 低い値 (0に近い):</p>
+                                            <p class="indent-2">- より予測可能で一貫性のある出力</p>
+                                            <p class="indent-2">- 校正では、より保守的で確実な修正を行う傾向</p>
+                                            <p class="indent-1">- 高い値 (1に近い):</p>
+                                            <p class="indent-2">- より多様で予想外の出力</p>
+                                            <p class="indent-2">- 校正では、より大胆で創造的な提案をする可能性</p>
+                                            <div class="ai-usage-examples">
+                                                <p>校正AIでの使用例:</p>
+                                                <p class="indent-1">- 厳密な文法修正: temperature = 0.3, top_p = 0.1</p>
+                                                <p class="indent-2">→ 保守的で確実な修正を行います</p>
+                                                <p class="indent-1">- クリエイティブな文章改善: temperature = 1.0, top_p = 1.0</p>
+                                                <p class="indent-2">→ より多様で創造的な提案を行う可能性がありま</p>
+                                                <p></p>
+                                                <p>これらのパラメータを調整することで、校正AIの動作を目的に応じて最適化できます。</p>
+                                                <p>自分に合ったパラメーター値を探してみてください。</p>
+                                            </div>
+                                        </div>
+                                        <a href="https://anakin.ai/ja-jp/blog/what-is-top-p-openai-ja/" target="_blank">詳細はこちら</a>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h3>&nbsp;</h3> <!-- 空の見出しで揃える -->
+                                <div class="form-group">
+                                    <label for="topP" class="text-primary">(デフォルト値:1)Top P: <span id="topPValue">1</span></label>
+                                    <input type="range" class="form-range" id="topP" min="0" max="1" step="0.1" value="1">
+                                    <small class="form-text text-muted">
+                                        <p>2. top_p（トップP、または核サンプリング）:</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;- 範囲: 0.0 〜 1.0</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;- 効果: AIが考慮する単語の選択肢を制限します</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;- 低い値:</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- より確実で一般的な単語や表現を選択</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 校正では、一般的で安全な修正を提案</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;- 高い値:</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- より多様な単語や表現を選択する可能性</p>
+                                        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 校正では、珍しい表現や独創的な提案をする可能性</p>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-12">
+                <a href="/dictionary" target="_blank" class="btn btn-info">校正辞書を表示</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 m-3">
+                <div id="textStats" class="text-muted m-3">
+                    文字数: <span id="charCount">0</span>  <br>おおよそのトークン数: <span id="tokenCount">0</span><br>処理完了予想秒数: <span id="predictionCount"></span>秒
+                </div>
+                <div class="col-md-6 m-3">
+                    <button id="startCorrectionBtn" class="btn btn-primary btn-lg">AI校正する</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="text-area-header">校正してほしい文章を入力(サンプル文章を消してペーストしてください)</div>
+                <textarea id="inputText" class="form-control mb-3">&lt;dv class=&#34;comment&#34;&gt;
+
+２０２４年、増加期傾向にあるといわれる、不登校のこどもたち。
+
+文部科学省の法則によると、不登校とは、病気や経済敵な理由を除き『年間の欠席日数が３０日以上となった状態』を指します。
+
+令和３年度の調査によると、小、中学校における不登校児童生徒数は２４万４９４０人。調査開始以降最多で２０万人を超え、前年度と比較した増加率は２４.９％と、調査開始以降最も高い割合になりました。翌令和４年度も２９万９０４８人と増加の一途をたどっています。
+
+また、この定義には当てはまらないものの、休みがちであったり、強質に入れなかったりするケースも考慮すると、不登校状態で悩んでいる子供たちは、もっと多くいると推測できるでしょう。
+&lt;h2&gt;小学8年生の息子が不登校に…　ある親子の葛藤&lt;/h2&gt;
+学校に行けずに悩む子供たちが多くいるということは、それだけ、我が子の不登校に悩んでいる親が多いということでもあります。
+
+もし我が子が不当校になったら、当然親も戸惑い、どう向き合っていけばいいのか、思い悩むことでしょ。
+
+漫画家の川口真目（&lt;a hrf=&#34;https://x.com/kawaguchi_game&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;@kawaguchi_game&lt;/a&gt;）さんは、小学生の息子さんが不登校になった時の体験談をXに投稿。大きな反響が寄せられました。
+
+小学３年生までは元気に登校していたという、息子さん。川口さんが異変を感じたのは、-４年生に進級し１か月ほど経過した時のことでした。
+
+息子さんは、中きな声で成都たちを叱る担任を、苦てに感じていたようです。ある日、ほかの生徒たちの前で怒鳴られたことをきっかけに、ついに学校に行けなくなってしまいました。
+
+それからしばらく、習いごとにもゆけず、外に出ることもできず、現実的から逃げるようにゲームに夢になっていった息子さん。
+
+川口さんと夫は解決を探るため、学校に何度も足を運んで話し合いを重ねましたが、納得のいく結果を得られず、精神的に落ち込んでしまったそうです。
+
+状況を打破したい一心で、カウンセリングを受けてみたところ…。
+&lt;p class=&#34;nextpage&#34;&gt;親子でカウンセリンを受けてみると…&lt;/p&gt;
+
+&lt;/div
+&lt;div clas=&#34;txt-box&#34;&gt;
+
+・「信じて待つ」…本当にこれのみ。うちは６年半かかったけど、学校行くかどうか、自分で答えを出してきた。
+
+・すごく参考になった。｢心配より信頼｣が響く。価値観を壊すのは難しそうだけど、頑張ろう。
+
+・引きこもった経験があるから分かる。学校は行かなくても、終わりじゃない。
+
+・不登校児の親です。たくさんの人に届いてほしい。大事なことを書いてくれてありがとう。
+
+&lt;/div&gt;
+最後に、不登校の期間のこと、また、現在の息子さんについて、川口さんにお話を聞いています。
+&lt;p class=&#34;nextpage&#34;&gt;不登校を乗り越えられた？　川口さんにインタビュー&lt;/p&gt;
+&lt;!--nextpage--&gt;
+&lt;div clss=&#34;comment&#34;&gt;
+&lt;h&gt;『不登校と向き合った２年間』　川口真目さんにインタビュー&lt;/h2&gt;
+&lt;b―息子さんは現在、復学されているとのこと。なにかきっけはあった？&lt;/b&gt;
+&lt;div class=&#34;txt-box&#34;&gt;
+
+不登校になってから１年後に、息子は復学をしました。
+
+たくさんの方に支えられたことがきっかけになっていると思います。まず、家庭と学校以外の居場所になってくれた、フリースクールとカウンセラーの先生方は心強く、私と息子が安心できる居場所になりました。
+
+(校正辞書ヒットテスト部分)
+
+※※※※※※※※※※　校正に引っかかるかテスト
+ごみはゴミ箱に入れてください。
+
+スゴイことは得意です。
+
+たとえば、段ボールです。
+
+わたしはともだちとドーナッツと虜です。
+
+私は明らかなひとときの休憩をする
+
+※※※※※※※※※※　正しく校正されてる場所に引っかからないかテスト
+
+挨拶は大事です
+
+傘を片手にひと時のタバコを吸う
+
+決してケガしない子供たち
+
+多分、猫をとらえることができる
+
+２０２４年、仕事を辞める
+
+１９９９年、お酒をやめる
+
+２０２７年、ラーメンをゆでる
+
+
+(ここまで)
+&lt;&gt;――不登校の期間中、印象に残った出来事は。&lt;/b&gt;
+&lt;div class=&#34;txt-box&#34;&gt;
+
+不登校になってから１～２か月経った頃、息子が好きだった科学館なら行けるというので、週２～３回くらい通っていました。
+
+生ける場所にある科学館のプラネタりウムは、ほぼ全部見たと思います。わたし自身も科学館は好きな場所したので、苦ではなかったです。
+
+息子は原器になてから、この頃を振り返り&lt;b&gt;「あの時、マが楽しそうにしてくれたのが嬉しかった」&lt;/b&gt;と話してくれました。
+
+ふ登校の子供の中には、「自分のせいで親を追い詰めてる」と悔やんでいる子供も多いと思います。
+
+子供の不登校に悩む親御さんは、仕事もあるし、家事も増えるし、大変なことが多いので、どこかで楽しみを見つけてほしいと思います。
+
+&lt;/div&gt;
+つら時期を乗り越え、安心して過ごる居場所を見つけることができた、川口さん親子。
+
+たくさんの涙を流し、傷付きながらも不登校と向き合った経験、自分を支えてくれる人がいるという実感は、きっと息子さんの今後の人生において、大きな糧になるでしょう。
+
+菌年は、フリースクールを始め、不登校になった子供の居場所や学びの機会が広がっています。
+
+「本いた学校に再投稿する」ことだけが解決策ではありません。さまざまな関係機関と連系をしながら、子供に合った未知を探していけるといいですよね。
+&lt;h2&gt;川口真目さん著『個育てしながらフリーランス」が発売中&lt;/h2&gt;
+川口さんが１０年以上のフリーランス経験を漫画とコラムでつづった『子育てしながらフリーランス』が発売中です。
+
+妊娠・出産を機に、仕事と家庭のバランスに悩み、働き方を見直したい人には、参考になる一冊。気になファる人はチェックしてみてください！
+
+[wpap service=&#34;with&#34; type=&#34;detail&#34; id=&#34;B09MHD1LN1&#34; title=&#34;子育てしながらフリランス]
+
+&lt;hr /&gt;
+&lt;p class=&#34;small&#34;&gt;[文・構成／grape変集部]&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;</textarea>
+            </div>
+            <div class="col-md-6">
+                <div class="text-area-header">校正結果(ハイライトされた部分をクリックすると修正案を選択できます)</div>
+                <div id="correctionResult" class="border p-2" style="white-space: pre-wrap;" contenteditable="true"></div>
+                <div id="correctionResult" style="white-space: pre-wrap;" contenteditable="true"></div>
+                <div id="processingTime" class="text-muted mt-2">処理時間: <span id="timeElapsed">0</span> 秒</div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+            </div>
+            <div class="col-md-6">
+                <button onclick="copyToClipboard()" class="btn btn-secondary">修正内容をコピー</button>
+            </div>
+        </div>
+
+        <h4 class="card-title">修正要望フォーム</h4>
+        <form id="feedbackForm" action="/submit_feedback" method="post">
+            <div class="mb-3">
+                <label for="name" class="form-label">名前</label>
+                <input type="text" class="form-control" id="name" name="name" value="" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="post_id" class="form-label">投稿ID</label>
+                <input type="text" class="form-control" id="post_id" name="post_id" value="999999" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="feedback" class="form-label">修正要望内容</label>
+                <textarea class="form-control" id="feedback" name="feedback" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">送信</button>
+        </form>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <p id="status" class="text-muted"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="overlay">
+        <div class="spinner"></div>
+        <div id="loadingMessage" class="loading-message">
+            処理中です。<br>少々お待ちください...<br>
+            経過時間: <span id="elapsedTime">0</span> 秒
+        </div>
+    </div>
+
+    <div id="costInfo"></div>
+        <!-- 下部にボタンを追加（フッターの前） -->
+    <div class="container mb-4">
+        <div class="text-center mt-4">
+            <a href="/recommend_tags" target="_blank" class="btn btn-info btn-lg">
+                <i class="fas fa-tags"></i> タグ推薦ツールはこちら
+            </a>
+        </div>
+    </div>
+
+
+    <!-- 新しいフッター -->
+    <footer class="rich-footer">
+        <div class="container">
+            <p>&copy; 2024 AI校正ツール. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let isProcessing = false;
+        let startTime;
+        let timerInterval;
+        const ws = new WebSocket("wss://grape-app.jp/ws_dev");
+
+        function showLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            stopTimer();
+        }
+
+        function startTimer() {
+            stopTimer(); // 既存のタイマーがあれば停止
+            timerInterval = setInterval(updateElapsedTime, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+        }
+
+        function updateElapsedTime() {
+            const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('elapsedTime').textContent = elapsedSeconds;
+        }
+
+        ws.onopen = function(event) {
+            console.log('WebSocket接続が確立されました');
+        };
+
+        ws.onmessage = function(event) {
+            try {
+                // 受信したデータをログ出力
+                console.log("Received raw data:", event.data);
+                
+                // JSONとして解析
+                const data = JSON.parse(event.data);
+                
+                // 解析されたデータを処理
+                handleParsedData(data);
+            } catch (error) {
+                console.error("Error parsing JSON:", error);
+                console.log("Problematic data:", event.data);
+                
+                // エラーメッセージを表示するなど、適切なエラーハンドリングを行う
+                handleParsingError(event.data);
+            }
+        };
+
+        function handleParsedData(data) {
+            console.log('Raw event data:', event.data);
+            console.log('Parsed data:', data);
+
+            switch(data.type) {
+                case 'correction':
+                    // 進捗表示などの処理（必要に応じて）
+                    break;
+                case 'final_response':
+                    const correctionText = data.content;
+                    console.log('Correction text:', correctionText);
+                    // 処理時間を計算して表示
+                    const endTime = Date.now();
+                    const timeElapsed = (endTime - startTime) / 1000; // ミリ秒を秒に変換
+                    document.getElementById('timeElapsed').textContent = timeElapsed.toFixed(2);
+                    document.getElementById('processingTime').style.display = 'block';
+                    // 結果を表示する要素のIDを正しいものに変更してください
+                    const resultElement = document.getElementById('correctionResult');
+                    if (resultElement) {
+                        resultElement.innerHTML = '' + correctionText;
+                    } else {
+                        console.error('Element with ID "correctionResult" not found');
+                    }
+                    hideLoadingOverlay();
+                    break;
+                case 'error':
+                    console.error('Error from server:', data.content);
+                    if (data.content.includes('serviceUnavailableException')) {
+                        alert('サーバーが混み合っています。少し時間をおいてから再度お試しください。');
+                    } else {
+                        alert('エラーが発生しました。お手数ですがこのタブを閉じてWPの校正ボタンを押して再度校正を行ってください。');
+                    }
+                    document.getElementById('status').textContent = 'エラー: ' + data.content;
+                    hideLoadingOverlay();
+                    isProcessing = false;
+                    break;
+                case 'status':
+                    console.log('Status update:', data.content);
+                    if (data.content === 'completed') {
+                        hideLoadingOverlay();
+                        isProcessing = false;
+                    }
+                    break;
+                case 'cost_info':
+                    console.log('Cost info:', data);
+                    updateCostInfo(data);
+                    break;
+                case 'diff_update':
+                case 'corrections_chunk':
+                case 'html_diff':
+                    // これらのメッセージタイプは無視するか、必要に応じて処理を追加
+                    console.log(`Received ${data.type} message:`, data.content);
+                    break;
+                default:
+                    console.warn('Unknown message type:', data.type);
+            }
+        }
+
+        function handleParsingError(rawData) {
+            // JSON解析エラー時の処理
+            // 例: エラーメッセージを表示する
+            displayErrorMessage("データの処理中にエラーが発生しました。");
+            
+            // 可能であれば、rawDataを適切に整形して再度解析を試みる
+            // ...
+        }
+
+        ws.onerror = function(error) {
+            console.error('WebSocketエラー:', error);
+            hideLoadingOverlay();
+            isProcessing = false;
+        };
+
+        ws.onclose = function(event) {
+            console.log('WebSocket接続が閉じられました');
+            hideLoadingOverlay();
+            isProcessing = false;
+        };
+
+        function startCorrection() {
+            if (isProcessing) {
+                console.log('処理中です。しばらくお待ちください。');
+                return;
+            }
+            startTime = Date.now();
+            showLoadingOverlay();
+            startTimer();
+            const textInput = document.getElementById('inputText');
+            const text = textInput.value;
+            if (text.trim() === '') {
+                console.log('テキストを入力してください。');
+                return;
+            }
+
+            isProcessing = true;
+            
+            // 'text'  'prompt' の両方を含むオブジェクトを送信
+            const temperature = document.getElementById('temperature').value;
+            const topP = document.getElementById('topP').value;
+
+            ws.send(JSON.stringify({
+                text: text,
+                prompt: "校正表記を使用して、誤字・脱字を修正し、修正案を提案してください。",
+                temperature: parseFloat(temperature),
+                top_p: parseFloat(topP)
+            }));
+
+            updateContentHeight();
+        }
+
+        function applyCorrection(correctionText) {
+            const parts = correctionText.split('\n\n');
+            const beforeCorrection = document.getElementById('beforeCorrection');
+            const afterCorrection = document.getElementById('afterCorrection');
+            const correctionReason = document.getElementById('correctionReason');
+
+            if (parts.length >= 3) {
+                beforeCorrection.innerHTML = '<h5>校正前文章</h5>' + formatCorrectionText(parts[0].replace('校正前文章：', ''), parts[1].replace('校正後文章：', ''), parts[2].replace('校正理由：', ''));
+                afterCorrection.innerHTML = '<h5>校正後文章</h5>' + parts[1].replace('校後文章', '');
+                correctionReason.innerHTML = '<h5>校正理由</h5>' + parts[2].replace('校正理由：', '');
+            } else {
+                console.error('予期しない形式の校正結果です');
+            }
+        }
+
+        function formatCorrectionText(before, after, reasons) {
+            const beforePhrases = before.split('\n');
+            const afterPhrases = after.split('\n');
+            const reasonPhrases = reasons.split('\n');
+
+            let formattedText = '';
+            for (let i = 0; i < beforePhrases.length; i++) {
+                if (beforePhrases[i] !== afterPhrases[i]) {
+                    formattedText += `<span class="correction-span">
+                        ${beforePhrases[i]}
+                        <div class="correction-tooltip">
+                            <span class="correction-original">${beforePhrases[i]}</span><br>
+                            <span class="correction-suggested">${afterPhrases[i]}</span><br>
+                            <span class="correction-reason">${reasonPhrases[i]}</span>
+                        </div>
+                    </span> `;
+                } else {
+                    formattedText += beforePhrases[i] + ' ';
+                }
+            }
+            return formattedText;
+        }
+
+        function applyAllCorrections() {
+            // この関数の実装は省略されています
+            console.log('すべての修正を適用');
+        }
+
+        function copyToClipboard() {
+            const resultText = document.getElementById('correctionResult').innerText;
+            navigator.clipboard.writeText(resultText).then(() => {
+                alert('テキストがクリップボードにコピーされました。');
+            }).catch(err => {
+                console.error('クリップボードへのコピーに失敗しました:', err);
+            });
+        }
+
+        function updateCostInfo(data) {
+            const costInfoElement = document.getElementById('costInfo');
+            if (costInfoElement) {
+                costInfoElement.innerHTML = `
+                    入力ト���クン: ${data.input_tokens}<br>
+                    出力トークン: ${data.output_tokens}<br>
+                    合計コスト: $${data.total_cost.toFixed(4)}
+                `;
+            }
+        }
+
+        function adjustTooltipPosition(tooltip) {
+            const rect = tooltip.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            if (rect.right > viewportWidth) {
+                tooltip.style.left = 'auto';
+                tooltip.style.right = '0';
+            }
+            if (rect.bottom > viewportHeight) {
+                tooltip.style.top = 'auto';
+                tooltip.style.bottom = '100%';
+            }
+        }
+
+        function toggleCorrection(event) {
+            const span = event.currentTarget;
+            const tooltip = span.querySelector('.correction-tooltip');
+            
+            if (tooltip.classList.contains('active')) {
+                tooltip.classList.remove('active');
+            } else {
+                // 他のすべてのアクティブなツールチップを非表示にする
+                document.querySelectorAll('.correction-tooltip.active').forEach(t => {
+                    t.classList.remove('active');
+                });
+                tooltip.classList.add('active');
+                adjustTooltipPosition(tooltip);
+            }
+            
+            event.stopPropagation();
+        }
+
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('inputText');
+            const resultDiv = document.getElementById('correctionResult');
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            resultDiv.style.height = textarea.style.height;
+        }
+
+        function updateContentHeight() {
+            const inputText = document.getElementById('inputText');
+            const correctionResult = document.getElementById('correctionResult');
+            const maxHeight = Math.max(inputText.scrollHeight, correctionResult.scrollHeight);
+            inputText.style.height = `${maxHeight}px`;
+            correctionResult.style.height = `${maxHeight}px`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const startCorrectionBtn = document.getElementById('startCorrectionBtn');
+            if (startCorrectionBtn) {
+                startCorrectionBtn.addEventListener('click', startCorrection);
+            } else {
+                console.error("'startCorrectionBtn' という ID の要素が見つかりません。");
+            }
+
+            document.body.addEventListener('click', function(event) {
+                if (!event.target.closest('.correction-span')) {
+                    // クリックされた要素が correction-span の外部の場合、すべてのツールチップを非表示にする
+                    document.querySelectorAll('.correction-tooltip.active').forEach(tooltip => {
+                        tooltip.classList.remove('active');
+                    });
+                }
+            });
+
+            document.querySelectorAll('.correction-span').forEach(span => {
+                span.addEventListener('click', toggleCorrection);
+            });
+
+            const inputText = document.getElementById('inputText');
+            if (inputText) {
+                inputText.addEventListener('input', autoResizeTextarea);
+                // 初期表示時にも高さを調整
+                autoResizeTextarea();
+            }
+
+            updateContentHeight();
+            window.addEventListener('resize', updateContentHeight);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.addEventListener('click', function(event) {
+                if (event.target.classList.contains('correction-button')) {
+                    const span = event.target.closest('.correction-span');
+                    const textSpan = span.querySelector('.correction-text');
+                    textSpan.textContent = event.target.textContent;
+                }
+            });
+        });
+
+        // 既存のスクリプトの後に追加
+        document.getElementById('temperature').addEventListener('input', function() {
+            document.getElementById('temperatureValue').textContent = this.value;
+        });
+
+        document.getElementById('topP').addEventListener('input', function() {
+            document.getElementById('topPValue').textContent = this.value;
+        });
+
+        // AI設定の状態を保存
+        const aiSettingsCollapse = document.getElementById('aiSettings');
+        aiSettingsCollapse.addEventListener('hidden.bs.collapse', function () {
+            localStorage.setItem('aiSettingsCollapsed', 'true');
+        });
+        aiSettingsCollapse.addEventListener('shown.bs.collapse', function () {
+            localStorage.setItem('aiSettingsCollapsed', 'false');
+        });
+
+        // ページ読み込み時にAI設定の状態を復元
+        const aiSettingsCollapsed = localStorage.getItem('aiSettingsCollapsed');
+        if (aiSettingsCollapsed === 'false') {
+            new bootstrap.Collapse(aiSettingsCollapse, {
+                toggle: false
+            }).show();
+        }
+
+        function countCharactersAndTokens() {
+            const text = document.getElementById('inputText').value;
+            const charCount = text.length;
+            
+            // おおよそのトークン数を計算（日本語の場合、1文字≒1.5トークンと仮定）
+            const tokenCount = Math.ceil(charCount * 1.5);
+            const predictionCount = Math.ceil(charCount * 0.014);
+            
+            document.getElementById('charCount').textContent = charCount;
+            document.getElementById('tokenCount').textContent = tokenCount;
+            predictionCountText  = predictionCount.toString(); + '~' + (predictionCount + 10).toString();
+            document.getElementById('predictionCount').textContent = predictionCountText;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('inputText');
+            if (inputText) {
+                inputText.addEventListener('input', function() {
+                    autoResizeTextarea();
+                    countCharactersAndTokens();
+                });
+                // 初期表示時にも文字数とトークン数を計算
+                countCharactersAndTokens();
+            }
+
+            // ... 既存のイベントリスナー ...
+        });
+    </script>
+</body>
+</html>
