@@ -72,6 +72,18 @@ Resources:
               Value: 'config.settings'
             - Name: SECRET_KEY
               Value: '{{resolve:secretsmanager:django-ecs-secrets:SecretString:SECRET_KEY}}'
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            - Name: INPUT_PRICE_PER_1K_TOKENS
+              Value: '0.003'
+            - Name: OUTPUT_PRICE_PER_1K_TOKENS
+              Value: '0.015'
+            - Name: YEN_PER_DOLLAR
+              Value: '150'
+            - Name: BEDROCK_PROMPT_PATH
+              Value: '/app/proofreading_ai/prompt.md'
 
   # ECS Service
   Service:
