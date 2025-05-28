@@ -113,20 +113,35 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
     """
     if not corrections:
         return html.escape(original_text)
+    
     result = []
     last_idx = 0
-    used = set()
+    used_positions = set()  # 使用済み位置を記録
+    
+    # 修正箇所を位置順にソート
+    sorted_corrections = []
     for corr in corrections:
-        # すでにハイライト済みの箇所はスキップ
-        if (corr["original"], corr["corrected"]) in used:
+        start = original_text.find(corr["original"])
+        if start != -1:
+            sorted_corrections.append((start, corr))
+    
+    # 位置順にソート
+    sorted_corrections.sort(key=lambda x: x[0])
+    
+    for start_pos, corr in sorted_corrections:
+        # 既に処理済みの位置はスキップ
+        if start_pos in used_positions:
             continue
-        used.add((corr["original"], corr["corrected"]))
-        start = original_text.find(corr["original"], last_idx)
-        if start == -1:
+            
+        # 現在の位置より前の位置はスキップ
+        if start_pos < last_idx:
             continue
-        end = start + len(corr["original"])
+            
+        end_pos = start_pos + len(corr["original"])
+        
         # 修正前の部分
-        result.append(html.escape(original_text[last_idx:start]))
+        result.append(html.escape(original_text[last_idx:start_pos]))
+        
         # 修正箇所をハイライト
         result.append(
             f'<span class="correction-span">'
@@ -138,10 +153,16 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
             f'</span>'
             f'</span>'
         )
-        last_idx = end
+        
+        # 使用済み位置を記録
+        for i in range(start_pos, end_pos):
+            used_positions.add(i)
+            
+        last_idx = end_pos
+    
     # 残りの部分
     result.append(html.escape(original_text[last_idx:]))
-    return ''.join(result) 
+    return ''.join(result)
 
 
 def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
@@ -151,6 +172,8 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
     の形式を抽出し、original, corrected, reasonのdictリストで返す
     """
     corrections = []
+    seen_corrections = set()  # 重複チェック用
+    
     # 「✅修正箇所：」以降を抽出
     if "✅修正箇所：" not in corrected_text:
         return corrections
@@ -158,6 +181,7 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
         _, after = corrected_text.split("✅修正箇所：", 1)
     except ValueError:
         return corrections
+    
     # 各行をパース
     for line in after.splitlines():
         line = line.strip()
@@ -167,9 +191,18 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
         m = re.match(r"- [^:]+: \((.*?)\) -> \((.*?)\): ?(.*)", line)
         if m:
             original, corrected, reason = m.groups()
-            corrections.append({
-                "original": original.strip(),
-                "corrected": corrected.strip(),
-                "reason": reason.strip(),
-            })
+            original = original.strip()
+            corrected = corrected.strip()
+            reason = reason.strip()
+            
+            # 重複チェック（同じ original -> corrected の組み合わせは除外）
+            correction_key = (original, corrected)
+            if correction_key not in seen_corrections:
+                seen_corrections.add(correction_key)
+                corrections.append({
+                    "original": original,
+                    "corrected": corrected,
+                    "reason": reason,
+                })
+    
     return corrections 

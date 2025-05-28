@@ -631,14 +631,17 @@
             hideLoading();
             isProcessing = false;
             
-            // 校正結果をすべてテキストとして<pre>で表示
-            correctionResult.innerHTML = '<pre style="white-space: pre-wrap;">' + data.corrected_text + '</pre>';
+            // サーバー側で生成されたハイライト付きHTMLをそのまま表示
+            correctionResult.innerHTML = data.corrected_text;
             
             // 修正箇所の解析と表示
             displayCorrections(data.corrections);
             
-            // ハイライトHTML化＋イベントバインド
-            applyHighlights();
+            // サーバー側で既にハイライト処理済みなので、JavaScript側のハイライト処理は不要
+            // applyHighlights(); // この行をコメントアウト
+            
+            // イベントリスナーを直接設定
+            setupCorrectionEventListeners();
             
             // 出力エリアのサイズを自動調整
             autoResizeTextarea(correctionResult);
