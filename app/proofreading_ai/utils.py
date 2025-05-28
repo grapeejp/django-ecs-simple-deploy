@@ -161,10 +161,14 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
         # カテゴリーに応じたCSSクラスを決定
         css_class = f"correction-{category}" if category in ["tone", "typo", "dict", "inconsistency"] else "correction-text"
         
-        # 修正箇所をハイライト（4色カテゴリー対応）
+        # 修正箇所をハイライト（4色カテゴリー対応・修正後文字列表示）
         result.append(
-            f'<span class="correction-span">'
-            f'<span class="{css_class}">{html.escape(original_word)}</span>'
+            f'<span class="correction-span" '
+            f'data-original="{html.escape(original_word)}" '
+            f'data-corrected="{html.escape(corrected_word)}" '
+            f'data-reason="{html.escape(reason)}" '
+            f'data-category="{category}">'
+            f'<span class="{css_class}">{html.escape(corrected_word)}</span>'
             f'<span class="correction-tooltip">'
             f'<span class="original-text">{html.escape(original_word)}</span><br>'
             f'<span class="corrected-text">{html.escape(corrected_word)}</span><br>'

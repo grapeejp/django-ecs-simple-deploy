@@ -5,17 +5,18 @@
 
 {% block extra_css %}
 <style>
-    /* 校正AIのスタイル設定 */
+    /* 校正AIのスタイル設定（統一版） */
     .input-area, .output-area {
+        min-height: 200px; /* 最小高さを200pxに変更 */
         height: auto;
-        max-height: none;
+        max-height: none; /* 最大高さ制限なし */
         resize: vertical;
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 8px;
         padding: 1rem;
         background-color: rgba(255, 255, 255, 0.9);
         font-size: 16px;
-        line-height: 1.5;
+        line-height: 1.5; /* 行の高さを統一 */
         white-space: pre-wrap;
         word-wrap: break-word;
         color: #333;
@@ -24,9 +25,19 @@
         box-shadow: 
             0 4px 12px 0 rgba(76, 47, 116, 0.15),
             0 2px 4px 0 rgba(255, 255, 255, 0.3);
-        overflow-y: visible;
+        overflow: visible; /* オーバーフローを完全に表示 */
         display: block;
         width: 100%;
+        box-sizing: border-box;
+        font-family: inherit; /* フォントファミリーを統一 */
+        vertical-align: top; /* 垂直位置を統一 */
+    }
+    
+    /* 出力エリア専用の追加スタイル */
+    #correctionResult {
+        font-size: 16px !important;
+        line-height: 1.5 !important;
+        font-family: inherit !important;
     }
     
     .glass-form {
@@ -40,9 +51,11 @@
     }
     
     .correction-span {
-        position: relative;
-        display: inline-block;
-        vertical-align: middle;
+        position: relative !important;
+        display: inline !important;
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+        margin: 0 !important;
     }
     
     .correction-text {
@@ -337,103 +350,125 @@
         border-bottom: 1px solid #ef4444;
     }
     
-    /* 4種類のカテゴリー別ハイライト */
+    /* 4種類のカテゴリー別ハイライト（完全リニューアル版） */
     .highlight-typo {
-        background-color: #EF4444; /* 明るい赤色 */
-        color: white;
-        font-weight: bold;
-        padding: 2px 4px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-        cursor: pointer;
-        position: relative;
-        display: inline-block;
-        transition: all 0.2s ease;
+        background-color: #fef2f2 !important; /* 薄い赤背景 */
+        color: #dc2626 !important; /* 赤文字 */
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #ef4444 !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
     }
     
     .highlight-expression {
-        background-color: #C084FC; /* 濃い紫色 */
-        color: white;
-        font-weight: bold;
-        padding: 2px 4px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(192, 132, 252, 0.3);
-        cursor: pointer;
-        position: relative;
-        display: inline-block;
-        transition: all 0.2s ease;
+        background-color: #faf5ff !important; /* 薄い紫背景 */
+        color: #7c3aed !important; /* 紫文字 */
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #a855f7 !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
     }
     
     .highlight-dictionary {
-        background-color: #FBBF24; /* 濃い黄色 */
-        color: #92400e;
-        font-weight: bold;
-        padding: 2px 4px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
-        cursor: pointer;
-        position: relative;
-        display: inline-block;
-        transition: all 0.2s ease;
+        background-color: #fffbeb !important; /* 薄い黄背景 */
+        color: #d97706 !important; /* オレンジ文字 */
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #f59e0b !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
     }
     
     .highlight-contradiction {
-        background-color: #FB923C; /* 濃いオレンジ色 */
-        color: white;
-        font-weight: bold;
-        padding: 2px 4px;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(251, 146, 60, 0.3);
-        cursor: pointer;
-        position: relative;
-        display: inline-block;
-        transition: all 0.2s ease;
+        background-color: #fff7ed !important; /* 薄いオレンジ背景 */
+        color: #ea580c !important; /* 濃いオレンジ文字 */
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #fb923c !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
     }
     
-    /* ホバーエフェクト */
-    .highlight-typo:hover,
-    .highlight-expression:hover,
-    .highlight-dictionary:hover,
+    /* ホバーエフェクト（シンプル版） */
+    .highlight-typo:hover {
+        background-color: #fee2e2 !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .highlight-expression:hover {
+        background-color: #f3e8ff !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .highlight-dictionary:hover {
+        background-color: #fef3c7 !important;
+        transform: scale(1.02) !important;
+    }
+    
     .highlight-contradiction:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        background-color: #fed7aa !important;
+        transform: scale(1.02) !important;
     }
     
-    /* 小さな吹き出し */
+    /* ツールチップ（シンプル版） */
     .highlight-tooltip {
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(0, 0, 0, 0.9);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        white-space: nowrap;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.2s ease;
-        z-index: 1000;
-        margin-bottom: 5px;
+        position: absolute !important;
+        bottom: 100% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        background-color: #1f2937 !important;
+        color: white !important;
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transition: all 0.2s ease !important;
+        z-index: 1000 !important;
+        margin-bottom: 5px !important;
+        pointer-events: none !important;
+        font-weight: normal !important;
     }
     
     .highlight-tooltip::after {
-        content: '';
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 4px solid transparent;
-        border-top-color: rgba(0, 0, 0, 0.9);
+        content: '' !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        border: 4px solid transparent !important;
+        border-top-color: #1f2937 !important;
     }
     
     .highlight-typo:hover .highlight-tooltip,
     .highlight-expression:hover .highlight-tooltip,
     .highlight-dictionary:hover .highlight-tooltip,
     .highlight-contradiction:hover .highlight-tooltip {
-        opacity: 1;
-        visibility: visible;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     
     /* カテゴリー別修正箇所表示 */
@@ -630,11 +665,108 @@
             max-width: 280px;
         }
     }
+    
+    /* サーバー側で生成されるCSSクラスに対応（4種類のカテゴリー・改良版） */
+    .correction-tone {
+        background-color: #faf5ff !important; /* 薄い紫背景 */
+        color: #7c3aed !important; /* 紫文字 */
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #a855f7 !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+        margin: 0 !important;
+    }
+    
+    .correction-typo {
+        background-color: #fef2f2 !important; /* 薄い赤背景 */
+        color: #dc2626 !important; /* 赤文字 */
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #ef4444 !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+        margin: 0 !important;
+    }
+    
+    .correction-dict {
+        background-color: #fffbeb !important; /* 薄い黄背景 */
+        color: #d97706 !important; /* オレンジ文字 */
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #f59e0b !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+        margin: 0 !important;
+    }
+    
+    .correction-inconsistency {
+        background-color: #fff7ed !important; /* 薄いオレンジ背景 */
+        color: #ea580c !important; /* 濃いオレンジ文字 */
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        border-left: 3px solid #fb923c !important;
+        position: relative !important;
+        display: inline !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        font-weight: normal !important;
+        border-bottom: none !important;
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+        margin: 0 !important;
+    }
+    
+    /* ホバーエフェクト（軽微な変更のみ） */
+    .correction-tone:hover {
+        background-color: #f3e8ff !important;
+        transform: none !important; /* スケール変更を無効化 */
+    }
+    
+    .correction-typo:hover {
+        background-color: #fee2e2 !important;
+        transform: none !important; /* スケール変更を無効化 */
+    }
+    
+    .correction-dict:hover {
+        background-color: #fef3c7 !important;
+        transform: none !important; /* スケール変更を無効化 */
+    }
+    
+    .correction-inconsistency:hover {
+        background-color: #fed7aa !important;
+        transform: none !important; /* スケール変更を無効化 */
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
+    <!-- CSRFトークン -->
+    {% csrf_token %}
+    
     <h1 class="text-3xl font-bold mb-4 text-white drop-shadow-lg">校正AI</h1>
     <p class="text-gray-200 mb-8">文章を入力して「校正する」ボタンを押すと、AIが文章を校正します。HTML記述も保持されます。</p>
     
@@ -701,7 +833,6 @@
             </div>
             <div class="p-4">
                 <textarea id="inputText" class="input-area w-full" placeholder="校正したい文章をこちらに入力してください。HTMLタグも保持されます。"><div class="comment">
-
 ２０２４年、増加期傾向にあるといわれる、不登校のこどもたち。
 
 文部科学省の法則によると、不登校とは、病気や経済敵な理由を除き『年間の欠席日数が３０日以上となった状態』を指します。
@@ -709,12 +840,13 @@
 令和３年度の調査によると、小、中学校における不登校児童生徒数は２４万４９４０人。調査開始以降最多で２０万人を超え、前年度と比較した増加率は２４.９％と、調査開始以降最も高い割合になりました。翌令和４年度も２９万９０４８人と増加の一途をたどっています。
 
 また、この定義には当てはまらないものの、休みがちであったり、強質に入れなかったりするケースも考慮すると、不登校状態で悩んでいる子供たちは、もっと多くいると推測できるでしょう。
+
 <h2>小学8年生の息子が不登校に…　ある親子の葛藤</h2>
 学校に行けずに悩む子供たちが多くいるということは、それだけ、我が子の不登校に悩んでいる親が多いということでもあります。
 
 もし我が子が不当校になったら、当然親も戸惑い、どう向き合っていけばいいのか、思い悩むことでしょ。
 
-漫画家の川口真目（<a hrf="https://x.com/kawaguchi_game" target="_blank" rel="noopener">@kawaguchi_game</a>）さんは、小学生の息子さんが不登校になった時の体験談をXに投稿。大きな反響が寄せられました。
+漫画家の川口真目（<a href="https://x.com/kawaguchi_game" target="_blank" rel="noopener">@kawaguchi_game</a>）さんは、小学生の息子さんが不登校になった時の体験談をXに投稿。大きな反響が寄せられました。
 
 ごみはゴミ箱に入れてください。
 
@@ -725,7 +857,6 @@
 わたしはともだちとドーナッツと虜です。
 
 私は明らかなひとときの休憩をする
-
 </div></textarea>
                 <div class="char-counter">
                     <span id="charCount">0</span> 文字
@@ -901,6 +1032,19 @@
     // 置換辞書データの受け取り
     const replacementDict = JSON.parse('{{ replacement_dict|safe }}' || '{}');
     
+    // テキストエリアの高さを自動調整する関数
+    function autoResizeTextarea(textarea) {
+        // 一時的に高さをリセット
+        textarea.style.height = 'auto';
+        
+        // 内容に応じた高さを計算
+        const scrollHeight = textarea.scrollHeight;
+        const minHeight = 200; // 最小高さ
+        
+        // 計算された高さまたは最小高さのうち大きい方を設定
+        textarea.style.height = Math.max(scrollHeight, minHeight) + 'px';
+    }
+    
     // DOMが読み込まれた時の処理
     document.addEventListener('DOMContentLoaded', function() {
         // 設定の復元
@@ -931,6 +1075,9 @@
             
             document.getElementById('charCount').textContent = charCount.toLocaleString();
             document.getElementById('tokenCount').textContent = tokenCount.toLocaleString();
+            
+            // テキストエリアの高さを自動調整
+            autoResizeTextarea(this);
         });
         
         // 初期文字数カウント
@@ -940,43 +1087,91 @@
         document.getElementById('charCount').textContent = initialCharCount.toLocaleString();
         document.getElementById('tokenCount').textContent = initialTokenCount.toLocaleString();
         
+        // 初期状態でもテキストエリアの高さを調整
+        autoResizeTextarea(document.getElementById('inputText'));
+        
         // リセットボタンのイベント
         document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
         
         // 校正ボタンのイベント
         document.getElementById('startCorrectionBtn').addEventListener('click', function() {
+            console.log('🚀 校正ボタンがクリックされました');
+            
             const inputText = document.getElementById('inputText').value.trim();
             if (!inputText) {
+                console.log('❌ 入力テキストが空です');
                 alert('校正する文章を入力してください。');
                 return;
             }
             
+            console.log('📝 入力テキスト長:', inputText.length);
+            console.log('📝 入力テキスト（最初の100文字）:', inputText.substring(0, 100));
+            
             const temperature = document.getElementById('temperature').value;
             const topP = document.getElementById('topP').value;
             
-            // ローディング状態
+            console.log('⚙️ 設定 - 温度:', temperature, 'Top P:', topP);
+            
+            // CSRFトークンの確認
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                console.error('❌ CSRFトークンが見つかりません');
+                alert('CSRFトークンが見つかりません。ページをリロードしてください。');
+                return;
+            }
+            console.log('🔐 CSRFトークン確認済み:', csrfToken.value.substring(0, 10) + '...');
+            
+            // ローディングオーバーレイを表示
+            console.log('⏳ ローディングオーバーレイを表示');
+            showLoadingOverlay();
+            
+            // ボタンの状態変更
             this.disabled = true;
             this.textContent = '校正中...';
             document.getElementById('correctionResult').innerHTML = '<div class="text-center text-gray-500">校正処理中です...</div>';
+            
+            console.log('📡 APIリクエスト開始');
+            const requestData = {
+                text: inputText,
+                temperature: parseFloat(temperature),
+                top_p: parseFloat(topP)
+            };
+            console.log('📤 送信データ:', requestData);
             
             fetch('/proofreading_ai/proofread/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    'X-CSRFToken': csrfToken.value
                 },
-                body: JSON.stringify({
-                    text: inputText,
-                    temperature: parseFloat(temperature),
-                    top_p: parseFloat(topP)
-                })
+                body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('📥 レスポンス受信:', response.status, response.statusText);
+                console.log('📥 レスポンスヘッダー:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return response.json();
+            })
             .then(data => {
+                console.log('✅ JSONパース成功');
+                console.log('📊 レスポンスデータ:', data);
+                
                 if (data.success) {
-                    // ハイライト適用
-                    const highlightedText = applyHighlights(data.corrected_text, data.corrections);
-                    document.getElementById('correctionResult').innerHTML = highlightedText;
+                    console.log('🎉 校正成功');
+                    console.log('📝 校正後テキスト長:', data.corrected_text ? data.corrected_text.length : 0);
+                    console.log('🔧 修正箇所数:', data.corrections ? data.corrections.length : 0);
+                    console.log('📋 修正箇所詳細:', data.corrections);
+                    
+                    // サーバー側で生成されたハイライト付きHTMLをそのまま表示
+                    document.getElementById('correctionResult').innerHTML = data.corrected_text;
+                    console.log('📺 校正結果をDOMに設定完了');
+                    
+                    // 修正箇所のクリックイベントを設定
+                    setupCorrectionClickEvents();
                     
                     // 修正箇所表示
                     displayCorrections(data.corrections);
@@ -986,24 +1181,69 @@
                     
                     // コピーボタンの表示
                     document.getElementById('copyResultBtn').style.display = 'inline-block';
+                    
+                    console.log('✅ UI更新完了');
                 } else {
+                    console.error('❌ 校正エラー:', data.error);
                     document.getElementById('correctionResult').innerHTML = `<div class="text-red-500">エラー: ${data.error}</div>`;
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('correctionResult').innerHTML = '<div class="text-red-500">校正処理中にエラーが発生しました。</div>';
+                console.error('💥 リクエストエラー:', error);
+                console.error('💥 エラー詳細:', error.message);
+                console.error('💥 エラースタック:', error.stack);
+                document.getElementById('correctionResult').innerHTML = '<div class="text-red-500">校正処理中にエラーが発生しました。詳細はコンソールを確認してください。</div>';
             })
             .finally(() => {
+                console.log('🏁 処理完了 - ローディング非表示');
+                
+                // ローディングオーバーレイを非表示
+                hideLoadingOverlay();
+                
+                // ボタンの状態を元に戻す
                 this.disabled = false;
                 this.textContent = '校正する';
+                
+                console.log('🔄 ボタン状態リセット完了');
             });
         });
         
         // コピーボタンのイベント
         document.getElementById('copyResultBtn').addEventListener('click', function() {
             const outputElement = document.getElementById('correctionResult');
-            const textToCopy = outputElement.innerText || outputElement.textContent;
+            
+            // 現在表示されている状態を正確に取得
+            let textToCopy = '';
+            
+            // 子ノードを順番に処理して、現在表示されているテキストを構築
+            function extractCurrentText(element) {
+                let result = '';
+                for (let node of element.childNodes) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        // テキストノードの場合はそのまま追加
+                        result += node.textContent;
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.classList.contains('correction-span')) {
+                            // 修正箇所の場合は、現在表示されているテキストを取得
+                            const textSpan = node.querySelector('[class*="correction-"]');
+                            if (textSpan) {
+                                result += textSpan.textContent;
+                            }
+                        } else if (node.classList.contains('correction-tooltip')) {
+                            // ツールチップは無視
+                            continue;
+                        } else {
+                            // その他の要素は再帰的に処理
+                            result += extractCurrentText(node);
+                        }
+                    }
+                }
+                return result;
+            }
+            
+            textToCopy = extractCurrentText(outputElement);
+            
+            console.log('📋 コピー対象テキスト（最初の100文字）:', textToCopy.substring(0, 100));
             
             navigator.clipboard.writeText(textToCopy).then(() => {
                 const originalText = this.textContent;
@@ -1127,44 +1367,6 @@
         }, 1500);
     }
     
-    // 4種類のハイライト機能
-    function applyHighlights(text, corrections) {
-        if (!corrections || corrections.length === 0) {
-            return text;
-        }
-        
-        let highlightedText = text;
-        const replacements = [];
-        
-        corrections.forEach((correction, index) => {
-            if (correction.original && correction.corrected) {
-                const category = getCorrectionCategory(correction.reason || '');
-                const tooltipText = getCategoryTooltip(category);
-                
-                const highlightClass = `highlight-${category}`;
-                const replacement = `<span class="${highlightClass}" data-correction-id="${index}">
-                    ${correction.corrected}
-                    <span class="highlight-tooltip">${tooltipText}</span>
-                </span>`;
-                
-                replacements.push({
-                    original: correction.original,
-                    replacement: replacement
-                });
-            }
-        });
-        
-        // 長い文字列から順にソートして置換
-        replacements.sort((a, b) => b.original.length - a.original.length);
-        
-        replacements.forEach(rep => {
-            const regex = new RegExp(escapeRegExp(rep.original), 'g');
-            highlightedText = highlightedText.replace(regex, rep.replacement);
-        });
-        
-        return highlightedText;
-    }
-    
     function getCorrectionCategory(reason) {
         const reasonLower = reason.toLowerCase();
         if (reasonLower.includes('誤字') || reasonLower.includes('脱字') || reasonLower.includes('typo')) {
@@ -1273,6 +1475,165 @@
                 document.getElementById('helpModal').style.display = 'none';
             }
         });
+    }
+
+    // ローディングオーバーレイ表示関数
+    function showLoadingOverlay() {
+        console.log('🔄 showLoadingOverlay() 開始');
+        
+        const overlay = document.getElementById('loadingOverlay');
+        const progressBar = document.getElementById('progressBar');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const estimatedTime = document.getElementById('estimatedTime');
+        
+        console.log('🔍 要素確認:', {
+            overlay: !!overlay,
+            progressBar: !!progressBar,
+            loadingMessage: !!loadingMessage,
+            estimatedTime: !!estimatedTime
+        });
+        
+        if (!overlay) {
+            console.error('❌ loadingOverlay要素が見つかりません');
+            return;
+        }
+        
+        // オーバーレイを表示
+        overlay.style.display = 'flex';
+        console.log('✅ オーバーレイ表示設定完了');
+        
+        // プログレスバーをリセット
+        if (progressBar) {
+            progressBar.style.width = '0%';
+            console.log('✅ プログレスバーリセット完了');
+        }
+        
+        // メッセージを設定
+        if (loadingMessage) {
+            loadingMessage.textContent = 'Claude 4で校正中...';
+            console.log('✅ ローディングメッセージ設定完了');
+        }
+        
+        if (estimatedTime) {
+            estimatedTime.textContent = '約30-60秒';
+            console.log('✅ 推定時間設定完了');
+        }
+        
+        // プログレスバーのアニメーション
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15; // ランダムに進行
+            if (progress > 90) progress = 90; // 90%で止める
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+            }
+            console.log('📊 プログレス更新:', Math.round(progress) + '%');
+        }, 1000);
+        
+        // プログレスバーのインターバルIDを保存
+        overlay.dataset.progressInterval = progressInterval;
+        console.log('✅ プログレスアニメーション開始');
+    }
+    
+    // ローディングオーバーレイ非表示関数
+    function hideLoadingOverlay() {
+        console.log('🔄 hideLoadingOverlay() 開始');
+        
+        const overlay = document.getElementById('loadingOverlay');
+        const progressBar = document.getElementById('progressBar');
+        
+        if (!overlay) {
+            console.error('❌ loadingOverlay要素が見つかりません');
+            return;
+        }
+        
+        // プログレスバーを100%にして完了感を演出
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            console.log('✅ プログレスバー100%設定完了');
+        }
+        
+        // プログレスバーのインターバルをクリア
+        const progressInterval = overlay.dataset.progressInterval;
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            console.log('✅ プログレスインターバルクリア完了');
+        }
+        
+        // 少し待ってからオーバーレイを非表示
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+            console.log('✅ オーバーレイ非表示完了');
+        }, 500);
+    }
+
+    // 修正箇所のクリックイベントを設定（校正結果内のハイライト用）
+    function setupCorrectionClickEvents() {
+        console.log('🖱️ 修正箇所クリックイベント設定開始');
+        
+        const correctionSpans = document.querySelectorAll('.correction-span');
+        console.log('🔍 見つかった修正箇所:', correctionSpans.length, '件');
+        
+        correctionSpans.forEach((span, index) => {
+            const originalText = span.dataset.original;
+            const correctedText = span.dataset.corrected;
+            const reason = span.dataset.reason;
+            const category = span.dataset.category;
+            
+            console.log(`📝 修正箇所 ${index + 1}:`, {
+                original: originalText,
+                corrected: correctedText,
+                reason: reason,
+                category: category
+            });
+            
+            // 現在の状態を追跡（true: 修正後, false: 元の文字列）
+            span.dataset.showingCorrected = 'true';
+            
+            span.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isShowingCorrected = this.dataset.showingCorrected === 'true';
+                const textSpan = this.querySelector(`.correction-${category}, .correction-text`);
+                
+                if (isShowingCorrected) {
+                    // 修正後 → 元の文字列
+                    textSpan.textContent = originalText;
+                    this.dataset.showingCorrected = 'false';
+                    // 元の文字列表示時は赤色背景で明確に区別
+                    textSpan.style.backgroundColor = '#fee2e2';
+                    textSpan.style.color = '#dc2626';
+                    textSpan.style.borderLeft = '3px solid #ef4444';
+                    textSpan.style.fontWeight = 'bold';
+                    console.log(`🔄 ${index + 1}番目を元の文字列に変更:`, originalText);
+                } else {
+                    // 元の文字列 → 修正後
+                    textSpan.textContent = correctedText;
+                    this.dataset.showingCorrected = 'true';
+                    // 元のカテゴリー色に戻す
+                    textSpan.style.backgroundColor = '';
+                    textSpan.style.color = '';
+                    textSpan.style.borderLeft = '';
+                    textSpan.style.fontWeight = '';
+                    console.log(`🔄 ${index + 1}番目を修正後に変更:`, correctedText);
+                }
+                
+                // クリック時のアニメーション効果
+                textSpan.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    textSpan.style.transform = '';
+                }, 150);
+            });
+            
+            // ホバー時のヒント表示
+            span.title = `クリックで「${originalText}」⇔「${correctedText}」を切り替え`;
+        });
+        
+        console.log('✅ 修正箇所クリックイベント設定完了');
     }
 </script>
 {% endblock %}
