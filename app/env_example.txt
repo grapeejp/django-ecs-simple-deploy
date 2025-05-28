@@ -1,0 +1,22 @@
+# AWS Bedrock アプリケーション推論プロファイル設定
+# 校正AI専用のClaude Sonnet 4プロファイル
+BEDROCK_INFERENCE_PROFILE_ARN=arn:aws:bedrock:ap-northeast-1:026090540679:application-inference-profile/wnxc217ue6bh
+
+# AWS基本設定
+AWS_REGION=ap-northeast-1
+AWS_ACCOUNT_ID=026090540679
+
+# Claude Sonnet 4価格設定（USD per 1,000 tokens）
+INPUT_PRICE_PER_1K_TOKENS=0.003
+OUTPUT_PRICE_PER_1K_TOKENS=0.015
+YEN_PER_DOLLAR=150
+
+# プロンプト設定
+BEDROCK_PROMPT_PATH=./prompt.md
+
+# Django設定
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+
+# データベース設定
+DATABASE_URL=sqlite:///db.sqlite3 

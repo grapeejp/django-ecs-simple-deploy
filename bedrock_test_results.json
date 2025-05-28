@@ -1,0 +1,49 @@
+{
+  "aws_credentials": true,
+  "bedrock_service": true,
+  "model_access_results": [
+    {
+      "model_id": "apac.anthropic.claude-sonnet-4-20250514-v1:0",
+      "accessible": false,
+      "error": "An error occurred (AccessDeniedException) when calling the InvokeModel operation: You don't have access to the model with the specified model ID.",
+      "response_time": null,
+      "test_response": null
+    },
+    {
+      "model_id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+      "accessible": false,
+      "error": "An error occurred (ValidationException) when calling the InvokeModel operation: Invocation of model ID anthropic.claude-3-5-sonnet-20241022-v2:0 with on-demand throughput isn’t supported. Retry your request with the ID or ARN of an inference profile that contains this model.",
+      "response_time": null,
+      "test_response": null
+    },
+    {
+      "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "accessible": true,
+      "error": null,
+      "response_time": 0.7211599349975586,
+      "test_response": "はい。",
+      "usage": {
+        "input_tokens": 31,
+        "output_tokens": 6
+      }
+    },
+    {
+      "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "accessible": false,
+      "error": "An error occurred (ValidationException) when calling the InvokeModel operation: Invocation of model ID anthropic.claude-3-sonnet-20240229-v1:0 with on-demand throughput isn’t supported. Retry your request with the ID or ARN of an inference profile that contains this model.",
+      "response_time": null,
+      "test_response": null
+    }
+  ],
+  "iam_permissions": {
+    "bedrock_access": true,
+    "bedrock_runtime_access": false,
+    "specific_errors": [
+      "bedrock-runtime:InvokeModel: An error occurred (ValidationException) when calling the InvokeModel operation: Invocation of model ID anthropic.claude-3-sonnet-20240229-v1:0 with on-demand throughput isn’t supported. Retry your request with the ID or ARN of an inference profile that contains this model."
+    ]
+  },
+  "recommendations": [
+    "✅ 利用可能なモデルが見つかりました",
+    "🎯 推奨モデル: anthropic.claude-3-5-sonnet-20240620-v1:0 (応答時間: 0.72秒)"
+  ]
+}

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     ProofreadingRequest, ProofreadingResult, ReplacementDictionary,
-    CorrectionV2, CompanyDictionary, GeographicData
+    CorrectionV2, CompanyDictionary, InconsistencyData
 )
 
 
@@ -97,40 +97,42 @@ class CompanyDictionaryAdmin(admin.ModelAdmin):
     set_high_priority.short_description = '選択した辞書エントリを高優先度に設定'
 
 
-@admin.register(GeographicData)
-class GeographicDataAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'parent', 'climate_zone', 'is_active', 'created_at')
-    list_filter = ('type', 'climate_zone', 'is_active', 'created_at')
-    search_fields = ('name', 'characteristics')
+@admin.register(InconsistencyData)
+class InconsistencyDataAdmin(admin.ModelAdmin):
+    list_display = ('name', 'type', 'correct_form', 'severity', 'is_active', 'created_at')
+    list_filter = ('type', 'severity', 'is_active', 'created_at')
+    search_fields = ('name', 'correct_form', 'description', 'detection_rule')
     readonly_fields = ('created_at',)
     ordering = ('type', 'name')
     
     fieldsets = (
         ('基本情報', {
-            'fields': ('name', 'type', 'parent')
+            'fields': ('name', 'type', 'correct_form')
         }),
-        ('地理情報', {
-            'fields': ('latitude', 'longitude', 'climate_zone')
+        ('検出パターン', {
+            'fields': ('incorrect_patterns', 'detection_rule')
         }),
-        ('特徴', {
-            'fields': ('characteristics',)
+        ('詳細情報', {
+            'fields': ('description', 'severity')
         }),
         ('設定', {
             'fields': ('is_active', 'created_at')
         }),
     )
     
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('parent')
-    
-    actions = ['activate_data', 'deactivate_data']
+    actions = ['activate_data', 'deactivate_data', 'set_high_severity']
     
     def activate_data(self, request, queryset):
         updated = queryset.update(is_active=True)
-        self.message_user(request, f'{updated}件の地理データを有効にしました。')
-    activate_data.short_description = '選択した地理データを有効にする'
+        self.message_user(request, f'{updated}件の矛盾検出データを有効にしました。')
+    activate_data.short_description = '選択した矛盾検出データを有効にする'
     
     def deactivate_data(self, request, queryset):
         updated = queryset.update(is_active=False)
-        self.message_user(request, f'{updated}件の地理データを無効にしました。')
-    deactivate_data.short_description = '選択した地理データを無効にする' 
+        self.message_user(request, f'{updated}件の矛盾検出データを無効にしました。')
+    deactivate_data.short_description = '選択した矛盾検出データを無効にする'
+    
+    def set_high_severity(self, request, queryset):
+        updated = queryset.update(severity='high')
+        self.message_user(request, f'{updated}件の矛盾検出データを高重要度に設定しました。')
+    set_high_severity.short_description = '選択した矛盾検出データを高重要度に設定' 

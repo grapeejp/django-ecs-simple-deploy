@@ -107,11 +107,12 @@ def restore_html_tags(text: str, placeholders: Dict[str, str]) -> str:
 
 def format_corrections(original_text: str, corrections: List[Dict]) -> str:
     """
-    校正結果をハイライト付きHTMLとして生成する
+    校正結果をハイライト付きHTMLとして生成する（4色カテゴリー対応・改良版）
     original_text: 元のテキスト（HTMLタグ含む）
-    corrections: [{'original': 'xxx', 'corrected': 'yyy', 'reason': '...'}]
+    corrections: [{'original': 'xxx', 'corrected': 'yyy', 'reason': '...', 'category': 'tone|typo|dict|inconsistency'}]
     """
     if not corrections:
+        # 修正箇所がない場合は元のテキストをエスケープして返す
         return html.escape(original_text)
     
     result = []
@@ -121,9 +122,19 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
     # 修正箇所を位置順にソート
     sorted_corrections = []
     for corr in corrections:
-        start = original_text.find(corr["original"])
-        if start != -1:
-            sorted_corrections.append((start, corr))
+        original_word = corr.get("original", "")
+        if original_word:
+            # 複数の出現位置を検索
+            start = 0
+            while True:
+                pos = original_text.find(original_word, start)
+                if pos == -1:
+                    break
+                # 既に使用済みでない位置のみ追加
+                if pos not in used_positions:
+                    sorted_corrections.append((pos, corr))
+                    break
+                start = pos + 1
     
     # 位置順にソート
     sorted_corrections.sort(key=lambda x: x[0])
@@ -137,19 +148,27 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
         if start_pos < last_idx:
             continue
             
-        end_pos = start_pos + len(corr["original"])
+        original_word = corr.get("original", "")
+        corrected_word = corr.get("corrected", "")
+        reason = corr.get("reason", "")
+        category = corr.get("category", "general")
+        
+        end_pos = start_pos + len(original_word)
         
         # 修正前の部分
         result.append(html.escape(original_text[last_idx:start_pos]))
         
-        # 修正箇所をハイライト
+        # カテゴリーに応じたCSSクラスを決定
+        css_class = f"correction-{category}" if category in ["tone", "typo", "dict", "inconsistency"] else "correction-text"
+        
+        # 修正箇所をハイライト（4色カテゴリー対応）
         result.append(
             f'<span class="correction-span">'
-            f'<span class="correction-text">{html.escape(corr["original"])}</span>'
+            f'<span class="{css_class}">{html.escape(original_word)}</span>'
             f'<span class="correction-tooltip">'
-            f'<span class="original-text">{html.escape(corr["original"])}</span><br>'
-            f'<span class="corrected-text">{html.escape(corr["corrected"])}</span><br>'
-            f'<span class="reason-text">{html.escape(corr["reason"])}</span>'
+            f'<span class="original-text">{html.escape(original_word)}</span><br>'
+            f'<span class="corrected-text">{html.escape(corrected_word)}</span><br>'
+            f'<span class="reason-text">{html.escape(reason)}</span>'
             f'</span>'
             f'</span>'
         )
@@ -162,14 +181,15 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
     
     # 残りの部分
     result.append(html.escape(original_text[last_idx:]))
+    
     return ''.join(result)
 
 
 def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
     """
-    Claudeの校正API返却値から修正箇所リストをパースする
-    - 行番号: (変更前) -> (変更後): 理由
-    の形式を抽出し、original, corrected, reasonのdictリストで返す
+    Claude Sonnet 4の校正API返却値から修正箇所リストをパースする（4色カテゴリー対応）
+    - カテゴリー: tone | (変更前) -> (変更後): 理由
+    の形式を抽出し、original, corrected, reason, categoryのdictリストで返す
     """
     corrections = []
     seen_corrections = set()  # 重複チェック用
@@ -187,10 +207,11 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
         line = line.strip()
         if not line or not line.startswith("-"):
             continue
-        # 例: - 1行目: (増加期傾向) -> (増加傾向): 「増加期傾向」は誤字であり、正しくは「増加傾向」です。
-        m = re.match(r"- [^:]+: \((.*?)\) -> \((.*?)\): ?(.*)", line)
-        if m:
-            original, corrected, reason = m.groups()
+        
+        # Claude Sonnet 4の新形式: - カテゴリー: tone | (変更前) -> (変更後): 理由
+        category_match = re.match(r"- カテゴリー: (tone|typo|dict|inconsistency) \| \((.*?)\) -> \((.*?)\): ?(.*)", line)
+        if category_match:
+            category, original, corrected, reason = category_match.groups()
             original = original.strip()
             corrected = corrected.strip()
             reason = reason.strip()
@@ -203,6 +224,27 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
                     "original": original,
                     "corrected": corrected,
                     "reason": reason,
+                    "category": category,
+                })
+            continue
+        
+        # 従来形式（後方互換性のため）: - 行番号: (変更前) -> (変更後): 理由
+        legacy_match = re.match(r"- [^:]+: \((.*?)\) -> \((.*?)\): ?(.*)", line)
+        if legacy_match:
+            original, corrected, reason = legacy_match.groups()
+            original = original.strip()
+            corrected = corrected.strip()
+            reason = reason.strip()
+            
+            # 重複チェック（同じ original -> corrected の組み合わせは除外）
+            correction_key = (original, corrected)
+            if correction_key not in seen_corrections:
+                seen_corrections.add(correction_key)
+                corrections.append({
+                    "original": original,
+                    "corrected": corrected,
+                    "reason": reason,
+                    "category": "general",  # デフォルトカテゴリー
                 })
     
     return corrections 

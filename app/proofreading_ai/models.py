@@ -54,7 +54,7 @@ class CorrectionV2(models.Model):
         ('tone', '言い回しアドバイス'),
         ('typo', '誤字修正'),
         ('dict', '社内辞書ルール'),
-        ('geo', '地域矛盾チェック'),
+        ('inconsistency', '矛盾チェック'),
     ]
     
     SEVERITY_CHOICES = [
@@ -67,7 +67,7 @@ class CorrectionV2(models.Model):
     original_text = models.CharField('修正前テキスト', max_length=500)
     corrected_text = models.CharField('修正後テキスト', max_length=500)
     reason = models.TextField('修正理由')
-    category = models.CharField('カテゴリー', max_length=10, choices=CATEGORY_CHOICES)
+    category = models.CharField('カテゴリー', max_length=15, choices=CATEGORY_CHOICES)
     confidence = models.FloatField('信頼度', help_text='0.0-1.0の範囲')
     position = models.IntegerField('文字位置', help_text='元テキスト内での開始位置')
     severity = models.CharField('重要度', max_length=10, choices=SEVERITY_CHOICES, default='medium')
@@ -86,10 +86,10 @@ class CorrectionV2(models.Model):
     def category_color(self):
         """カテゴリーに応じた色を返す"""
         colors = {
-            'tone': '#FEF3C7',  # 黄色
+            'tone': '#E9D5FF',  # 紫色
             'typo': '#FEE2E2',  # 赤色
-            'dict': '#DBEAFE',  # 青色
-            'geo': '#FED7AA',   # オレンジ色
+            'dict': '#FEF3C7',  # 黄色
+            'inconsistency': '#FED7AA',   # オレンジ色
         }
         return colors.get(self.category, '#F3F4F6')
     
@@ -97,10 +97,10 @@ class CorrectionV2(models.Model):
     def category_border(self):
         """カテゴリーに応じたボーダー色を返す"""
         borders = {
-            'tone': '#F59E0B',
+            'tone': '#8B5CF6',
             'typo': '#EF4444',
-            'dict': '#3B82F6',
-            'geo': '#F97316',
+            'dict': '#F59E0B',
+            'inconsistency': '#F97316',
         }
         return borders.get(self.category, '#6B7280')
     
@@ -111,7 +111,7 @@ class CorrectionV2(models.Model):
             'tone': '💬',
             'typo': '❌',
             'dict': '📚',
-            'geo': '🗺️',
+            'inconsistency': '⚠️',
         }
         return icons.get(self.category, '📝')
 
@@ -155,30 +155,37 @@ class CompanyDictionary(models.Model):
         return []
 
 
-class GeographicData(models.Model):
-    """地理データモデル"""
+class InconsistencyData(models.Model):
+    """矛盾検出データモデル"""
     
     TYPE_CHOICES = [
-        ('prefecture', '都道府県'),
-        ('city', '市区町村'),
-        ('region', '地域'),
-        ('landmark', 'ランドマーク'),
+        ('geographic', '地理的矛盾'),
+        ('temporal', '時系列矛盾'),
+        ('numerical', '数値矛盾'),
+        ('logical', '論理的矛盾'),
+        ('factual', '事実矛盾'),
     ]
     
-    name = models.CharField('名称', max_length=255)
+    name = models.CharField('項目名', max_length=255)
     type = models.CharField('種別', max_length=20, choices=TYPE_CHOICES)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, verbose_name='親地域')
-    latitude = models.FloatField('緯度', null=True, blank=True)
-    longitude = models.FloatField('経度', null=True, blank=True)
-    climate_zone = models.CharField('気候区分', max_length=50, blank=True)
-    characteristics = models.TextField('特徴', blank=True, help_text='気候や地理的特徴など')
+    correct_form = models.CharField('正しい形', max_length=255, blank=True)
+    incorrect_patterns = models.TextField('誤りパターン', blank=True, help_text='カンマ区切りで複数指定可能')
+    description = models.TextField('説明', blank=True, help_text='矛盾の詳細や背景情報')
+    detection_rule = models.TextField('検出ルール', blank=True, help_text='矛盾を検出するためのルールや条件')
+    severity = models.CharField('重要度', max_length=10, choices=[('high', '高'), ('medium', '中'), ('low', '低')], default='medium')
     is_active = models.BooleanField('有効', default=True)
     created_at = models.DateTimeField('作成日時', default=timezone.now)
     
     class Meta:
-        verbose_name = '地理データ'
-        verbose_name_plural = '地理データ'
+        verbose_name = '矛盾検出データ'
+        verbose_name_plural = '矛盾検出データ'
         ordering = ['type', 'name']
         
     def __str__(self):
-        return f"{self.name} ({self.get_type_display()})" 
+        return f"{self.name} ({self.get_type_display()})"
+    
+    def get_incorrect_patterns_list(self):
+        """誤りパターンをリストで返す"""
+        if self.incorrect_patterns:
+            return [pattern.strip() for pattern in self.incorrect_patterns.split(',') if pattern.strip()]
+        return [] 

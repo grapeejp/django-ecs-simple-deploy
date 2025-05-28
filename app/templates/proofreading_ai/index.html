@@ -336,6 +336,300 @@
         color: #ef4444;
         border-bottom: 1px solid #ef4444;
     }
+    
+    /* 4種類のカテゴリー別ハイライト */
+    .highlight-typo {
+        background-color: #EF4444; /* 明るい赤色 */
+        color: white;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    
+    .highlight-expression {
+        background-color: #C084FC; /* 濃い紫色 */
+        color: white;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(192, 132, 252, 0.3);
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    
+    .highlight-dictionary {
+        background-color: #FBBF24; /* 濃い黄色 */
+        color: #92400e;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    
+    .highlight-contradiction {
+        background-color: #FB923C; /* 濃いオレンジ色 */
+        color: white;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(251, 146, 60, 0.3);
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    
+    /* ホバーエフェクト */
+    .highlight-typo:hover,
+    .highlight-expression:hover,
+    .highlight-dictionary:hover,
+    .highlight-contradiction:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* 小さな吹き出し */
+    .highlight-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        margin-bottom: 5px;
+    }
+    
+    .highlight-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 4px solid transparent;
+        border-top-color: rgba(0, 0, 0, 0.9);
+    }
+    
+    .highlight-typo:hover .highlight-tooltip,
+    .highlight-expression:hover .highlight-tooltip,
+    .highlight-dictionary:hover .highlight-tooltip,
+    .highlight-contradiction:hover .highlight-tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* カテゴリー別修正箇所表示 */
+    .category-section {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-header {
+        padding: 12px 16px;
+        font-weight: bold;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .category-header-typo {
+        background: linear-gradient(135deg, #EF4444, #DC2626);
+    }
+    
+    .category-header-expression {
+        background: linear-gradient(135deg, #C084FC, #A855F7);
+    }
+    
+    .category-header-dictionary {
+        background: linear-gradient(135deg, #FBBF24, #F59E0B);
+    }
+    
+    .category-header-contradiction {
+        background: linear-gradient(135deg, #FB923C, #EA580C);
+    }
+    
+    .category-icon {
+        font-size: 18px;
+        margin-right: 8px;
+    }
+    
+    .category-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+    }
+    
+    .category-items {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 16px;
+    }
+    
+    .correction-item-typo {
+        border-left: 4px solid #EF4444;
+    }
+    
+    .correction-item-expression {
+        border-left: 4px solid #C084FC;
+    }
+    
+    .correction-item-dictionary {
+        border-left: 4px solid #FBBF24;
+    }
+    
+    .correction-item-contradiction {
+        border-left: 4px solid #FB923C;
+    }
+    
+    /* パフォーマンス情報表示 */
+    .performance-info {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        margin-top: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .performance-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .performance-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.75rem;
+        border-radius: 6px;
+        text-align: center;
+    }
+    
+    .performance-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+        display: block;
+    }
+    
+    .performance-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 0.25rem;
+    }
+    
+    /* ヘルプ機能 */
+    .help-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(76, 47, 116, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .help-button:hover {
+        background: rgba(76, 47, 116, 1);
+        transform: scale(1.1);
+    }
+    
+    .help-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+    
+    .help-content {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        margin: 1rem;
+    }
+    
+    .help-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .help-section h3 {
+        color: #4c2f74;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    
+    .help-highlight-demo {
+        display: inline-block;
+        margin: 0 4px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+        .settings-panel .flex {
+            flex-direction: column;
+        }
+        
+        .settings-panel .w-full.md\\:w-auto {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .performance-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .highlight-tooltip {
+            position: fixed;
+            bottom: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 280px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -343,6 +637,30 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-4 text-white drop-shadow-lg">校正AI</h1>
     <p class="text-gray-200 mb-8">文章を入力して「校正する」ボタンを押すと、AIが文章を校正します。HTML記述も保持されます。</p>
+    
+    <!-- 4種類のハイライト機能説明 -->
+    <div class="glass-form mb-6">
+        <h3 class="text-lg font-semibold text-white mb-4">🎨 4種類のハイライト機能</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="highlight-typo px-3 py-1 rounded-md text-sm font-bold">🔴 誤字修正</span>
+                <span class="text-gray-200 text-sm">明るい赤色 (#EF4444)</span>
+                </div>
+            <div class="flex items-center space-x-2">
+                <span class="highlight-expression px-3 py-1 rounded-md text-sm font-bold">🟣 言い回し</span>
+                <span class="text-gray-200 text-sm">濃い紫色 (#C084FC)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="highlight-dictionary px-3 py-1 rounded-md text-sm font-bold">🟡 辞書ルール</span>
+                <span class="text-gray-200 text-sm">濃い黄色 (#FBBF24)</span>
+                </div>
+            <div class="flex items-center space-x-2">
+                <span class="highlight-contradiction px-3 py-1 rounded-md text-sm font-bold">🟠 矛盾チェック</span>
+                <span class="text-gray-200 text-sm">濃いオレンジ色 (#FB923C)</span>
+            </div>
+                </div>
+        <p class="text-gray-300 text-sm mt-3">修正箇所にマウスを合わせると、詳細な説明が表示されます。</p>
+    </div>
     
     <!-- 設定パネル -->
     <div class="settings-panel mb-6">
@@ -359,6 +677,11 @@
                         <label for="topP" class="block text-sm font-medium text-gray-200">Top P</label>
                         <input type="range" min="0" max="1" step="0.1" value="0.7" class="w-32" id="topP">
                         <span id="topPValue" class="text-sm text-gray-300">0.7</span>
+                    </div>
+                    <div>
+                        <button id="resetSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-all duration-300">
+                            リセット
+                        </button>
                     </div>
                 </div>
             </div>
@@ -432,14 +755,111 @@
         </div>
     </div>
     
+    <!-- パフォーマンス情報表示 -->
+    <div id="performanceInfo" class="performance-info" style="display: none;">
+        <h3 class="text-lg font-semibold mb-2">📊 パフォーマンス情報</h3>
+        <div class="performance-grid">
+            <div class="performance-item">
+                <span id="processingTimeDisplay" class="performance-value">0.00</span>
+                <div class="performance-label">処理時間 (秒)</div>
+            </div>
+            <div class="performance-item">
+                <span id="inputTokensDisplay" class="performance-value">0</span>
+                <div class="performance-label">入力トークン</div>
+            </div>
+            <div class="performance-item">
+                <span id="outputTokensDisplay" class="performance-value">0</span>
+                <div class="performance-label">出力トークン</div>
+            </div>
+            <div class="performance-item">
+                <span id="estimatedCostDisplay" class="performance-value">¥0.00</span>
+                <div class="performance-label">推定コスト</div>
+            </div>
+            <div class="performance-item">
+                <span id="modelUsedDisplay" class="performance-value">Claude 4 Pro</span>
+                <div class="performance-label">使用モデル</div>
+            </div>
+            <div class="performance-item">
+                <span id="processedAtDisplay" class="performance-value">--:--</span>
+                <div class="performance-label">処理日時</div>
+            </div>
+        </div>
+    </div>
+    
     <!-- 修正箇所リスト -->
-    <div class="glass-card mt-8 overflow-hidden">
+    <div class="glass-card mt-6">
         <div class="bg-grape-600/60 backdrop-blur-md p-4 text-white">
             <h2 class="font-bold text-lg">修正箇所</h2>
         </div>
         <div class="p-4">
             <div id="correctionsContainer" class="corrections-list">
-                <p class="text-gray-500 italic">校正を実行すると、修正箇所の一覧がここに表示されます。</p>
+                <p class="text-gray-500 italic">校正結果がここに表示されます。</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ヘルプボタン -->
+    <button id="helpButton" class="help-button" title="ヘルプ">
+        <i class="fas fa-question"></i>
+    </button>
+    
+    <!-- ヘルプモーダル -->
+    <div id="helpModal" class="help-modal">
+        <div class="help-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-grape-700">校正AI ヘルプ</h2>
+                <button id="closeHelpBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            
+            <div class="help-section">
+                <h3>🎯 基本的な使い方</h3>
+                <p class="text-gray-700">
+                    1. 左側のテキストエリアに校正したい文章を入力<br>
+                    2. 必要に応じて温度・Top P設定を調整<br>
+                    3. 「校正する」ボタンをクリック<br>
+                    4. 右側に校正結果が表示されます
+                </p>
+            </div>
+            
+            <div class="help-section">
+                <h3>🎨 ハイライトの意味</h3>
+                <p class="text-gray-700 mb-2">修正箇所は4つのカテゴリーで色分けされています：</p>
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <span class="help-highlight-demo highlight-typo">🔴 誤字修正</span>
+                        <span class="ml-2 text-gray-600">- 誤字脱字や表記ミスの修正</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="help-highlight-demo highlight-expression">🟣 言い回し</span>
+                        <span class="ml-2 text-gray-600">- より自然な表現への変更</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="help-highlight-demo highlight-dictionary">🟡 辞書ルール</span>
+                        <span class="ml-2 text-gray-600">- 辞書に基づく表記統一</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="help-highlight-demo highlight-contradiction">🟠 矛盾チェック</span>
+                        <span class="ml-2 text-gray-600">- 論理的矛盾や不整合の指摘</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>⌨️ キーボードショートカット</h3>
+                <div class="space-y-1 text-gray-700">
+                    <div><kbd class="bg-gray-200 px-2 py-1 rounded">Ctrl + Enter</kbd> - 校正実行</div>
+                    <div><kbd class="bg-gray-200 px-2 py-1 rounded">Ctrl + Shift + R</kbd> - 設定リセット</div>
+                    <div><kbd class="bg-gray-200 px-2 py-1 rounded">Esc</kbd> - ヘルプを閉じる</div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>⚙️ 設定について</h3>
+                <div class="space-y-2 text-gray-700">
+                    <div><strong>温度 (0.0-1.0):</strong> 創造性のレベル。低いほど保守的、高いほど創造的</div>
+                    <div><strong>Top P (0.0-1.0):</strong> 語彙選択の多様性。低いほど確実、高いほど多様</div>
+                    <div class="text-sm text-gray-600">※ 設定は自動的に保存され、24時間保持されます</div>
+                </div>
             </div>
         </div>
     </div>
@@ -483,415 +903,376 @@
     
     // DOMが読み込まれた時の処理
     document.addEventListener('DOMContentLoaded', function() {
-        // 要素の参照
-        const inputText = document.getElementById('inputText');
-        const correctionResult = document.getElementById('correctionResult');
-        const startBtn = document.getElementById('startCorrectionBtn');
-        const copyBtn = document.getElementById('copyResultBtn');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const charCount = document.getElementById('charCount');
-        const tokenCount = document.getElementById('tokenCount');
-        const processingTime = document.getElementById('processingTime');
-        const timeElapsed = document.getElementById('timeElapsed');
-        const tokenInfo = document.getElementById('tokenInfo');
-        const inputTokens = document.getElementById('inputTokens');
-        const outputTokens = document.getElementById('outputTokens');
-        const totalCost = document.getElementById('totalCost');
-        const correctionsContainer = document.getElementById('correctionsContainer');
-        const progressBar = document.getElementById('progressBar');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const estimatedTime = document.getElementById('estimatedTime');
-        const temperatureSlider = document.getElementById('temperature');
-        const temperatureValue = document.getElementById('temperatureValue');
-        const topPSlider = document.getElementById('topP');
-        const topPValue = document.getElementById('topPValue');
-        const errorContainer = document.getElementById('errorContainer');
-        const errorDetails = document.getElementById('errorDetails');
+        // 設定の復元
+        loadSettings();
         
-        // 処理状態の変数
-        let isProcessing = false;
-        let startTime;
-        let processId = null;
-        let pollInterval = null;
+        // ヘルプ機能の初期化
+        initializeHelp();
         
-        // エラー詳細表示関数
-        function showErrorDetails(title, details) {
-            errorDetails.innerHTML = `<strong>${title}</strong>\n\n${details}`;
-            errorContainer.style.display = 'block';
-            // 表示位置までスクロール
-            errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        // キーボードショートカットの初期化
+        initializeKeyboardShortcuts();
         
-        // エラー表示をクリア
-        function clearErrorDetails() {
-            errorDetails.innerHTML = '';
-            errorContainer.style.display = 'none';
-        }
-        
-        // スライダー値の表示更新
-        temperatureSlider.addEventListener('input', function() {
-            temperatureValue.textContent = this.value;
+        // 設定変更時の保存
+        document.getElementById('temperature').addEventListener('input', function() {
+            document.getElementById('temperatureValue').textContent = this.value;
+            saveSettings();
         });
         
-        topPSlider.addEventListener('input', function() {
-            topPValue.textContent = this.value;
+        document.getElementById('topP').addEventListener('input', function() {
+            document.getElementById('topPValue').textContent = this.value;
+            saveSettings();
         });
         
-        // 文字カウンターの更新
-        inputText.addEventListener('input', function() {
+        // 文字数カウント機能
+        document.getElementById('inputText').addEventListener('input', function() {
             const text = this.value;
-            const chars = text.length;
-            // 簡易的なトークン計算（日本語なので1.5倍に概算）
-            const tokens = Math.ceil(chars * 1.5);
+            const charCount = text.length;
+            const tokenCount = Math.ceil(charCount / 3); // 概算
             
-            charCount.textContent = chars;
-            tokenCount.textContent = tokens;
-            
-            // トークン数によって処理時間の目安を更新
-            if (tokens > 0) {
-                const estimatedSeconds = 5 + Math.ceil(tokens / 100);
-                estimatedTime.textContent = `約${estimatedSeconds}秒`;
-            } else {
-                estimatedTime.textContent = '約30秒';
-            }
+            document.getElementById('charCount').textContent = charCount.toLocaleString();
+            document.getElementById('tokenCount').textContent = tokenCount.toLocaleString();
         });
         
-        // 校正開始ボタンのイベント
-        startBtn.addEventListener('click', function() {
-            if (isProcessing) {
-                alert('すでに処理中です。しばらくお待ちください。');
+        // 初期文字数カウント
+        const initialText = document.getElementById('inputText').value;
+        const initialCharCount = initialText.length;
+        const initialTokenCount = Math.ceil(initialCharCount / 3);
+        document.getElementById('charCount').textContent = initialCharCount.toLocaleString();
+        document.getElementById('tokenCount').textContent = initialTokenCount.toLocaleString();
+        
+        // リセットボタンのイベント
+        document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
+        
+        // 校正ボタンのイベント
+        document.getElementById('startCorrectionBtn').addEventListener('click', function() {
+            const inputText = document.getElementById('inputText').value.trim();
+            if (!inputText) {
+                alert('校正する文章を入力してください。');
                 return;
             }
             
-            const text = inputText.value.trim();
-            if (!text) {
-                alert('校正するテキストを入力してください。');
-                return;
-            }
+            const temperature = document.getElementById('temperature').value;
+            const topP = document.getElementById('topP').value;
             
-            // 処理開始状態の設定
-            startTime = Date.now();
-            isProcessing = true;
+            // ローディング状態
+            this.disabled = true;
+            this.textContent = '校正中...';
+            document.getElementById('correctionResult').innerHTML = '<div class="text-center text-gray-500">校正処理中です...</div>';
             
-            // ローディング表示
-            showLoading();
-            
-            // 校正処理のリクエスト
             fetch('/proofreading_ai/proofread/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
                 body: JSON.stringify({
-                    text: text,
-                    temperature: temperatureSlider.value,
-                    top_p: topPSlider.value
+                    text: inputText,
+                    temperature: parseFloat(temperature),
+                    top_p: parseFloat(topP)
                 })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('校正処理に失敗しました。ステータスコード: ' + response.status);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('校正結果:', data);
-                handleCorrectionResult(data);
+                if (data.success) {
+                    // ハイライト適用
+                    const highlightedText = applyHighlights(data.corrected_text, data.corrections);
+                    document.getElementById('correctionResult').innerHTML = highlightedText;
+                    
+                    // 修正箇所表示
+                    displayCorrections(data.corrections);
+                    
+                    // パフォーマンス情報更新
+                    updatePerformanceInfo(data);
+                    
+                    // コピーボタンの表示
+                    document.getElementById('copyResultBtn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('correctionResult').innerHTML = `<div class="text-red-500">エラー: ${data.error}</div>`;
+                }
             })
             .catch(error => {
-                console.error('エラーが発生しました:', error);
-                hideLoading();
-                isProcessing = false;
-                
-                // エラーの詳細情報を表示
-                showErrorDetails('校正処理エラー', error.message || 'テキストの校正中にエラーが発生しました。');
+                console.error('Error:', error);
+                document.getElementById('correctionResult').innerHTML = '<div class="text-red-500">校正処理中にエラーが発生しました。</div>';
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.textContent = '校正する';
             });
         });
         
-        // CSRF トークンを取得するヘルパー関数
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        
-        // 校正結果の処理
-        function handleCorrectionResult(data) {
-            // ローディング非表示
-            hideLoading();
-            isProcessing = false;
+        // コピーボタンのイベント
+        document.getElementById('copyResultBtn').addEventListener('click', function() {
+            const outputElement = document.getElementById('correctionResult');
+            const textToCopy = outputElement.innerText || outputElement.textContent;
             
-            // サーバー側で生成されたハイライト付きHTMLをそのまま表示
-            correctionResult.innerHTML = data.corrected_text;
-            
-            // 修正箇所の解析と表示
-            displayCorrections(data.corrections);
-            
-            // サーバー側で既にハイライト処理済みなので、JavaScript側のハイライト処理は不要
-            // applyHighlights(); // この行をコメントアウト
-            
-            // イベントリスナーを直接設定
-            setupCorrectionEventListeners();
-            
-            // 出力エリアのサイズを自動調整
-            autoResizeTextarea(correctionResult);
-            
-            // エラー表示をクリア
-            clearErrorDetails();
-        }
-        
-        // 修正箇所をハイライト表示する関数
-        function applyHighlights() {
-            try {
-                console.log('修正箇所のハイライト処理を開始');
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = this.textContent;
+                this.textContent = '✓ コピー完了';
+                this.style.backgroundColor = '#10B981';
                 
-                // 修正項目を収集
-                const correctionItems = [];
-                const correctionElements = document.querySelectorAll('.correction-item');
-                
-                correctionElements.forEach(item => {
-                    const originalText = item.querySelector('.original-text')?.textContent;
-                    const correctedText = item.querySelector('.corrected-text')?.textContent;
-                    const reason = item.querySelector('.reason-text')?.textContent || '';
-                    
-                    if (originalText && correctedText) {
-                        correctionItems.push({
-                            original: originalText,
-                            corrected: correctedText,
-                            reason: reason
-                        });
-                    }
-                });
-                
-                if (correctionItems.length === 0) {
-                    console.log('修正箇所が見つかりません');
-                    return;
-                }
-                
-                console.log(`${correctionItems.length}箇所の修正を検出`);
-                
-                // 校正結果内のテキストを処理
-                let resultHTML = correctionResult.innerHTML;
-                
-                correctionItems.forEach((correction, index) => {
-                    // 特殊文字をエスケープしてから正規表現で検索できるようにする
-                    const escapedOriginal = correction.original
-                        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 正規表現の特殊文字をエスケープ
-                    
-                    const regex = new RegExp(escapedOriginal, 'g');
-                    
-                    // ハイライト用のHTML
-                    const highlightHTML = 
-                        `<span class="correction-span">` + 
-                            `<span class="correction-text">${correction.original}</span>` + 
-                            `<div class="correction-tooltip">` + 
-                                `<span class="original-text">${correction.original}</span><br>` + 
-                                `<span class="corrected-text">${correction.corrected}</span><br>` + 
-                                `<span class="reason-text">${correction.reason}</span><br>` + 
-                                `<button class="apply-correction">修正する</button>` + 
-                            `</div>` + 
-                        `</span>`;
-                    
-                    // 置換を実行
-                    resultHTML = resultHTML.replace(regex, highlightHTML);
-                });
-                
-                // 修正したHTMLを設定
-                correctionResult.innerHTML = resultHTML;
-                
-                // イベントリスナーを設定
-                setupCorrectionEventListeners();
-                
-                console.log('ハイライト処理完了');
-            } catch (e) {
-                console.error('ハイライト処理でエラーが発生:', e);
-            }
-        }
-        
-        // 修正適用ボタンのイベントリスナーを設定
-        function setupCorrectionEventListeners() {
-            document.querySelectorAll('.correction-span').forEach(span => {
-                const tooltip = span.querySelector('.correction-tooltip');
-                let hideTimeout = null;
-                // ポップアップ表示制御
-                span.addEventListener('mouseenter', () => {
-                    if (tooltip) {
-                        clearTimeout(hideTimeout);
-                        tooltip.style.display = 'block';
-                    }
-                });
-                span.addEventListener('mouseleave', () => {
-                    hideTimeout = setTimeout(() => {
-                        if (tooltip) tooltip.style.display = 'none';
-                    }, 120);
-                });
-                if (tooltip) {
-                    tooltip.addEventListener('mouseenter', () => {
-                        clearTimeout(hideTimeout);
-                        tooltip.style.display = 'block';
-                    });
-                    tooltip.addEventListener('mouseleave', () => {
-                        hideTimeout = setTimeout(() => {
-                            tooltip.style.display = 'none';
-                        }, 120);
-                    });
-                }
-                // クリックで修正適用
-                const orig = span.querySelector('.original-text');
-                const corr = span.querySelector('.corrected-text');
-                const highlight = span.querySelector('.correction-text');
-                if (orig) {
-                    orig.onclick = function(e) {
-                        e.stopPropagation();
-                        console.log('original-text clicked!', orig.textContent);
-                        span.outerHTML = `<span class='applied-correction original' data-original-html='${encodeURIComponent(span.outerHTML)}'>${orig.textContent}</span>`;
-                        setupCorrectionEventListeners();
-                    };
-                }
-                if (corr) {
-                    corr.onclick = function(e) {
-                        e.stopPropagation();
-                        console.log('corrected-text clicked!', corr.textContent);
-                        span.outerHTML = `<span class='applied-correction' data-original-html='${encodeURIComponent(span.outerHTML)}'>${corr.textContent}</span>`;
-                        setupCorrectionEventListeners();
-                    };
-                }
-                if (highlight && corr) {
-                    highlight.onclick = function(e) {
-                        e.stopPropagation();
-                        console.log('correction-text clicked!', highlight.textContent);
-                        span.outerHTML = `<span class='applied-correction' data-original-html='${encodeURIComponent(span.outerHTML)}'>${corr.textContent}</span>`;
-                        setupCorrectionEventListeners();
-                    };
-                }
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.style.backgroundColor = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('コピーに失敗しました:', err);
+                alert('コピーに失敗しました。');
             });
-            // applied-correctionにもイベントを付与
-            document.querySelectorAll('.applied-correction').forEach(span => {
-                span.onclick = function(e) {
-                    e.stopPropagation();
-                    const originalHtml = span.getAttribute('data-original-html');
-                    if (originalHtml) {
-                        span.outerHTML = decodeURIComponent(originalHtml);
-                        setupCorrectionEventListeners();
-                    }
-                };
-            });
-        }
-        
-        // ローディング表示
-        function showLoading() {
-            loadingOverlay.style.display = 'flex';
-        }
-        
-        // ローディング非表示
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
-        }
-        
-        // プログレスバーアニメーション
-        function startProgressAnimation() {
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                if (!isProcessing) {
-                    clearInterval(progressInterval);
-                    progressBar.style.width = '100%';
-                    return;
-                }
-                
-                // 進捗表現の計算（0〜95%まで徐々に遅くなる）
-                if (progress < 90) {
-                    progress += (90 - progress) / 50;
-                } else if (progress < 95) {
-                    progress += 0.1;
-                }
-                
-                progressBar.style.width = `${progress}%`;
-                
-                // 進捗に応じてメッセージ更新
-                if (progress < 20) {
-                    loadingMessage.textContent = 'テキスト解析中...';
-                } else if (progress < 50) {
-                    loadingMessage.textContent = '校正処理中...';
-                } else if (progress < 80) {
-                    loadingMessage.textContent = '最終チェック中...';
-                } else {
-                    loadingMessage.textContent = 'もうすぐ完了します...';
-                }
-            }, 200);
-        }
-        
-        // テキストエリアの自動サイズ調整
-        function autoResizeTextarea(textarea) {
-            if (!textarea) return;
-            
-            // 一度最小高さにリセット
-            textarea.style.height = 'auto';
-            
-            // スクロール高さに合わせて高さを設定
-            textarea.style.height = (textarea.scrollHeight) + 'px';
-            
-            // 少し余裕を持たせる
-            textarea.style.height = (textarea.scrollHeight + 10) + 'px';
-            
-            console.log('テキストエリアリサイズ:', textarea.id, textarea.style.height);
-        }
-        
-        // 初期ロード時にサイズ調整
-        if (inputText) {
-            // 遅延を入れて確実にコンテンツが反映された後でリサイズ
-            setTimeout(() => autoResizeTextarea(inputText), 100);
-            
-            // テキスト入力時に自動調整
-            inputText.addEventListener('input', function() {
-                autoResizeTextarea(this);
-            });
-        }
-        
-        // 結果表示エリアも初期調整
-        if (correctionResult) {
-            setTimeout(() => autoResizeTextarea(correctionResult), 100);
-            
-            // コンテンツが変更された時も調整
-            const observer = new MutationObserver(function() {
-                autoResizeTextarea(correctionResult);
-            });
-            
-            observer.observe(correctionResult, { 
-                childList: true, 
-                subtree: true,
-                characterData: true 
-            });
-        }
+        });
     });
 
     // 修正箇所リストを表示する関数（グローバルスコープに追加）
     function displayCorrections(corrections) {
         const container = document.getElementById('correctionsContainer');
         if (!container) return;
+        
         if (!corrections || corrections.length === 0) {
             container.innerHTML = '<p class="text-gray-500 italic">修正箇所はありません。</p>';
-            return;
-        }
-        let html = '';
+                return;
+            }
+            
+        // カテゴリー別に分類
+        const categories = {
+            typo: { name: '誤字修正', icon: '🔴', items: [] },
+            expression: { name: '言い回し', icon: '🟣', items: [] },
+            dictionary: { name: '辞書ルール', icon: '🟡', items: [] },
+            contradiction: { name: '矛盾チェック', icon: '🟠', items: [] }
+        };
+        
         corrections.forEach(corr => {
-            html += `<div class="correction-item">
-                <span class="original-text">${corr.original ?? ''}</span>
-                <span class="popup-arrow">→</span>
-                <span class="corrected-text">${corr.corrected ?? ''}</span>
-                <span class="reason-text">${corr.reason ?? ''}</span>
-            </div>`;
+            const category = getCorrectionCategory(corr.reason || '');
+            categories[category].items.push(corr);
         });
+        
+        let html = '';
+        
+        // カテゴリー別に表示
+        Object.keys(categories).forEach(categoryKey => {
+            const category = categories[categoryKey];
+            if (category.items.length > 0) {
+                html += `
+                    <div class="category-section">
+                        <div class="category-header category-header-${categoryKey}">
+                            <div class="flex items-center">
+                                <span class="category-icon">${category.icon}</span>
+                                <span>${category.name}</span>
+                            </div>
+                            <span class="category-count">${category.items.length}件</span>
+                        </div>
+                        <div class="category-items">
+                `;
+                
+                category.items.forEach(corr => {
+                    html += `
+                        <div class="correction-item correction-item-${categoryKey} mb-3 p-3 bg-white rounded-lg">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="original-text">${corr.original || ''}</span>
+                                <span class="popup-arrow text-gray-400">→</span>
+                                <span class="corrected-text">${corr.corrected || ''}</span>
+                            </div>
+                            <div class="reason-text text-sm">${corr.reason || ''}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
         container.innerHTML = html;
+    }
+
+    // 設定の保存・復元機能
+    function saveSettings() {
+        const settings = {
+            temperature: document.getElementById('temperature').value,
+            topP: document.getElementById('topP').value,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('proofreadingSettings', JSON.stringify(settings));
+    }
+    
+    function loadSettings() {
+        const saved = localStorage.getItem('proofreadingSettings');
+        if (saved) {
+            const settings = JSON.parse(saved);
+            // 24時間以内の設定のみ復元
+            if (Date.now() - settings.timestamp < 24 * 60 * 60 * 1000) {
+                document.getElementById('temperature').value = settings.temperature;
+                document.getElementById('topP').value = settings.topP;
+                document.getElementById('temperatureValue').textContent = settings.temperature;
+                document.getElementById('topPValue').textContent = settings.topP;
+            }
+        }
+    }
+    
+    function resetSettings() {
+        document.getElementById('temperature').value = '0.1';
+        document.getElementById('topP').value = '0.7';
+        document.getElementById('temperatureValue').textContent = '0.1';
+        document.getElementById('topPValue').textContent = '0.7';
+        saveSettings();
+        
+        // 視覚的フィードバック
+        const btn = document.getElementById('resetSettingsBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '✓ リセット完了';
+        btn.style.backgroundColor = '#10B981';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.backgroundColor = '';
+        }, 1500);
+    }
+    
+    // 4種類のハイライト機能
+    function applyHighlights(text, corrections) {
+        if (!corrections || corrections.length === 0) {
+            return text;
+        }
+        
+        let highlightedText = text;
+        const replacements = [];
+        
+        corrections.forEach((correction, index) => {
+            if (correction.original && correction.corrected) {
+                const category = getCorrectionCategory(correction.reason || '');
+                const tooltipText = getCategoryTooltip(category);
+                
+                const highlightClass = `highlight-${category}`;
+                const replacement = `<span class="${highlightClass}" data-correction-id="${index}">
+                    ${correction.corrected}
+                    <span class="highlight-tooltip">${tooltipText}</span>
+                </span>`;
+                
+                replacements.push({
+                    original: correction.original,
+                    replacement: replacement
+                });
+            }
+        });
+        
+        // 長い文字列から順にソートして置換
+        replacements.sort((a, b) => b.original.length - a.original.length);
+        
+        replacements.forEach(rep => {
+            const regex = new RegExp(escapeRegExp(rep.original), 'g');
+            highlightedText = highlightedText.replace(regex, rep.replacement);
+        });
+        
+        return highlightedText;
+    }
+    
+    function getCorrectionCategory(reason) {
+        const reasonLower = reason.toLowerCase();
+        if (reasonLower.includes('誤字') || reasonLower.includes('脱字') || reasonLower.includes('typo')) {
+            return 'typo';
+        } else if (reasonLower.includes('言い回し') || reasonLower.includes('表現') || reasonLower.includes('expression')) {
+            return 'expression';
+        } else if (reasonLower.includes('辞書') || reasonLower.includes('統一') || reasonLower.includes('dictionary')) {
+            return 'dictionary';
+        } else if (reasonLower.includes('矛盾') || reasonLower.includes('不整合') || reasonLower.includes('contradiction')) {
+            return 'contradiction';
+        }
+        return 'typo'; // デフォルト
+    }
+    
+    function getCategoryTooltip(category) {
+        const tooltips = {
+            'typo': '🔴 誤字修正',
+            'expression': '🟣 言い回し',
+            'dictionary': '🟡 辞書ルール',
+            'contradiction': '🟠 矛盾チェック'
+        };
+        return tooltips[category] || '🔴 誤字修正';
+    }
+    
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    
+    // パフォーマンス情報更新
+    function updatePerformanceInfo(data) {
+        console.log('パフォーマンス情報更新:', data);
+        
+        const performanceInfo = document.getElementById('performanceInfo');
+        
+        if (data.processing_time !== undefined) {
+            document.getElementById('processingTimeDisplay').textContent = 
+                parseFloat(data.processing_time || 0).toFixed(2);
+        }
+        
+        if (data.input_tokens !== undefined) {
+            document.getElementById('inputTokensDisplay').textContent = 
+                parseInt(data.input_tokens || 0).toLocaleString();
+        }
+        
+        if (data.output_tokens !== undefined) {
+            document.getElementById('outputTokensDisplay').textContent = 
+                parseInt(data.output_tokens || 0).toLocaleString();
+        }
+        
+        if (data.estimated_cost !== undefined) {
+            document.getElementById('estimatedCostDisplay').textContent = 
+                `¥${parseFloat(data.estimated_cost || 0).toFixed(2)}`;
+        }
+        
+        if (data.model_used) {
+            document.getElementById('modelUsedDisplay').textContent = data.model_used;
+        }
+        
+        if (data.processed_at) {
+            const date = new Date(data.processed_at);
+            document.getElementById('processedAtDisplay').textContent = 
+                date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        performanceInfo.style.display = 'block';
+    }
+    
+    // ヘルプ機能
+    function initializeHelp() {
+        const helpButton = document.getElementById('helpButton');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+        
+        helpButton.addEventListener('click', () => {
+            helpModal.style.display = 'flex';
+        });
+        
+        closeHelpBtn.addEventListener('click', () => {
+            helpModal.style.display = 'none';
+        });
+        
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.style.display = 'none';
+            }
+        });
+    }
+    
+    // キーボードショートカット
+    function initializeKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl + Enter: 校正実行
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('startCorrectionBtn').click();
+            }
+            
+            // Ctrl + Shift + R: 設定リセット
+            if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                e.preventDefault();
+                resetSettings();
+            }
+            
+            // Esc: ヘルプを閉じる
+            if (e.key === 'Escape') {
+                document.getElementById('helpModal').style.display = 'none';
+            }
+        });
     }
 </script>
 {% endblock %}

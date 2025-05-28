@@ -1,0 +1,27 @@
+{
+  "test_text": "\n        <h1>テスト文章</h1>\n        <p>これは校正のテストです。いくつかの間違いが含まれています。</p>\n        <ul>\n            <li>誤字脱字のテスト: こんにちわ（正しくは「こんにちは」）</li>\n            <li>表記ゆれのテスト: サーバー/サーバ</li>\n            <li>言い回しのテスト: とても良いです（より自然な表現に）</li>\n        </ul>\n        <p>この文章を校正して、より読みやすくしてください。</p>\n        ",
+  "corrected_text": "<h1>テスト文章</h1>\n<p>これは校正のテストです。いくつかの間違いが含まれています。</p>\n<ul>\n    <li>誤字脱字のテスト: こんにちは（正しくは「こんにちは」）</li>\n    <li>表記ゆれのテスト: サーバー</li>\n    <li>言い回しのテスト: 非常に良いです（より自然な表現に）</li>\n</ul>\n<p>この文章を校正して、より読みやすくしてください。</p>\n\n✅修正箇所：\n- カテゴリー: typo | 3行目: こんにちわ -> こんにちは: 「こんにちは」が正しい表記のため修正しました。\n- カテゴリー: inconsistency | 4行目: サーバー/サーバ -> サーバー: 表記の一貫性を保つため、「サーバー」に統一しました。\n- カテゴリー: tone | 5行目: とても良いです -> 非常に良いです: より自然で適切な表現に修正しました。",
+  "model": "claude-3-5-sonnet-20240620",
+  "completion_time": 7.95526909828186,
+  "cost_info": {
+    "input_tokens": 3282,
+    "output_tokens": 613,
+    "total_cost": 2.8561500000000004,
+    "profile_type": "アプリケーション",
+    "model_id": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    "profile_info": {
+      "name": "proofreading-ai-claude-3-5-sonnet",
+      "description": "校正AI専用Claude 3.5 Sonnetプロファイル",
+      "tags": {
+        "Application": "ProofreadingAI",
+        "Environment": "Production",
+        "Team": "AI-Development",
+        "Model": "Claude-3.5-Sonnet"
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 1637,
+    "output_tokens": 335
+  }
+}

@@ -148,11 +148,15 @@ Claude 3.5 Sonnet v2を活用した次世代校正AI機能の実装。4つのカ
 
 2. **カテゴリー分類システム**
    - CorrectionV2モデルの作成
-   - 4つのカテゴリー定義（tone/typo/dict/geo）
+   - 4つのカテゴリー定義（tone/typo/dict/inconsistency）
    - カテゴリー別解析ロジック
 
 3. **色分けハイライト機能**
    - CSS定義（4色ハイライト）
+     - 🟣 言い回しアドバイス（紫色）
+     - 🔴 誤字修正（赤色）
+     - 🟡 社内辞書ルール（黄色）
+     - 🟠 矛盾チェック（オレンジ色）
    - HTML生成ロジックの拡張
    - フロントエンド表示の改良
 
@@ -162,10 +166,10 @@ Claude 3.5 Sonnet v2を活用した次世代校正AI機能の実装。4つのカ
    - 管理画面での辞書編集
    - カテゴリー別辞書適用
 
-2. **地域データベース連携**
-   - 地名・地域情報データベース
-   - 地理的矛盾検出ロジック
-   - 外部API連携（必要に応じて）
+2. **矛盾検出システム**
+   - InconsistencyDataモデル（地理的、時系列、数値、論理的、事実矛盾）
+   - 矛盾検出ルールエンジン
+   - 外部データベース連携（必要に応じて）
 
 3. **フィルター・統計機能**
    - カテゴリー別表示切り替え
@@ -183,7 +187,7 @@ Claude 3.5 Sonnet v2を活用した次世代校正AI機能の実装。4つのカ
 ### 新規モデル
 ```python
 class CorrectionV2(models.Model):
-    category = models.CharField(max_length=10)  # tone/typo/dict/geo
+    category = models.CharField(max_length=15)  # tone/typo/dict/inconsistency
     confidence = models.FloatField()
     severity = models.CharField(max_length=10)
     # 既存フィールド継承
@@ -193,6 +197,12 @@ class CompanyDictionary(models.Model):
     correct_form = models.CharField(max_length=255)
     category = models.CharField(max_length=50)
     is_active = models.BooleanField(default=True)
+
+class InconsistencyData(models.Model):
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=20)  # geographic/temporal/numerical/logical/factual
+    correct_form = models.CharField(max_length=255)
+    incorrect_patterns = models.TextField()
 ```
 
 ### API拡張
@@ -202,10 +212,10 @@ class CompanyDictionary(models.Model):
 
 ## テスト項目
 - [ ] Claude 3.5 Sonnet v2での校正精度テスト
-- [ ] 4色ハイライト表示テスト
+- [ ] 4色ハイライト表示テスト（紫、赤、黄、オレンジ）
 - [ ] カテゴリー分類精度テスト
 - [ ] 社内辞書適用テスト
-- [ ] 地域矛盾検出テスト
+- [ ] 矛盾検出テスト（地理的、時系列、数値、論理的、事実）
 - [ ] フィルター機能テスト
 - [ ] パフォーマンステスト
 - [ ] UI/UXテスト
