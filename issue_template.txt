@@ -131,4 +131,87 @@
 - [ ] ECS環境でのデプロイが正常に完了すること
 
 ## 期限
-2024/06/30 
+2024/06/30
+
+# [機能追加] 校正AI v2 - 4色カテゴリー分類システム
+
+## 目的
+Claude 3.5 Sonnet v2を活用した次世代校正AI機能の実装。4つのカテゴリーに分けた色分けハイライトで、より詳細で実用的な修正提案を提供する。
+
+## 実装内容
+
+### Phase 1: 基盤構築
+1. **Claude 3.5 Sonnet v2対応**
+   - BedrockClientの新モデル対応
+   - プロンプト設計の最適化
+   - レスポンス解析の改良
+
+2. **カテゴリー分類システム**
+   - CorrectionV2モデルの作成
+   - 4つのカテゴリー定義（tone/typo/dict/geo）
+   - カテゴリー別解析ロジック
+
+3. **色分けハイライト機能**
+   - CSS定義（4色ハイライト）
+   - HTML生成ロジックの拡張
+   - フロントエンド表示の改良
+
+### Phase 2: 高度化機能
+1. **社内辞書管理システム**
+   - CompanyDictionaryモデル
+   - 管理画面での辞書編集
+   - カテゴリー別辞書適用
+
+2. **地域データベース連携**
+   - 地名・地域情報データベース
+   - 地理的矛盾検出ロジック
+   - 外部API連携（必要に応じて）
+
+3. **フィルター・統計機能**
+   - カテゴリー別表示切り替え
+   - 信頼度フィルター
+   - 校正統計レポート
+
+## 技術的メモ
+
+### 使用技術
+- Claude 3.5 Sonnet v2 (anthropic.claude-3-5-sonnet-20241022-v2:0)
+- Django ORM (新モデル追加)
+- JavaScript (フィルター機能)
+- CSS (4色ハイライトシステム)
+
+### 新規モデル
+```python
+class CorrectionV2(models.Model):
+    category = models.CharField(max_length=10)  # tone/typo/dict/geo
+    confidence = models.FloatField()
+    severity = models.CharField(max_length=10)
+    # 既存フィールド継承
+
+class CompanyDictionary(models.Model):
+    term = models.CharField(max_length=255)
+    correct_form = models.CharField(max_length=255)
+    category = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
+```
+
+### API拡張
+- `/proofreading_ai/proofread-v2/` エンドポイント
+- カテゴリー別フィルター機能
+- 統計データ取得API
+
+## テスト項目
+- [ ] Claude 3.5 Sonnet v2での校正精度テスト
+- [ ] 4色ハイライト表示テスト
+- [ ] カテゴリー分類精度テスト
+- [ ] 社内辞書適用テスト
+- [ ] 地域矛盾検出テスト
+- [ ] フィルター機能テスト
+- [ ] パフォーマンステスト
+- [ ] UI/UXテスト
+
+## 期限
+2024/12/31
+
+## 優先度
+High - 次世代校正機能の核となる重要な機能追加 
