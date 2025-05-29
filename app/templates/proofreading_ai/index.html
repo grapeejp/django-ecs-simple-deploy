@@ -3600,8 +3600,7 @@
         document.getElementById('quizQuestionText').textContent = 'どちらが適切な表記でしょうか？';
         
         // カテゴリーバッジ更新
-        const ruleText = question.rule === '開く' ? '📖 ひらがな表記' : '📚 漢字表記';
-        document.getElementById('quizCategoryBadge').textContent = ruleText;
+        document.getElementById('quizCategoryBadge').textContent = '📝 校正問題';
         
         // 選択肢設定
         const option1 = document.getElementById('quizOption1');
@@ -3854,11 +3853,11 @@
         // まずクイズの結果を表示
         endQuiz();
         
-        // 2秒後にローディングオーバーレイを非表示にして校正結果を表示
+        // 7秒後にローディングオーバーレイを非表示にして校正結果を表示
         setTimeout(() => {
             console.log('✅ クイズ完了 - 校正結果を表示します');
             hideLoadingOverlay();
-        }, 2000);
+        }, 7000);
     }
 </script>
 {% endblock %}
