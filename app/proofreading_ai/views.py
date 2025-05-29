@@ -17,7 +17,7 @@ from .models import ProofreadingRequest, ProofreadingResult, ReplacementDictiona
 # 本番用とモック用両方をインポート
 from .services.bedrock_client import BedrockClient
 from .services.mock_bedrock_client import MockBedrockClient
-from .utils import get_html_diff, protect_html_tags, restore_html_tags, format_corrections, parse_corrections_from_text
+from .utils import get_html_diff, protect_html_tags_advanced, restore_html_tags_advanced, format_corrections, parse_corrections_from_text
 
 logger = logging.getLogger(__name__)
 
@@ -121,13 +121,15 @@ def proofread(request):
         # 保護されたテキストの準備
         try:
             logger.info('🛡️ テキスト保護処理開始')
-            protected_text, placeholders = protect_html_tags(original_text)
+            protected_text, placeholders, html_tag_info = protect_html_tags_advanced(original_text)
             logger.info(f'✅ テキスト保護処理完了')
             logger.info(f'📏 保護後テキスト長: {len(protected_text)}文字')
+            logger.info(f'🏷️ HTMLタグ情報: {len(html_tag_info)}個のタグ解析')
         except Exception as e:
             logger.error(f'❌ テキスト保護処理エラー: {str(e)}')
             protected_text = original_text
             placeholders = {}
+            html_tag_info = []
         
         # 校正実行
         try:
@@ -157,7 +159,7 @@ def proofread(request):
         # HTMLタグを復元
         try:
             logger.info('🔄 HTMLタグ復元開始')
-            corrected_text = restore_html_tags(corrected_text, placeholders)
+            corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
             logger.info(f'✅ HTMLタグ復元完了')
         except Exception as e:
             logger.warning(f'⚠️ HTMLタグ復元エラー: {str(e)}')
@@ -266,7 +268,7 @@ def process_proofread_async(process_id, original_text, temperature, top_p):
     """
     try:
         # HTMLタグを保護
-        protected_text, placeholders = protect_html_tags(original_text)
+        protected_text, placeholders, html_tag_info = protect_html_tags_advanced(original_text)
         
         # リクエストをDBに保存
         proofread_request = ProofreadingRequest.objects.create(
@@ -287,7 +289,7 @@ def process_proofread_async(process_id, original_text, temperature, top_p):
         print('DEBUG 校正AI返り値:', corrected_text, corrections, completion_time, cost_info)
         
         # HTMLタグを復元
-        corrected_text = restore_html_tags(corrected_text, placeholders)
+        corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
         
         # 修正箇所リストをパース
         corrections = parse_corrections_from_text(corrected_text)

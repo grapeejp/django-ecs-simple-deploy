@@ -265,3 +265,153 @@ def parse_corrections_from_text(corrected_text: str) -> List[Dict[str, str]]:
                 })
     
     return corrections 
+
+
+def protect_html_tags_advanced(text: str) -> Tuple[str, Dict[str, str], List[Dict]]:
+    """
+    HTMLタグを詳細解析して、タグ内の誤字も検出できるように改善された保護機能
+    
+    Args:
+        text: 元テキスト
+        
+    Returns:
+        タグを置換したテキスト、プレースホルダーマッピング辞書、HTMLタグ情報リスト
+    """
+    # HTMLタグを検出する正規表現（開始タグ、終了タグ、コメントタグ）
+    tag_pattern = r'(<(/?)([a-zA-Z][a-zA-Z0-9]*)\s*([^>]*?)>|<!--[\s\S]*?-->)'
+    
+    placeholders = {}
+    html_tag_info = []
+    protected_text = text
+    tag_counter = 0
+    
+    def replace_tag(match):
+        nonlocal tag_counter, placeholders, html_tag_info
+        
+        full_tag = match.group(0)
+        
+        # コメントタグの場合は従来通り保護
+        if full_tag.startswith('<!--'):
+            placeholder = f"__HTML_TAG_{tag_counter}__"
+            placeholders[placeholder] = full_tag
+            tag_counter += 1
+            return placeholder
+        
+        # 通常のHTMLタグの解析
+        is_closing = bool(match.group(2))  # "/" があるかどうか
+        tag_name = match.group(3)
+        attributes = match.group(4).strip() if match.group(4) else ""
+        
+        if is_closing:
+            # 終了タグは保護（校正対象外）
+            placeholder = f"__HTML_TAG_{tag_counter}__"
+            placeholders[placeholder] = full_tag
+            tag_counter += 1
+            return placeholder
+        else:
+            # 開始タグの場合、属性部分も校正対象にする
+            if attributes:
+                # 属性を校正可能テキストとして処理
+                attr_placeholder = f"__HTML_ATTR_{tag_counter}__"
+                
+                # HTMLタグ情報を保存（tag_counterも含める）
+                html_tag_info.append({
+                    'tag_name': tag_name,
+                    'attributes_original': attributes,
+                    'attr_placeholder': attr_placeholder,
+                    'full_placeholder': f"__HTML_TAG_{tag_counter}__",
+                    'tag_counter': tag_counter
+                })
+                
+                # タグの骨格部分のみプレースホルダーで保護
+                tag_skeleton = f"<{tag_name} {attr_placeholder}>"
+                placeholder = f"__HTML_TAG_{tag_counter}__"
+                placeholders[placeholder] = tag_skeleton
+                tag_counter += 1
+                
+                # 属性部分を校正可能テキストとして残す
+                return f"{placeholder} {attributes} __ATTR_END_{tag_counter-1}__"
+            else:
+                # 属性なしの場合は従来通り保護
+                placeholder = f"__HTML_TAG_{tag_counter}__"
+                placeholders[placeholder] = full_tag
+                tag_counter += 1
+                return placeholder
+    
+    # タグを置換
+    protected_text = re.sub(tag_pattern, replace_tag, protected_text)
+    
+    return protected_text, placeholders, html_tag_info
+
+
+def restore_html_tags_advanced(text: str, placeholders: Dict[str, str], html_tag_info: List[Dict], corrections: List[Dict]) -> str:
+    """
+    改善されたHTMLタグ復元機能（属性内の修正も反映）
+    
+    Args:
+        text: プレースホルダーを含むテキスト
+        placeholders: プレースホルダーとタグのマッピング辞書
+        html_tag_info: HTMLタグ詳細情報
+        corrections: 修正箇所リスト
+        
+    Returns:
+        タグと修正を復元したテキスト
+    """
+    result = text
+    
+    # 属性内の修正を適用
+    for i, tag_info in enumerate(html_tag_info):
+        attr_placeholder = tag_info['attr_placeholder']
+        original_attrs = tag_info['attributes_original']
+        tag_name = tag_info['tag_name']
+        full_placeholder = tag_info['full_placeholder']
+        tag_counter = tag_info['tag_counter']
+        attr_end_marker = f"__ATTR_END_{tag_counter}__"
+        
+        # 属性部分に対する修正を適用
+        corrected_attrs = original_attrs
+        for correction in corrections:
+            if correction['original'] in original_attrs:
+                corrected_attrs = corrected_attrs.replace(
+                    correction['original'], 
+                    correction['corrected']
+                )
+        
+        # タグ名に対する修正を適用
+        corrected_tag_name = tag_name
+        for correction in corrections:
+            if correction['original'] == tag_name:
+                corrected_tag_name = correction['corrected']
+        
+        # 修正された完全なタグを構築
+        corrected_tag = f"<{corrected_tag_name} {corrected_attrs}>"
+        
+        # プレースホルダーを更新
+        placeholders[full_placeholder] = corrected_tag
+        
+        # 属性部分とエンドマーカーを除去
+        pattern = f"{re.escape(full_placeholder)} {re.escape(original_attrs)} {re.escape(attr_end_marker)}"
+        result = re.sub(pattern, full_placeholder, result)
+        
+        # 終了タグも更新（存在する場合）
+        closing_tag_placeholder = f"__HTML_TAG_{tag_counter + 1}__"
+        if closing_tag_placeholder in placeholders:
+            corrected_closing_tag = f"</{corrected_tag_name}>"
+            placeholders[closing_tag_placeholder] = corrected_closing_tag
+    
+    # 本文テキストに対する修正を適用
+    for correction in corrections:
+        original = correction['original']
+        corrected = correction['corrected']
+        
+        # プレースホルダー以外の通常テキスト部分で修正を適用
+        if original in result and not original.startswith('__') and not original.endswith('__'):
+            result = result.replace(original, corrected)
+    
+    # 通常のプレースホルダー復元
+    sorted_placeholders = sorted(placeholders.items(), key=lambda x: len(x[0]), reverse=True)
+    
+    for placeholder, tag in sorted_placeholders:
+        result = result.replace(placeholder, tag)
+    
+    return result 
