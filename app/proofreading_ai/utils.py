@@ -171,7 +171,14 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
         
         cat_info = category_info.get(category, {'name': '修正', 'icon': '📝', 'color': '#6b7280'})
         
-        # 修正箇所をハイライト（4色カテゴリー対応・修正前文字列表示に変更）
+        # ツールチップ内容
+        tooltip_content = f'''
+            <div class="tooltip-original clickable-correction" data-action="revert" title="クリックして元に戻す">{html.escape(original_word)}</div>
+            <div class="tooltip-corrected clickable-correction" data-action="apply" title="クリックして修正を適用">{html.escape(corrected_word)}</div>
+            <div class="tooltip-reason">{html.escape(reason)}</div>
+        '''
+        
+        # ハイライト付きスパンの生成
         result.append(
             f'<span class="correction-span" '
             f'data-original="{html.escape(original_word)}" '
@@ -183,9 +190,7 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
             f'<div class="tooltip-category-badge" style="background: {cat_info["color"]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; text-align: center;">'
             f'{cat_info["icon"]} {cat_info["name"]}'
             f'</div>'
-            f'<div class="tooltip-original clickable-correction" data-action="revert" title="クリックして元に戻す">{html.escape(original_word)}</div>'
-            f'<div class="tooltip-corrected clickable-correction" data-action="apply" title="クリックして修正を適用">{html.escape(corrected_word)}</div>'
-            f'<div class="tooltip-reason">{html.escape(reason)}</div>'
+            f'{tooltip_content}'
             f'</span>'
             f'</span>'
         )

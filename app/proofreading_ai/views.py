@@ -103,15 +103,35 @@ def proofread(request):
         )
         logger.info(f"✅ Claude 4校正完了: 処理時間 {processing_time:.2f}秒")
         
-        # HTMLタグの復元と修正適用
+        # 修正箇所のハイライト処理（HTMLタグ復元前に実行）
+        logger.info("🎨 修正箇所ハイライト処理開始")
+        
+        # correctionsデータの修正：protected_text基準のoriginalを元の生テキスト基準に変換
+        corrected_corrections = []
+        for corr in corrections:
+            original_word = corr.get("original", "")
+            corrected_word = corr.get("corrected", "")
+            
+            # 元の生テキストから該当箇所を検索
+            if original_word in text:
+                # 元テキストでの該当箇所を使用
+                corrected_corrections.append({
+                    "original": original_word,
+                    "corrected": corrected_word,
+                    "reason": corr.get("reason", ""),
+                    "category": corr.get("category", "typo")
+                })
+            else:
+                # 見つからない場合はそのまま使用
+                corrected_corrections.append(corr)
+        
+        highlighted_text = format_corrections(text, corrected_corrections)
+        logger.info("✅ ハイライト処理完了")
+        
+        # HTMLタグの復元と修正適用（ハイライト後に実行）
         logger.info("🔄 HTMLタグ復元処理開始")
         final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
         logger.info("✅ HTMLタグ復元完了")
-        
-        # 修正箇所のハイライト処理
-        logger.info("🎨 修正箇所ハイライト処理開始")
-        highlighted_text = format_corrections(final_text, corrections)
-        logger.info("✅ ハイライト処理完了")
         
         total_time = time.time() - start_time
         logger.info(f"🏁 校正API処理完了: 総時間 {total_time:.2f}秒")
@@ -119,7 +139,7 @@ def proofread(request):
         return JsonResponse({
             'success': True,
             'corrected_text': highlighted_text,
-            'corrections': corrections,
+            'corrections': corrected_corrections,
             'processing_time': processing_time,
             'total_time': total_time,
             'input_tokens': cost_info.get('input_tokens', 0),
