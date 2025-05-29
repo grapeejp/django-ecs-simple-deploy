@@ -2122,6 +2122,14 @@
             // タイムアウト設定（90秒）
             const timeoutId = setTimeout(() => {
                 console.error('⏰ リクエストタイムアウト（90秒）');
+                
+                // 最終問題モードを解除
+                if (currentQuizState.isActive) {
+                    console.log('🎮 タイムアウト時にクイズ実行中 - 最終問題モードを解除');
+                    currentQuizState.isFinalQuestion = false;
+                    currentQuizState.processingCompleted = false;
+                }
+                
                 hideLoadingOverlay();
                 this.disabled = false;
                 this.textContent = '校正する';
@@ -2260,8 +2268,13 @@
             .finally(() => {
                 console.log('🏁 処理完了 - ローディング非表示');
                 
-                // ローディングオーバーレイを非表示
-                hideLoadingOverlay();
+                // 最終問題モードの場合は自動で閉じない
+                if (!currentQuizState.isFinalQuestion || !currentQuizState.processingCompleted) {
+                    // ローディングオーバーレイを非表示
+                    hideLoadingOverlay();
+                } else {
+                    console.log('🎮 最終問題モード - 自動非表示をスキップ');
+                }
                 
                 // ボタンの状態を元に戻す
                 this.disabled = false;
@@ -2334,6 +2347,13 @@
             if (window.currentAbortController) {
                 window.currentAbortController.abort();
                 console.log('🚫 リクエストをキャンセルしました');
+            }
+            
+            // 最終問題モードを解除
+            if (currentQuizState.isActive) {
+                console.log('🎮 クイズ実行中のキャンセル - 最終問題モードを解除');
+                currentQuizState.isFinalQuestion = false;
+                currentQuizState.processingCompleted = false;
             }
             
             // ローディングを非表示
