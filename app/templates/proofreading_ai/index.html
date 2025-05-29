@@ -1135,60 +1135,108 @@
         <p class="text-gray-200 text-sm mb-4">校正AIは文章の問題を4つのカテゴリーに分類して、色分けハイライトで表示します。</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div class="flex items-center space-x-3 mb-2">
-                    <span class="correction-typo px-4 py-2 rounded-md text-lg font-bold">🔤 誤字修正</span>
-                    <span class="text-gray-200 text-sm">(赤色系)</span>
+            <!-- 誤字修正カード（赤色系） -->
+            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-red-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                 style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%);">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 to-red-600"></div>
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-red-500 rounded-full shadow-md">
+                        <span class="text-white text-lg">🔤</span>
+                    </div>
+                    <div>
+                        <span class="text-red-800 text-xl font-bold">誤字修正</span>
+                        <span class="block text-red-600 text-xs font-medium">(タイポ・変換ミス)</span>
+                    </div>
                 </div>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>対象：</strong>タイポ、誤字脱字、変換ミス<br>
-                    <strong>例：</strong>「こんにちわ」→「こんにちは」<br>
-                    <strong>説明：</strong>明らかな文字の間違いや入力ミスを修正します
-                </p>
+                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-red-200">
+                    <p class="text-red-900 text-sm leading-relaxed">
+                        <strong class="text-red-800">対象：</strong>タイポ、誤字脱字、変換ミス<br>
+                        <strong class="text-red-800">例：</strong>「こんにちわ」→「こんにちは」<br>
+                        <strong class="text-red-800">説明：</strong>明らかな文字の間違いや入力ミスを修正します
+                    </p>
+                </div>
             </div>
             
-            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div class="flex items-center space-x-3 mb-2">
-                    <span class="correction-tone px-4 py-2 rounded-md text-lg font-bold">✨ 言い回し改善</span>
-                    <span class="text-gray-200 text-sm">(紫色系)</span>
+            <!-- 言い回し改善カード（紫色系） -->
+            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-purple-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                 style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%);">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-purple-600"></div>
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-purple-500 rounded-full shadow-md">
+                        <span class="text-white text-lg">✨</span>
+                    </div>
+                    <div>
+                        <span class="text-purple-800 text-xl font-bold">言い回し改善</span>
+                        <span class="block text-purple-600 text-xs font-medium">(表現・文体改善)</span>
+                    </div>
                 </div>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>対象：</strong>不自然な表現、読みにくい文章<br>
-                    <strong>例：</strong>「すごく良い」→「非常に優れている」<br>
-                    <strong>説明：</strong>より自然で読みやすい表現に改善します
-                </p>
+                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-purple-200">
+                    <p class="text-purple-900 text-sm leading-relaxed">
+                        <strong class="text-purple-800">対象：</strong>不自然な表現、読みにくい文章<br>
+                        <strong class="text-purple-800">例：</strong>「すごく良い」→「非常に優れている」<br>
+                        <strong class="text-purple-800">説明：</strong>より自然で読みやすい表現に改善します
+                    </p>
+                </div>
             </div>
             
-            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div class="flex items-center space-x-3 mb-2">
-                    <span class="correction-dict px-4 py-2 rounded-md text-lg font-bold">📚 辞書ルール</span>
-                    <span class="text-gray-200 text-sm">(黄色系)</span>
+            <!-- 辞書ルールカード（オレンジ色系） -->
+            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-orange-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                 style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fed7aa 100%);">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-orange-500 rounded-full shadow-md">
+                        <span class="text-white text-lg">📚</span>
+                    </div>
+                    <div>
+                        <span class="text-orange-800 text-xl font-bold">辞書ルール</span>
+                        <span class="block text-orange-600 text-xs font-medium">(表記統一・送り仮名)</span>
+                    </div>
                 </div>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>対象：</strong>表記統一、送り仮名、漢字使い分け<br>
-                    <strong>例：</strong>「下さい」→「ください」<br>
-                    <strong>説明：</strong>辞書や表記ルールに基づいた統一を行います
-                </p>
+                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-orange-200">
+                    <p class="text-orange-900 text-sm leading-relaxed">
+                        <strong class="text-orange-800">対象：</strong>表記統一、送り仮名、漢字使い分け<br>
+                        <strong class="text-orange-800">例：</strong>「下さい」→「ください」<br>
+                        <strong class="text-orange-800">説明：</strong>辞書や表記ルールに基づいた統一を行います
+                    </p>
+                </div>
             </div>
             
-            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                <div class="flex items-center space-x-3 mb-2">
-                    <span class="correction-inconsistency px-4 py-2 rounded-md text-lg font-bold">⚠️ 矛盾チェック</span>
-                    <span class="text-gray-200 text-sm">(オレンジ色系)</span>
+            <!-- 矛盾チェックカード（濃いオレンジ色系） -->
+            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-amber-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                 style="background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 50%, #fdba74 100%);">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-600"></div>
+                <div class="flex items-center space-x-3 mb-3">
+                    <div class="flex items-center justify-center w-10 h-10 bg-amber-600 rounded-full shadow-md">
+                        <span class="text-white text-lg">⚠️</span>
+                    </div>
+                    <div>
+                        <span class="text-amber-900 text-xl font-bold">矛盾チェック</span>
+                        <span class="block text-amber-700 text-xs font-medium">(論理・事実矛盾)</span>
+                    </div>
                 </div>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    <strong>対象：</strong>論理的矛盾、数値の不整合、地域名の矛盾、事実関係<br>
-                    <strong>例：</strong>「小学8年生」→「小学6年生」、「東京都大阪市」→「大阪府大阪市」<br>
-                    <strong>説明：</strong>文章内の矛盾や地理的・数値的不整合を指摘・修正します
-                </p>
+                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-amber-200">
+                    <p class="text-amber-900 text-sm leading-relaxed">
+                        <strong class="text-amber-800">対象：</strong>論理的矛盾、数値の不整合、地域名の矛盾、事実関係<br>
+                        <strong class="text-amber-800">例：</strong>「小学8年生」→「小学6年生」、「東京都大阪市」→「大阪府大阪市」<br>
+                        <strong class="text-amber-800">説明：</strong>文章内の矛盾や地理的・数値的不整合を指摘・修正します
+                    </p>
+                </div>
             </div>
         </div>
         
-        <div class="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-400/30">
-            <p class="text-blue-200 text-sm">
-                <strong>💡 使い方のコツ：</strong>
-                修正箇所にマウスを合わせると詳細な説明が表示されます。クリックすると修正前後の文字列を切り替えて確認できます。
-            </p>
+        <div class="mt-6 p-4 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-xl border border-blue-400/30 backdrop-blur-sm">
+            <div class="flex items-start space-x-3">
+                <div class="flex items-center justify-center w-8 h-8 bg-blue-500 rounded-full flex-shrink-0 mt-0.5">
+                    <span class="text-white text-sm">💡</span>
+                </div>
+                <div>
+                    <h4 class="text-blue-200 font-semibold mb-1">使い方のコツ</h4>
+                    <p class="text-blue-200 text-sm leading-relaxed">
+                        修正箇所にマウスを合わせると詳細な説明が表示されます。<br>
+                        <strong>緑色の修正後テキスト</strong>をクリックすると修正を適用、<strong>赤色の修正前テキスト</strong>をクリックすると元に戻します。
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1317,7 +1365,7 @@
 
 不登校になってから１～２か月経った頃、息子が好きだった科学館なら行けるというので、週２～３回くらい通っていました。
 
-生ける場所にある科学館のプラネタりウムは、ほぼ全部見たと思います。わたし自身も科学館は好きな場所したので、苦ではなかったです。
+生ける場所にある科学館のプラネタリウムは、ほぼ全部見たと思います。わたし自身も科学館は好きな場所したので、苦ではなかったです。
 
 息子は原器になてから、この頃を振り返り<b>「あの時、マが楽しそうにしてくれたのが嬉しかった」</b>と話してくれました。
 
