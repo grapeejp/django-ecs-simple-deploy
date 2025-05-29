@@ -77,7 +77,7 @@
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         border: 2px solid #e5e7eb;
         border-radius: 12px;
-        padding: 16px 20px;
+        padding: 12px 16px;
         z-index: 1000;
         width: max-content;
         max-width: 400px;
@@ -110,8 +110,8 @@
         font-size: 16px;
         font-weight: 700;
         color: #dc2626;
-        margin-bottom: 8px;
-        padding: 8px 12px;
+        margin-bottom: -30px;
+        padding: 6px 10px;
         background: #fee2e2;
         border-radius: 8px;
         border: 2px solid #fca5a5;
@@ -136,8 +136,8 @@
         font-size: 16px;
         font-weight: 700;
         color: #16a34a;
-        margin-bottom: 10px;
-        padding: 8px 12px;
+        margin-bottom: -26px;
+        padding: 6px 10px;
         background: #dcfce7;
         border-radius: 8px;
         border: 2px solid #86efac;
@@ -162,10 +162,11 @@
         color: #475569;
         font-style: italic;
         font-size: 13px;
-        padding: 8px 12px;
+        padding: 6px 10px;
         background: #f1f5f9;
         border-radius: 6px;
         border: 1px solid #e2e8f0;
+        margin-bottom: -26px;
     }
     
     .tooltip-reason::before {
@@ -392,63 +393,199 @@
         font-size: 13px;
     }
     
-    /* ローディングオーバーレイ */
+    /* ローディングオーバーレイ - 改良版 */
     .loading-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(88, 28, 135, 0.7); /* 半透明の紫色 */
+        background: linear-gradient(135deg, rgba(88, 28, 135, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
+        z-index: 2000;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     
-    .spinner {
-        width: 70px;
-        height: 70px;
-        border: 5px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-        margin-bottom: 20px;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    
-    .loading-text {
-        color: white;
-        font-size: 18px;
-        margin-bottom: 15px;
+    .loading-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 40px;
         text-align: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        min-width: 400px;
+        max-width: 500px;
     }
     
-    .expected-time {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 14px;
+    .loading-logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(45deg, #ffffff, #f0f0f0);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        animation: pulse-glow 2s ease-in-out infinite;
+        box-shadow: 
+            0 0 20px rgba(255, 255, 255, 0.3),
+            0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        50% { 
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+    }
+    
+    .loading-title {
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .loading-step {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+        margin-bottom: 20px;
+        font-weight: 500;
+        min-height: 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .loading-step.active {
+        animation: slideInFade 0.5s ease-out;
+    }
+    
+    @keyframes slideInFade {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .progress-container {
-        width: 300px;
-        height: 10px;
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-        margin-top: 10px;
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        margin: 20px 0;
         overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .progress-bar {
         height: 100%;
-        background-color: #fff;
-        border-radius: 5px;
-        transition: width 0.5s ease;
+        background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7);
+        border-radius: 20px;
+        transition: width 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 1.5s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .progress-text {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        margin-top: 8px;
+    }
+    
+    .elapsed-time, .estimated-time {
+        font-weight: 600;
+    }
+    
+    .loading-details {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .loading-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        color: white;
+        font-size: 18px;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    
+    .processing-info {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    .cancel-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+    
+    .cancel-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
     }
     
     /* ストリーミング更新中のテキストエフェクト */
@@ -509,8 +646,8 @@
     .correction-item {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         border-radius: 16px;
-        padding: 24px; /* 20px → 24px に拡大 */
-        margin-bottom: 20px; /* 16px → 20px に拡大 */
+        padding: 20px;
+        margin-bottom: 16px;
         box-shadow: 
             0 4px 20px rgba(0, 0, 0, 0.08),
             0 1px 3px rgba(0, 0, 0, 0.1);
@@ -570,25 +707,25 @@
     .category-badge {
         display: inline-flex;
         align-items: center;
-        gap: 12px; /* 10px → 12px に拡大 */
+        gap: 10px;
         background: var(--category-color); /* 背景色を強調色に変更 */
         color: white; /* 白文字に変更 */
-        padding: 16px 50px; /* 12px 20px → 16px 50px に大幅拡大 */
-        border-radius: 35px; /* 30px → 35px に拡大 */
-        font-size: 18px; /* 16px → 18px に拡大 */
-        font-weight: 800; /* 700 → 800 に強化 */
+        padding: 12px 40px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1.2px; /* 0.8px → 1.2px に拡大 */
-        border: 4px solid white; /* 3px → 4px に拡大 */
-        margin-bottom: 24px; /* 20px → 24px に拡大 */
+        letter-spacing: 1px;
+        border: 3px solid white;
+        margin-bottom: 20px;
         position: relative;
         box-shadow: 
-            0 8px 24px rgba(0, 0, 0, 0.25), /* 影を強化 */
-            0 3px 10px rgba(0, 0, 0, 0.15),
-            inset 0 2px 0 rgba(255, 255, 255, 0.4); /* 内側ハイライト強化 */
-        transform: translateY(-3px); /* 少し浮かせる */
-        min-width: 200px; /* 最小幅を設定 */
-        justify-content: center; /* 中央揃え */
+            0 6px 20px rgba(0, 0, 0, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        min-width: 180px;
+        justify-content: center;
     }
     
     /* 吹き出しの三角形を追加 */
@@ -653,13 +790,13 @@
     .correction-content {
         display: flex;
         flex-direction: column;
-        gap: 16px; /* 12px → 16px に拡大 */
+        gap: 12px;
     }
     
     .correction-texts {
         display: flex;
         align-items: center;
-        gap: 16px; /* 12px → 16px に拡大 */
+        gap: 12px;
         flex-wrap: wrap;
     }
     
@@ -741,12 +878,12 @@
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         color: #475569;
         font-style: italic;
-        font-size: 14px; /* 13px → 14px に拡大 */
-        padding: 16px 20px; /* 12px 16px → 16px 20px に拡大 */
-        border-radius: 12px; /* 10px → 12px に拡大 */
+        font-size: 14px;
+        padding: 14px 18px;
+        border-radius: 10px;
         border-left: 4px solid var(--category-color);
-        margin-top: 12px; /* 8px → 12px に拡大 */
-        line-height: 1.6; /* 1.5 → 1.6 に拡大 */
+        margin-top: 8px;
+        line-height: 1.5;
         position: relative;
     }
     
@@ -1308,27 +1445,6 @@
 </div
 <div clas="txt-box">
 
-・「信じて待つ」…本当にこれのみ。うちは６年半かかったけど、学校行くかどうか、自分で答えを出してきた。
-
-・すごく参考になった。｢心配より信頼｣が響く。価値観を壊すのは難しそうだけど、頑張ろう。
-
-・引きこもった経験があるから分かる。学校は行かなくても、終わりじゃない。
-
-・不登校児の親です。たくさんの人に届いてほしい。大事なことを書いてくれてありがとう。
-
-</div>
-最後に、不登校の期間のこと、また、現在の息子さんについて、川口さんにお話を聞いています。
-<p class="nextpage">不登校を乗り越えられた？　川口さんにインタビュー</p>
-<!--nextpage-->
-<div clss="comment">
-<h>『不登校と向き合った２年間』　川口真目さんにインタビュー</h2>
-<b―息子さんは現在、復学されているとのこと。なにかきっけはあった？</b>
-<div class="txt-box">
-
-不登校になってから１年後に、息子は復学をしました。
-
-たくさんの方に支えられたことがきっかけになっていると思います。まず、家庭と学校以外の居場所になってくれた、フリースクールとカウンセラーの先生方は心強く、私と息子が安心できる居場所になりました。
-
 (校正辞書ヒットテスト部分)
 
 ※※※※※※※※※※　校正に引っかかるかテスト
@@ -1362,37 +1478,7 @@
 (ここまで)
 <>――不登校の期間中、印象に残った出来事は。</b>
 <div class="txt-box">
-
-不登校になってから１～２か月経った頃、息子が好きだった科学館なら行けるというので、週２～３回くらい通っていました。
-
-生ける場所にある科学館のプラネタリウムは、ほぼ全部見たと思います。わたし自身も科学館は好きな場所したので、苦ではなかったです。
-
-息子は原器になてから、この頃を振り返り<b>「あの時、マが楽しそうにしてくれたのが嬉しかった」</b>と話してくれました。
-
-ふ登校の子供の中には、「自分のせいで親を追い詰めてる」と悔やんでいる子供も多いと思います。
-
-子供の不登校に悩む親御さんは、仕事もあるし、家事も増えるし、大変なことが多いので、どこかで楽しみを見つけてほしいと思います。
-
-</div>
-つら時期を乗り越え、安心して過ごる居場所を見つけることができた、川口さん親子。
-
-たくさんの涙を流し、傷付きながらも不登校と向き合った経験、自分を支えてくれる人がいるという実感は、きっと息子さんの今後の人生において、大きな糧になるでしょう。
-
-菌年は、フリースクールを始め、不登校になった子供の居場所や学びの機会が広がっています。
-
-「本いた学校に再投稿する」ことだけが解決策ではありません。さまざまな関係機関と連系をしながら、子供に合った未知を探していけるといいですよね。
-<h2>川口真目さん著『個育てしながらフリーランス」が発売中</h2>
-川口さんが１０年以上のフリーランス経験を漫画とコラムでつづった『子育てしながらフリーランス』が発売中です。
-
-妊娠・出産を機に、仕事と家庭のバランスに悩み、働き方を見直したい人には、参考になる一冊。気になファる人はチェックしてみてください！
-
-[wpap service="with" type="detail" id="B09MHD1LN1" title="子育てしながらフリランス]
-
-<hr />
-<p class="small">[文・構成／grape変集部]</p>
-
-</div>
-</div></textarea>
+</textarea>
                 <div class="char-counter">
                     <span id="charCount">0</span> 文字
                     (<span id="tokenCount">0</span> トークン)
@@ -1541,17 +1627,54 @@
         </div>
     </div>
     
-    <!-- ローディングオーバーレイ -->
+    <!-- ローディングオーバーレイ - 改良版 -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="spinner"></div>
-        <div class="loading-text">
-            <span id="loadingMessage">校正中...</span>
-        </div>
-        <div class="expected-time">
-            処理時間の目安: <span id="estimatedTime">約30秒</span>
-        </div>
-        <div class="progress-container">
-            <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+        <div class="loading-container">
+            <!-- ロゴ/アイコン -->
+            <div class="loading-logo">
+                🤖
+            </div>
+            
+            <!-- タイトル -->
+            <div class="loading-title">Claude 4 校正中</div>
+            
+            <!-- 処理ステップ -->
+            <div id="loadingStep" class="loading-step">
+                テキストを解析しています...
+            </div>
+            
+            <!-- プログレスバー -->
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+            </div>
+            
+            <!-- 進捗テキスト -->
+            <div class="progress-text">
+                <span id="progressPercentage">0%</span>
+                <span id="elapsedTime">00:00</span>
+            </div>
+            
+            <!-- 詳細情報 -->
+            <div class="loading-details">
+                <div class="loading-stats">
+                    <div class="stat-item">
+                        <span id="inputChars" class="stat-value">0</span>
+                        <div class="stat-label">入力文字数</div>
+                    </div>
+                    <div class="stat-item">
+                        <span id="estimatedTokens" class="stat-value">0</span>
+                        <div class="stat-label">推定トークン</div>
+                    </div>
+                </div>
+                <div class="processing-info">
+                    <span id="processingInfo">AWS Bedrock に接続中...</span>
+                </div>
+            </div>
+            
+            <!-- キャンセルボタン -->
+            <button id="cancelProcessing" class="cancel-button" style="display: none;">
+                処理をキャンセル
+            </button>
         </div>
     </div>
     
@@ -1628,15 +1751,14 @@
             autoResizeTextarea(this);
         });
         
-        // 初期文字数カウント
-        const initialText = document.getElementById('inputText').value;
+        // 初期文字数カウントとテキストエリア調整
+        const inputTextarea = document.getElementById('inputText');
+        const initialText = inputTextarea.value;
         const initialCharCount = initialText.length;
         const initialTokenCount = Math.ceil(initialCharCount / 3);
         document.getElementById('charCount').textContent = initialCharCount.toLocaleString();
         document.getElementById('tokenCount').textContent = initialTokenCount.toLocaleString();
-        
-        // 初期状態でもテキストエリアの高さを調整
-        autoResizeTextarea(document.getElementById('inputText'));
+        autoResizeTextarea(inputTextarea);
         
         // リセットボタンのイベント
         document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
@@ -1704,13 +1826,17 @@
             };
             console.log('📤 送信データ:', requestData);
             
+            // AbortControllerを作成してキャンセル機能を有効化
+            window.currentAbortController = new AbortController();
+            
             fetch('/proofreading_ai/proofread/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken.value
                 },
-                body: JSON.stringify(requestData)
+                body: JSON.stringify(requestData),
+                signal: window.currentAbortController.signal // キャンセル信号を追加
             })
             .then(response => {
                 clearTimeout(timeoutId); // タイムアウトをクリア
@@ -1739,6 +1865,9 @@
                 console.log('✅ JSONパース成功');
                 console.log('⏱️ 総処理時間:', totalTime + 'ms');
                 console.log('📊 レスポンスデータ:', data);
+                
+                // 進捗を強制完了
+                completeProgress();
                 
                 // デバッグ情報を保存
                 window.lastApiData = data;
@@ -1783,6 +1912,14 @@
             .catch(error => {
                 clearTimeout(timeoutId); // エラー時もタイムアウトをクリア
                 const totalTime = Date.now() - requestStartTime;
+                
+                // キャンセルされた場合の特別処理
+                if (error.name === 'AbortError') {
+                    console.log('🚫 リクエストがキャンセルされました');
+                    document.getElementById('correctionResult').innerHTML = '<div class="text-yellow-600">⚠️ 処理がキャンセルされました。</div>';
+                    return;
+                }
+                
                 console.error('💥 リクエストエラー:', error);
                 console.error('💥 エラー詳細:', error.message);
                 console.error('💥 エラースタック:', error.stack);
@@ -1869,6 +2006,31 @@
                 console.error('コピーに失敗しました:', err);
                 alert('コピーに失敗しました。');
             });
+        });
+        
+        // 初期状態でもテキストエリアの高さを調整
+        autoResizeTextarea(document.getElementById('inputText'));
+        
+        // キャンセルボタンのイベント
+        document.getElementById('cancelProcessing').addEventListener('click', function() {
+            console.log('🚫 処理キャンセルがリクエストされました');
+            
+            // 進行中のリクエストをキャンセル（AbortControllerが必要）
+            if (window.currentAbortController) {
+                window.currentAbortController.abort();
+                console.log('🚫 リクエストをキャンセルしました');
+            }
+            
+            // ローディングを非表示
+            hideLoadingOverlay();
+            
+            // ボタンの状態を元に戻す
+            const correctionBtn = document.getElementById('startCorrectionBtn');
+            correctionBtn.disabled = false;
+            correctionBtn.textContent = '校正する';
+            
+            // エラーメッセージを表示
+            document.getElementById('correctionResult').innerHTML = '<div class="text-yellow-600">⚠️ 処理がキャンセルされました。</div>';
         });
     });
 
@@ -2099,10 +2261,6 @@
                 `¥${parseFloat(data.estimated_cost || 0).toFixed(2)}`;
         }
         
-        if (data.model_used) {
-            document.getElementById('modelUsedDisplay').textContent = data.model_used;
-        }
-        
         if (data.processed_at) {
             const date = new Date(data.processed_at);
             document.getElementById('processedAtDisplay').textContent = 
@@ -2155,21 +2313,14 @@
         });
     }
 
-    // ローディングオーバーレイ表示関数
+    // ローディングオーバーレイ表示関数 - 改良版
     function showLoadingOverlay() {
         console.log('🔄 showLoadingOverlay() 開始');
         
         const overlay = document.getElementById('loadingOverlay');
-        const progressBar = document.getElementById('progressBar');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const estimatedTime = document.getElementById('estimatedTime');
-        
-        console.log('🔍 要素確認:', {
-            overlay: !!overlay,
-            progressBar: !!progressBar,
-            loadingMessage: !!loadingMessage,
-            estimatedTime: !!estimatedTime
-        });
+        const inputText = document.getElementById('inputText').value;
+        const charCount = inputText.length;
+        const estimatedTokens = Math.ceil(charCount / 3);
         
         if (!overlay) {
             console.error('❌ loadingOverlay要素が見つかりません');
@@ -2178,42 +2329,130 @@
         
         // オーバーレイを表示
         overlay.style.display = 'flex';
-        console.log('✅ オーバーレイ表示設定完了');
         
-        // プログレスバーをリセット
-        if (progressBar) {
-            progressBar.style.width = '0%';
-            console.log('✅ プログレスバーリセット完了');
-        }
+        // 初期値を設定
+        document.getElementById('inputChars').textContent = charCount.toLocaleString();
+        document.getElementById('estimatedTokens').textContent = estimatedTokens.toLocaleString();
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercentage').textContent = '0%';
+        document.getElementById('elapsedTime').textContent = '00:00';
         
-        // メッセージを設定
-        if (loadingMessage) {
-            loadingMessage.textContent = 'Claude 4で校正中...';
-            console.log('✅ ローディングメッセージ設定完了');
-        }
+        // 進捗管理を開始
+        window.loadingStartTime = Date.now();
+        window.loadingProgress = {
+            currentStep: 0,
+            steps: [
+                { progress: 5, message: 'テキストを解析しています...', info: 'Amazon Web Service に接続中...' },
+                { progress: 15, message: 'AWS Bedrock に接続中...', info: 'Claude 4 モデルを初期化中...' },
+                { progress: 25, message: 'Claude 4 で文章を解析中...', info: '自然言語処理を実行中...' },
+                { progress: 40, message: '誤字・脱字をチェック中...', info: '辞書ベースの検証を実行中...' },
+                { progress: 55, message: '文体・表現を改善中...', info: 'スタイル分析を実行中...' },
+                { progress: 70, message: '論理的矛盾を確認中...', info: '内容の一貫性をチェック中...' },
+                { progress: 85, message: '4色ハイライトを生成中...', info: 'カテゴリー別分類を実行中...' },
+                { progress: 90, message: '結果を受信中...', info: 'Claude 4 からの応答を待機中...' }
+                // 100%は実際にレスポンス受信時のみ表示
+            ]
+        };
         
-        if (estimatedTime) {
-            estimatedTime.textContent = '約30-60秒';
-            console.log('✅ 推定時間設定完了');
-        }
+        // プログレス更新開始
+        startProgressUpdate();
         
-        // プログレスバーのアニメーション
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += Math.random() * 15; // ランダムに進行
-            if (progress > 90) progress = 90; // 90%で止める
-            if (progressBar) {
-                progressBar.style.width = progress + '%';
-            }
-            console.log('📊 プログレス更新:', Math.round(progress) + '%');
-        }, 1000);
+        // 経過時間カウンター開始
+        window.elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
         
-        // プログレスバーのインターバルIDを保存
-        overlay.dataset.progressInterval = progressInterval;
-        console.log('✅ プログレスアニメーション開始');
+        console.log('✅ 改良版ローディングオーバーレイ表示完了');
     }
     
-    // ローディングオーバーレイ非表示関数
+    // プログレス更新関数
+    function startProgressUpdate() {
+        window.progressUpdateInterval = setInterval(() => {
+            const progress = window.loadingProgress;
+            const currentStep = progress.steps[progress.currentStep];
+            
+            if (!currentStep) return;
+            
+            // プログレスバーを段階的に更新
+            const currentProgress = parseInt(document.getElementById('progressBar').style.width) || 0;
+            const targetProgress = currentStep.progress;
+            
+            if (currentProgress < targetProgress) {
+                const newProgress = Math.min(currentProgress + 2, targetProgress);
+                document.getElementById('progressBar').style.width = newProgress + '%';
+                document.getElementById('progressPercentage').textContent = newProgress + '%';
+                
+                // ステップメッセージを更新
+                if (newProgress >= targetProgress - 2) {
+                    updateLoadingStep(currentStep.message, currentStep.info);
+                    progress.currentStep = Math.min(progress.currentStep + 1, progress.steps.length - 1);
+                }
+            }
+            
+            // 90%に達したら自動進行を停止（実際のレスポンス待ち）
+            if (currentProgress >= 90) {
+                clearInterval(window.progressUpdateInterval);
+                window.progressUpdateInterval = null;
+                console.log('📊 進捗90%到達 - 実際のレスポンス待機中...');
+            }
+        }, 500); // 500ms間隔で更新
+    }
+    
+    // ローディングステップ更新関数
+    function updateLoadingStep(message, info) {
+        const stepElement = document.getElementById('loadingStep');
+        const infoElement = document.getElementById('processingInfo');
+        
+        if (stepElement) {
+            stepElement.classList.remove('active');
+            setTimeout(() => {
+                stepElement.textContent = message;
+                stepElement.classList.add('active');
+            }, 100);
+        }
+        
+        if (infoElement && info) {
+            setTimeout(() => {
+                infoElement.textContent = info;
+            }, 200);
+        }
+    }
+    
+    // 経過時間更新関数
+    function updateElapsedTime() {
+        if (!window.loadingStartTime) return;
+        
+        const elapsed = Math.floor((Date.now() - window.loadingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        const elapsedElement = document.getElementById('elapsedTime');
+        if (elapsedElement) {
+            elapsedElement.textContent = timeString;
+        }
+        
+        // 進捗状況に応じたメッセージ更新
+        const currentProgress = parseInt(document.getElementById('progressBar').style.width) || 0;
+        if (currentProgress >= 90) {
+            // 90%以降は実際の待機時間に応じてメッセージを更新
+            if (elapsed >= 60) {
+                updateLoadingStep('Claude 4 が処理中...', '大きなテキストのため時間がかかっています...');
+            } else if (elapsed >= 30) {
+                updateLoadingStep('Claude 4 が応答を生成中...', 'もうしばらくお待ちください...');
+            } else if (elapsed >= 15) {
+                updateLoadingStep('結果を受信中...', 'Claude 4 からの応答を待機中...');
+            }
+        }
+        
+        // 30秒以上経過したらキャンセルボタンを表示
+        if (elapsed >= 30) {
+            const cancelButton = document.getElementById('cancelProcessing');
+            if (cancelButton) {
+                cancelButton.style.display = 'block';
+            }
+        }
+    }
+    
+    // ローディングオーバーレイ非表示関数 - 改良版
     function hideLoadingOverlay() {
         console.log('🔄 hideLoadingOverlay() 開始');
         
@@ -2225,27 +2464,58 @@
             return;
         }
         
+        // 最終ステップに更新
+        updateLoadingStep('校正完了！', '結果を表示します...');
+        
         // プログレスバーを100%にして完了感を演出
         if (progressBar) {
             progressBar.style.width = '100%';
-            console.log('✅ プログレスバー100%設定完了');
+            document.getElementById('progressPercentage').textContent = '100%';
         }
         
-        // プログレスバーのインターバルをクリア
-        const progressInterval = overlay.dataset.progressInterval;
-        if (progressInterval) {
-            clearInterval(progressInterval);
-            console.log('✅ プログレスインターバルクリア完了');
+        // インターバルをクリア
+        if (window.progressUpdateInterval) {
+            clearInterval(window.progressUpdateInterval);
+            window.progressUpdateInterval = null;
         }
         
-        // 少し待ってからオーバーレイを非表示
+        if (window.elapsedTimeInterval) {
+            clearInterval(window.elapsedTimeInterval);
+            window.elapsedTimeInterval = null;
+        }
+        
+        // 少し待ってから完了アニメーションとともに非表示
         setTimeout(() => {
-            overlay.style.display = 'none';
-            if (progressBar) {
-                progressBar.style.width = '0%';
-            }
-            console.log('✅ オーバーレイ非表示完了');
-        }, 500);
+            overlay.style.opacity = '0';
+            overlay.style.transform = 'scale(0.95)';
+            overlay.style.transition = 'all 0.3s ease-out';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.style.opacity = '';
+                overlay.style.transform = '';
+                overlay.style.transition = '';
+                
+                // キャンセルボタンを隠す
+                document.getElementById('cancelProcessing').style.display = 'none';
+                
+                console.log('✅ ローディングオーバーレイ非表示完了');
+            }, 300);
+        }, 800);
+    }
+    
+    // レスポンス受信時の進捗強制完了
+    function completeProgress() {
+        if (window.progressUpdateInterval) {
+            clearInterval(window.progressUpdateInterval);
+        }
+        
+        console.log('✅ 実際のレスポンス受信 - 進捗を100%に更新');
+        
+        // 即座に100%に更新
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressPercentage').textContent = '100%';
+        updateLoadingStep('🎉 校正完了！', '結果を表示します...');
     }
 
     // 修正箇所のクリックイベントを設定（校正結果内のハイライト用）

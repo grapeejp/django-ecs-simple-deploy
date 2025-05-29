@@ -187,7 +187,7 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
             f'data-category="{category}">'
             f'<span class="{css_class}">{html.escape(original_word)}</span>'
             f'<span class="correction-tooltip">'
-            f'<div class="tooltip-category-badge" style="background: {cat_info["color"]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; text-align: center;">'
+            f'<div class="tooltip-category-badge" style="background: {cat_info["color"]}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: -33px; text-align: center;">'
             f'{cat_info["icon"]} {cat_info["name"]}'
             f'</div>'
             f'{tooltip_content}'
