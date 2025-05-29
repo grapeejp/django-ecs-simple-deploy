@@ -70,7 +70,161 @@
     
     /* ツールチップを非表示に（モーダルに置き換え） */
     .correction-tooltip {
-        display: none !important;
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px 20px;
+        z-index: 1000;
+        width: max-content;
+        max-width: 400px;
+        box-shadow: 
+            0 10px 32px rgba(0, 0, 0, 0.15),
+            0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-top: 8px;
+        line-height: 1.4;
+        font-size: 14px;
+    }
+    
+    .correction-span:hover .correction-tooltip {
+        display: block;
+        animation: tooltipFadeIn 0.2s ease-out;
+    }
+    
+    @keyframes tooltipFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* ツールチップ内のスタイル - 修正前文字を強調 */
+    .tooltip-original {
+        font-size: 16px;
+        font-weight: 700;
+        color: #dc2626;
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        background: #fee2e2;
+        border-radius: 8px;
+        border: 2px solid #fca5a5;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    
+    .tooltip-original:hover {
+        background: #fecaca;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    }
+    
+    .tooltip-original::before {
+        content: '📝 修正前: ';
+        font-weight: 600;
+        color: #991b1b;
+    }
+    
+    .tooltip-corrected {
+        font-size: 16px;
+        font-weight: 700;
+        color: #16a34a;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background: #dcfce7;
+        border-radius: 8px;
+        border: 2px solid #86efac;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    
+    .tooltip-corrected:hover {
+        background: #bbf7d0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+    }
+    
+    .tooltip-corrected::before {
+        content: '✅ 修正後: ';
+        font-weight: 600;
+        color: #166534;
+    }
+    
+    .tooltip-reason {
+        color: #475569;
+        font-style: italic;
+        font-size: 13px;
+        padding: 8px 12px;
+        background: #f1f5f9;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .tooltip-reason::before {
+        content: '💡 理由: ';
+        font-style: normal;
+        font-weight: 600;
+        color: #334155;
+    }
+    
+    /* ツールチップ内の修正適用ボタン */
+    .tooltip-apply-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        width: 100%;
+    }
+    
+    .tooltip-apply-btn:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+    }
+    
+    .tooltip-apply-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* 適用済みのスタイル */
+    .correction-applied {
+        background-color: #dcfce7 !important;
+        color: #16a34a !important;
+        border: 2px solid #86efac !important;
+        position: relative;
+    }
+    
+    .correction-applied::after {
+        content: '✅';
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #16a34a;
+        color: white;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     /* 修正詳細モーダル */
@@ -942,6 +1096,27 @@
     .category-items {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         padding: 20px;
+    }
+    
+    /* クリック可能要素の共通スタイル */
+    .clickable-correction {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .clickable-correction::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .clickable-correction:hover::after {
+        left: 100%;
     }
 </style>
 {% endblock %}
@@ -1897,17 +2072,88 @@
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // モーダルを表示
-                showCorrectionModal(originalText, correctedText, reason, category);
+                // ツールチップ内のクリック可能要素のクリックでない場合のみ切り替え実行
+                if (!e.target.classList.contains('clickable-correction')) {
+                    // テキストの切り替え
+                    toggleCorrectionText(span);
+                }
                 
-                console.log(`🔍 ${index + 1}番目の修正詳細をモーダル表示:`, originalText);
+                console.log(`🔍 ${index + 1}番目の修正箇所をクリック:`, originalText);
             });
             
+            // ツールチップ内のクリック可能要素にイベントリスナー追加
+            const tooltipOriginal = span.querySelector('.tooltip-original.clickable-correction');
+            const tooltipCorrected = span.querySelector('.tooltip-corrected.clickable-correction');
+            
+            if (tooltipOriginal) {
+                tooltipOriginal.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔙 修正前文字をクリック - 元に戻します');
+                    revertCorrection(span);
+                });
+            }
+            
+            if (tooltipCorrected) {
+                tooltipCorrected.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('✅ 修正後文字をクリック - 修正を適用します');
+                    applyCorrection(span);
+                });
+            }
+            
             // ホバー時のヒント表示
-            span.title = `クリックで修正詳細を表示`;
+            span.title = `クリックで修正前後を切り替え`;
         });
         
         console.log('✅ 修正箇所クリックイベント設定完了');
+    }
+    
+    // 修正を適用する関数
+    function applyCorrection(span) {
+        const originalText = span.dataset.original;
+        const correctedText = span.dataset.corrected;
+        
+        const textSpan = span.querySelector(`[class*="correction-"]`);
+        if (textSpan) {
+            textSpan.textContent = correctedText;
+            textSpan.classList.add('correction-applied');
+            
+            // ツールチップを一時的に非表示
+            const tooltip = span.querySelector('.correction-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+                setTimeout(() => {
+                    tooltip.style.display = '';
+                }, 1000);
+            }
+            
+            console.log('✅ 修正適用完了:', originalText, '→', correctedText);
+        }
+    }
+    
+    // 修正を元に戻す関数
+    function revertCorrection(span) {
+        const originalText = span.dataset.original;
+        const correctedText = span.dataset.corrected;
+        
+        const textSpan = span.querySelector(`[class*="correction-"]`);
+        if (textSpan) {
+            textSpan.textContent = originalText;
+            textSpan.classList.remove('correction-applied');
+            
+            // ツールチップを一時的に非表示
+            const tooltip = span.querySelector('.correction-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+                setTimeout(() => {
+                    tooltip.style.display = '';
+                }, 1000);
+            }
+            
+            console.log('🔙 修正を元に戻しました:', correctedText, '→', originalText);
+        }
     }
     
     // 修正詳細モーダルを表示する関数
@@ -1992,5 +2238,83 @@
         // 設定の復元
         loadSettings();
     });
+    
+    // ツールチップから修正を適用する関数
+    function applyCorrectionFromTooltip(button) {
+        // イベントの伝播を停止
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('🔧 修正適用ボタンがクリックされました');
+        
+        // ボタンの親要素（.correction-span）を取得
+        const correctionSpan = button.closest('.correction-span');
+        if (!correctionSpan) {
+            console.error('❌ .correction-span が見つかりません');
+            return;
+        }
+        
+        // 修正前・修正後のテキストを取得
+        const originalText = correctionSpan.dataset.original;
+        const correctedText = correctionSpan.dataset.corrected;
+        const category = correctionSpan.dataset.category;
+        
+        console.log('📝 修正適用:', {
+            original: originalText,
+            corrected: correctedText,
+            category: category
+        });
+        
+        // 修正箇所のテキストを更新
+        const textSpan = correctionSpan.querySelector(`[class*="correction-"]`);
+        if (textSpan) {
+            textSpan.textContent = correctedText;
+            textSpan.classList.add('correction-applied');
+            
+            // ツールチップを非表示
+            const tooltip = correctionSpan.querySelector('.correction-tooltip');
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+            
+            // 適用完了のフィードバック
+            button.textContent = '✅ 適用完了';
+            button.style.background = '#10b981';
+            button.disabled = true;
+            
+            console.log('✅ 修正適用完了:', originalText, '→', correctedText);
+            
+            // 一時的な成功フィードバック
+            setTimeout(() => {
+                if (tooltip) {
+                    tooltip.style.display = '';
+                }
+            }, 2000);
+        } else {
+            console.error('❌ 修正箇所のテキストspan要素が見つかりません');
+        }
+    }
+    
+    // 修正前と修正後のテキストを切り替える関数（既存の機能を拡張）
+    function toggleCorrectionText(span) {
+        const textElement = span.querySelector(`[class*="correction-"]`);
+        if (!textElement) return;
+        
+        const isApplied = textElement.classList.contains('correction-applied');
+        const originalText = span.dataset.original;
+        const correctedText = span.dataset.corrected;
+        
+        if (isApplied) {
+            // 修正後 → 修正前に戻す
+            textElement.textContent = originalText;
+            textElement.classList.remove('correction-applied');
+            console.log('↩️ 修正を元に戻しました:', correctedText, '→', originalText);
+        } else {
+            // 修正前 → 修正後に適用
+            textElement.textContent = correctedText;
+            textElement.classList.add('correction-applied');
+            console.log('✅ 修正を適用しました:', originalText, '→', correctedText);
+        }
+    }
 </script>
 {% endblock %}
