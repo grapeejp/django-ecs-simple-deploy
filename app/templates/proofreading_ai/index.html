@@ -2830,11 +2830,11 @@
         // 即座に100%に更新
         document.getElementById('progressBar').style.width = '100%';
         document.getElementById('progressPercentage').textContent = '100%';
-        updateLoadingStep('🎉 校正完了！', '最後の問題に答えて終了しましょう！');
         
         // クイズが実行中の場合、最終問題モードに切り替え
         if (currentQuizState.isActive) {
             console.log('🏆 処理完了 - 最終問題モードに切り替え');
+            updateLoadingStep('🎉 校正完了！', '最後の問題に答えて終了しましょう！');
             currentQuizState.processingCompleted = true;
             currentQuizState.isFinalQuestion = true;
             
@@ -2851,6 +2851,13 @@
             
             // UIメッセージ更新
             document.getElementById('quizQuestionText').textContent = '🏁 最終問題！答えたら結果が表示されます';
+        } else {
+            // クイズが実行中でない場合は即座に結果表示
+            console.log('✅ 処理完了 - クイズ未実行のため即座に結果表示');
+            updateLoadingStep('🎉 校正完了！', '結果を表示します...');
+            setTimeout(() => {
+                hideLoadingOverlay();
+            }, 1000);
         }
     }
 
@@ -3682,6 +3689,7 @@
     
     // 次の問題に進む関数
     function nextQuizQuestion() {
+        console.log('➡️ 次の問題に進みます');
         currentQuizState.currentIndex++;
         
         // 最終問題に答えた場合は結果を表示して終了
@@ -3817,6 +3825,20 @@
         }, 1000);
         
         console.log('✅ 改良版ローディングオーバーレイ表示完了（クイズ機能付き）');
+    }
+    
+    // 最終問題完了時の処理（クイズ終了＋校正結果表示）
+    function endQuizAndShowResults() {
+        console.log('🎊 最終問題完了！校正結果を表示します');
+        
+        // まずクイズの結果を表示
+        endQuiz();
+        
+        // 2秒後にローディングオーバーレイを非表示にして校正結果を表示
+        setTimeout(() => {
+            console.log('✅ クイズ完了 - 校正結果を表示します');
+            hideLoadingOverlay();
+        }, 2000);
     }
 </script>
 {% endblock %}
