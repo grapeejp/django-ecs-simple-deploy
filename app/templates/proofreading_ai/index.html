@@ -68,25 +68,134 @@
         margin: 0 3px;
     }
     
+    /* ツールチップを非表示に（モーダルに置き換え） */
     .correction-tooltip {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        padding: 6px 12px;
-        z-index: 1000;
-        width: max-content;
-        max-width: 320px;
-        box-shadow: 0 4px 16px 0 rgba(76, 47, 116, 0.12);
-        margin-top: 0;
-        line-height: 1.2;
+        display: none !important;
     }
     
-    .correction-span:hover .correction-tooltip {
-        display: block;
+    /* 修正詳細モーダル */
+    .correction-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    
+    .correction-modal-content {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.3),
+            0 8px 24px rgba(0, 0, 0, 0.15);
+        position: relative;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .correction-modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .correction-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: #6b7280;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    
+    .correction-modal-close:hover {
+        color: #ef4444;
+    }
+    
+    .correction-modal-body {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    
+    .modal-correction-item {
+        background: #f8fafc;
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--modal-category-color, #6b7280);
+    }
+    
+    .modal-original-text {
+        font-size: 18px;
+        font-weight: 700;
+        color: #dc2626;
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        background: #fee2e2;
+        border-radius: 8px;
+        border: 2px solid #fca5a5;
+    }
+    
+    .modal-original-text::before {
+        content: '📝 修正前: ';
+        font-weight: 600;
+        color: #991b1b;
+    }
+    
+    .modal-corrected-text {
+        font-size: 16px;
+        color: #16a34a;
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        background: #dcfce7;
+        border-radius: 8px;
+        border: 2px solid #86efac;
+    }
+    
+    .modal-corrected-text::before {
+        content: '✅ 修正後: ';
+        font-weight: 600;
+        color: #166534;
+    }
+    
+    .modal-reason-text {
+        color: #475569;
+        font-style: italic;
+        font-size: 15px;
+        padding: 10px 15px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .modal-reason-text::before {
+        content: '💡 理由: ';
+        font-style: normal;
+        font-weight: 600;
+        color: #334155;
     }
     
     .original-text, .corrected-text {
@@ -237,300 +346,306 @@
     
     /* 修正箇所リスト */
     .corrections-list {
-        max-height: 400px;
+        max-height: 650px; /* 500px → 650px に拡大 */
         overflow-y: auto;
         padding-right: 10px;
         margin-top: 15px;
     }
     
     .correction-item {
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    .char-counter {
-        font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.8);
-        text-align: right;
-        margin-top: 5px;
-    }
-    
-    /* インタラクティブな修正オプション */
-    .correction-option {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        padding: 24px; /* 20px → 24px に拡大 */
+        margin-bottom: 20px; /* 16px → 20px に拡大 */
+        box-shadow: 
+            0 4px 20px rgba(0, 0, 0, 0.08),
+            0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.8);
         position: relative;
-        display: inline-block;
-        cursor: pointer;
-    }
-    
-    .highlight-text {
-        background-color: #fef3c7; /* 薄い黄色 */
-        border-bottom: 1px dashed #d97706; /* オレンジ色 */
-        padding: 0 2px;
-        transition: all 0.2s ease;
-        display: inline-block; /* インライン要素をブロック化して文字ずれを防止 */
-        line-height: 1.5; /* 行の高さを固定して揃える */
-    }
-    
-    .correction-option:hover .highlight-text {
-        background-color: #fde68a; /* ホバー時はより濃い黄色 */
-    }
-    
-    .correction-popup {
-        display: none;
-        position: absolute;
-        z-index: 1000;
-        min-width: 200px;
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        padding: 12px;
-        top: 100%;
-        left: 0;
-        margin-top: 5px;
-        font-size: 14px;
-    }
-    
-    .correction-option:hover .correction-popup {
-        display: block;
-    }
-    
-    .popup-original {
-        color: #ef4444; /* 赤色 - 削除/原文 */
-        display: block;
-        margin-bottom: 4px;
-    }
-    
-    .popup-arrow {
-        color: #6b7280;
-        display: block;
-        margin: 4px 0;
-    }
-    
-    .popup-corrected {
-        color: #10b981; /* 緑色 - 追加/校正後 */
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
-    }
-    
-    .apply-correction {
-        background-color: #10b981;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        padding: 4px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    
-    .apply-correction:hover {
-        background-color: #059669;
-    }
-    
-    .applied-correction {
-        background-color: #d1fae5;
-        color: #10b981;
-        border-bottom: 1px solid #10b981;
-        padding: 0 2px;
-        display: inline-block;
-        line-height: 1.5;
-        border-radius: 5px;
-        font-weight: bold;
-        margin: 0 1px;
-    }
-    
-    .applied-correction.original {
-        background-color: #fee2e2;
-        color: #ef4444;
-        border-bottom: 1px solid #ef4444;
-    }
-    
-    /* 4種類のカテゴリー別ハイライト（完全リニューアル版） */
-    .highlight-typo {
-        background-color: #fef2f2 !important; /* 薄い赤背景 */
-        color: #dc2626 !important; /* 赤文字 */
-        padding: 2px 4px !important;
-        border-radius: 3px !important;
-        position: relative !important;
-        display: inline !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        text-decoration: none !important;
-        font-weight: normal !important;
-        border-bottom: none !important;
-    }
-    
-    .highlight-expression {
-        background-color: #faf5ff !important; /* 薄い紫背景 */
-        color: #7c3aed !important; /* 紫文字 */
-        padding: 2px 4px !important;
-        border-radius: 3px !important;
-        position: relative !important;
-        display: inline !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        text-decoration: none !important;
-        font-weight: normal !important;
-        border-bottom: none !important;
-    }
-    
-    .highlight-dictionary {
-        background-color: #fffbeb !important; /* 薄い黄背景 */
-        color: #d97706 !important; /* オレンジ文字 */
-        padding: 2px 4px !important;
-        border-radius: 3px !important;
-        position: relative !important;
-        display: inline !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        text-decoration: none !important;
-        font-weight: normal !important;
-        border-bottom: none !important;
-    }
-    
-    .highlight-contradiction {
-        background-color: #fff7ed !important; /* 薄いオレンジ背景 */
-        color: #ea580c !important; /* 濃いオレンジ文字 */
-        padding: 2px 4px !important;
-        border-radius: 3px !important;
-        position: relative !important;
-        display: inline !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        text-decoration: none !important;
-        font-weight: normal !important;
-        border-bottom: none !important;
-    }
-    
-    /* ホバーエフェクト（シンプル版） */
-    .highlight-typo:hover {
-        background-color: #fee2e2 !important;
-        transform: scale(1.02) !important;
-    }
-    
-    .highlight-expression:hover {
-        background-color: #f3e8ff !important;
-        transform: scale(1.02) !important;
-    }
-    
-    .highlight-dictionary:hover {
-        background-color: #fef3c7 !important;
-        transform: scale(1.02) !important;
-    }
-    
-    .highlight-contradiction:hover {
-        background-color: #fed7aa !important;
-        transform: scale(1.02) !important;
-    }
-    
-    /* ツールチップ（シンプル版） */
-    .highlight-tooltip {
-        position: absolute !important;
-        bottom: 100% !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        background-color: #1f2937 !important;
-        color: white !important;
-        padding: 4px 8px !important;
-        border-radius: 4px !important;
-        font-size: 12px !important;
-        white-space: nowrap !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-        transition: all 0.2s ease !important;
-        z-index: 1000 !important;
-        margin-bottom: 5px !important;
-        pointer-events: none !important;
-        font-weight: normal !important;
-    }
-    
-    .highlight-tooltip::after {
-        content: '' !important;
-        position: absolute !important;
-        top: 100% !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        border: 4px solid transparent !important;
-        border-top-color: #1f2937 !important;
-    }
-    
-    .highlight-typo:hover .highlight-tooltip,
-    .highlight-expression:hover .highlight-tooltip,
-    .highlight-dictionary:hover .highlight-tooltip,
-    .highlight-contradiction:hover .highlight-tooltip {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    
-    /* カテゴリー別修正箇所表示 */
-    .category-section {
-        margin-bottom: 20px;
-        border-radius: 8px;
+        transition: all 0.3s ease;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .category-header {
-        padding: 12px 16px;
-        font-weight: bold;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+    .correction-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 8px 30px rgba(0, 0, 0, 0.12),
+            0 4px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .category-header-typo {
-        background: linear-gradient(135deg, #EF4444, #DC2626);
+    .correction-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--category-color), var(--category-color-light));
     }
     
-    .category-header-expression {
-        background: linear-gradient(135deg, #C084FC, #A855F7);
-    }
-    
-    .category-header-dictionary {
-        background: linear-gradient(135deg, #FBBF24, #F59E0B);
-    }
-    
-    .category-header-contradiction {
-        background: linear-gradient(135deg, #FB923C, #EA580C);
-    }
-    
-    .category-icon {
-        font-size: 18px;
-        margin-right: 8px;
-    }
-    
-    .category-count {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-    }
-    
-    .category-items {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 16px;
-    }
-    
+    /* カテゴリー別の色設定 */
     .correction-item-typo {
-        border-left: 4px solid #EF4444;
+        --category-color: #ef4444;
+        --category-color-light: #fca5a5;
+        --category-bg: #fef2f2;
+        --category-text: #dc2626;
     }
     
     .correction-item-expression {
-        border-left: 4px solid #C084FC;
+        --category-color: #8b5cf6;
+        --category-color-light: #c4b5fd;
+        --category-bg: #faf5ff;
+        --category-text: #7c3aed;
     }
     
     .correction-item-dictionary {
-        border-left: 4px solid #FBBF24;
+        --category-color: #f59e0b;
+        --category-color-light: #fbbf24;
+        --category-bg: #fffbeb;
+        --category-text: #d97706;
     }
     
     .correction-item-contradiction {
-        border-left: 4px solid #FB923C;
+        --category-color: #ea580c;
+        --category-color-light: #fb923c;
+        --category-bg: #fff7ed;
+        --category-text: #ea580c;
+    }
+    
+    /* カテゴリー吹き出し */
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px; /* 10px → 12px に拡大 */
+        background: var(--category-color); /* 背景色を強調色に変更 */
+        color: white; /* 白文字に変更 */
+        padding: 16px 50px; /* 12px 20px → 16px 50px に大幅拡大 */
+        border-radius: 35px; /* 30px → 35px に拡大 */
+        font-size: 18px; /* 16px → 18px に拡大 */
+        font-weight: 800; /* 700 → 800 に強化 */
+        text-transform: uppercase;
+        letter-spacing: 1.2px; /* 0.8px → 1.2px に拡大 */
+        border: 4px solid white; /* 3px → 4px に拡大 */
+        margin-bottom: 24px; /* 20px → 24px に拡大 */
+        position: relative;
+        box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.25), /* 影を強化 */
+            0 3px 10px rgba(0, 0, 0, 0.15),
+            inset 0 2px 0 rgba(255, 255, 255, 0.4); /* 内側ハイライト強化 */
+        transform: translateY(-3px); /* 少し浮かせる */
+        min-width: 200px; /* 最小幅を設定 */
+        justify-content: center; /* 中央揃え */
+    }
+    
+    /* 吹き出しの三角形を追加 */
+    .category-badge::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 30px;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid var(--category-color);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+    
+    .category-badge::before {
+        content: '';
+        width: 12px; /* 10px → 12px に拡大 */
+        height: 12px; /* 10px → 12px に拡大 */
+        background: white; /* 白いドットに変更 */
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 0 2px var(--category-color); /* カテゴリー色のリング */
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.2); }
+    }
+    
+    /* カテゴリー別の色設定を強化 */
+    .correction-item-typo {
+        --category-color: #dc2626; /* より濃い赤 */
+        --category-color-light: #fca5a5;
+        --category-bg: #fef2f2;
+        --category-text: #dc2626;
+    }
+    
+    .correction-item-expression {
+        --category-color: #7c3aed; /* より濃い紫 */
+        --category-color-light: #c4b5fd;
+        --category-bg: #faf5ff;
+        --category-text: #7c3aed;
+    }
+    
+    .correction-item-dictionary {
+        --category-color: #d97706; /* より濃いオレンジ */
+        --category-color-light: #fbbf24;
+        --category-bg: #fffbeb;
+        --category-text: #d97706;
+    }
+    
+    .correction-item-contradiction {
+        --category-color: #c2410c; /* より濃いオレンジ */
+        --category-color-light: #fb923c;
+        --category-bg: #fff7ed;
+        --category-text: #ea580c;
+    }
+    
+    /* 修正内容の表示 */
+    .correction-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px; /* 12px → 16px に拡大 */
+    }
+    
+    .correction-texts {
+        display: flex;
+        align-items: center;
+        gap: 16px; /* 12px → 16px に拡大 */
+        flex-wrap: wrap;
+    }
+    
+    .original-text, .corrected-text {
+        display: inline-flex;
+        align-items: center;
+        min-width: 140px; /* 120px → 140px に拡大 */
+        text-align: center;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 
+            0 2px 8px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        padding: 12px 20px; /* 10px 16px → 12px 20px に拡大 */
+        margin: 0;
+        line-height: 1.4;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        position: relative;
+        font-size: 15px; /* 14px → 15px に拡大 */
+    }
+    
+    .original-text {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #dc2626;
+        border: 2px solid #fca5a5;
+    }
+    
+    .original-text::before {
+        content: '❌';
+        margin-right: 8px; /* 6px → 8px に拡大 */
+        font-size: 14px; /* 12px → 14px に拡大 */
+    }
+    
+    .corrected-text {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #16a34a;
+        border: 2px solid #86efac;
+    }
+    
+    .corrected-text::before {
+        content: '✅';
+        margin-right: 8px; /* 6px → 8px に拡大 */
+        font-size: 14px; /* 12px → 14px に拡大 */
+    }
+    
+    .original-text:hover, .corrected-text:hover {
+        transform: translateY(-1px);
+        box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    /* 矢印アイコン */
+    .correction-arrow {
+        color: #6b7280;
+        font-size: 20px; /* 18px → 20px に拡大 */
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px; /* 32px → 36px に拡大 */
+        height: 36px; /* 32px → 36px に拡大 */
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateX(0); }
+        40% { transform: translateX(3px); }
+        60% { transform: translateX(-1px); }
+    }
+    
+    /* 理由説明 */
+    .reason-text {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        color: #475569;
+        font-style: italic;
+        font-size: 14px; /* 13px → 14px に拡大 */
+        padding: 16px 20px; /* 12px 16px → 16px 20px に拡大 */
+        border-radius: 12px; /* 10px → 12px に拡大 */
+        border-left: 4px solid var(--category-color);
+        margin-top: 12px; /* 8px → 12px に拡大 */
+        line-height: 1.6; /* 1.5 → 1.6 に拡大 */
+        position: relative;
+    }
+    
+    .reason-text::before {
+        content: '💡';
+        margin-right: 10px; /* 8px → 10px に拡大 */
+        font-style: normal;
+        font-size: 16px; /* サイズ指定追加 */
+    }
+    
+    /* カテゴリーアイコンマッピング */
+    .correction-item-typo .category-badge::after {
+        content: '🔤';
+        margin-left: 4px;
+    }
+    
+    .correction-item-expression .category-badge::after {
+        content: '✨';
+        margin-left: 4px;
+    }
+    
+    .correction-item-dictionary .category-badge::after {
+        content: '📚';
+        margin-left: 4px;
+    }
+    
+    .correction-item-contradiction .category-badge::after {
+        content: '⚠️';
+        margin-left: 4px;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+        .correction-texts {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .original-text, .corrected-text {
+            min-width: auto;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .correction-arrow {
+            transform: rotate(90deg);
+            margin: 8px 0;
+        }
+        
+        .correction-item {
+            padding: 16px;
+            margin-bottom: 12px;
+        }
     }
     
     /* パフォーマンス情報表示 */
@@ -751,6 +866,83 @@
         background-color: #fed7aa !important;
         transform: none !important; /* スケール変更を無効化 */
     }
+    
+    /* カテゴリー別修正箇所表示 */
+    .category-section {
+        margin-bottom: 24px;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 2px 8px rgba(0, 0, 0, 0.05);
+        background: white;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .category-header {
+        padding: 16px 20px;
+        font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .category-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .category-header-typo {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .category-header-expression {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+    
+    .category-header-dictionary {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .category-header-contradiction {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    }
+    
+    .category-icon {
+        font-size: 20px;
+        margin-right: 12px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    
+    .category-count {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .category-items {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 20px;
+    }
 </style>
 {% endblock %}
 
@@ -765,25 +957,64 @@
     <!-- 4種類のハイライト機能説明 -->
     <div class="glass-form mb-6">
         <h3 class="text-lg font-semibold text-white mb-4">🎨 4種類のハイライト機能</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="flex items-center space-x-2">
-                <span class="highlight-typo px-3 py-1 rounded-md text-sm font-bold">🔴 誤字修正</span>
-                <span class="text-gray-200 text-sm">明るい赤色 (#EF4444)</span>
+        <p class="text-gray-200 text-sm mb-4">校正AIは文章の問題を4つのカテゴリーに分類して、色分けハイライトで表示します。</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="correction-typo px-4 py-2 rounded-md text-lg font-bold">🔤 誤字修正</span>
+                    <span class="text-gray-200 text-sm">(赤色系)</span>
                 </div>
-            <div class="flex items-center space-x-2">
-                <span class="highlight-expression px-3 py-1 rounded-md text-sm font-bold">🟣 言い回し</span>
-                <span class="text-gray-200 text-sm">濃い紫色 (#C084FC)</span>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    <strong>対象：</strong>タイポ、誤字脱字、変換ミス<br>
+                    <strong>例：</strong>「こんにちわ」→「こんにちは」<br>
+                    <strong>説明：</strong>明らかな文字の間違いや入力ミスを修正します
+                </p>
             </div>
-            <div class="flex items-center space-x-2">
-                <span class="highlight-dictionary px-3 py-1 rounded-md text-sm font-bold">🟡 辞書ルール</span>
-                <span class="text-gray-200 text-sm">濃い黄色 (#FBBF24)</span>
+            
+            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="correction-tone px-4 py-2 rounded-md text-lg font-bold">✨ 言い回し改善</span>
+                    <span class="text-gray-200 text-sm">(紫色系)</span>
                 </div>
-            <div class="flex items-center space-x-2">
-                <span class="highlight-contradiction px-3 py-1 rounded-md text-sm font-bold">🟠 矛盾チェック</span>
-                <span class="text-gray-200 text-sm">濃いオレンジ色 (#FB923C)</span>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    <strong>対象：</strong>不自然な表現、読みにくい文章<br>
+                    <strong>例：</strong>「すごく良い」→「非常に優れている」<br>
+                    <strong>説明：</strong>より自然で読みやすい表現に改善します
+                </p>
             </div>
+            
+            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="correction-dict px-4 py-2 rounded-md text-lg font-bold">📚 辞書ルール</span>
+                    <span class="text-gray-200 text-sm">(黄色系)</span>
                 </div>
-        <p class="text-gray-300 text-sm mt-3">修正箇所にマウスを合わせると、詳細な説明が表示されます。</p>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    <strong>対象：</strong>表記統一、送り仮名、漢字使い分け<br>
+                    <strong>例：</strong>「下さい」→「ください」<br>
+                    <strong>説明：</strong>辞書や表記ルールに基づいた統一を行います
+                </p>
+            </div>
+            
+            <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="flex items-center space-x-3 mb-2">
+                    <span class="correction-inconsistency px-4 py-2 rounded-md text-lg font-bold">⚠️ 矛盾チェック</span>
+                    <span class="text-gray-200 text-sm">(オレンジ色系)</span>
+                </div>
+                <p class="text-gray-300 text-sm leading-relaxed">
+                    <strong>対象：</strong>論理的矛盾、数値の不整合、地域名の矛盾、事実関係<br>
+                    <strong>例：</strong>「小学8年生」→「小学6年生」、「東京都大阪市」→「大阪府大阪市」<br>
+                    <strong>説明：</strong>文章内の矛盾や地理的・数値的不整合を指摘・修正します
+                </p>
+            </div>
+        </div>
+        
+        <div class="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-400/30">
+            <p class="text-blue-200 text-sm">
+                <strong>💡 使い方のコツ：</strong>
+                修正箇所にマウスを合わせると詳細な説明が表示されます。クリックすると修正前後の文字列を切り替えて確認できます。
+            </p>
+        </div>
     </div>
     
     <!-- 設定パネル -->
@@ -824,21 +1055,21 @@
                 <h2 class="font-bold text-lg">入力テキスト</h2>
             </div>
             <div class="p-4">
-                <textarea id="inputText" class="input-area w-full" placeholder="校正したい文章をこちらに入力してください。HTMLタグも保持されます。"><div class="comment">
+                <textarea id="inputText" class="input-area w-full" placeholder="校正したい文章をこちらに入力してください。HTMLタグも保持されます。"><dv class="comment">
 ２０２４年、増加期傾向にあるといわれる、不登校のこどもたち。
 
-文部科学省の法則によると、不登校とは、病気や経済敵な理由を除き『年間の欠席日数が３０日以上となった状態』を指します。
+文部科学省の法則によると、不登校とは、病気や経済敵な理由を除き『年間の欠席日数がー３０日以上となった状態』を指します。
 
-令和３年度の調査によると、小、中学校における不登校児童生徒数は２４万４９４０人。調査開始以降最多で２０万人を超え、前年度と比較した増加率は２４.９％と、調査開始以降最も高い割合になりました。翌令和４年度も２９万９０４８人と増加の一途をたどっています。
+令和1３年度の調査によると、小、中学校における不登校児童生徒数は２４万４９４０人。調査開始以降最多で-２０万人を超え、前年度と比較した増加率は２４.９％と、調査開始以降最も高い割合になりました。翌令和４年度も２９万９０４８人と増加の一途をたっています。
 
 また、この定義には当てはまらないものの、休みがちであったり、強質に入れなかったりするケースも考慮すると、不登校状態で悩んでいる子供たちは、もっと多くいると推測できるでしょう。
 
 <h2>小学8年生の息子が不登校に…　ある親子の葛藤</h2>
-学校に行けずに悩む子供たちが多くいるということは、それだけ、我が子の不登校に悩んでいる親が多いということでもあります。
+学校にゆけずに悩む子供たちが多くいるということは、それだけ、我が子の不登校に悩んでいる親が多いということでもあります。
 
 もし我が子が不当校になったら、当然親も戸惑い、どう向き合っていけばいいのか、思い悩むことでしょ。
 
-漫画家の川口真目（<a href="https://x.com/kawaguchi_game" target="_blank" rel="noopener">@kawaguchi_game</a>）さんは、小学生の息子さんが不登校になった時の体験談をXに投稿。大きな反響が寄せられました。
+漫画家の川口真目（<a hef="https://x.com/kawaguchi_game" target="_blank" rel="noopener">@kawaguchi_game</a>）さんは、小学生の息さんが不登校になった時の体験談をXに投稿。大きな反響が寄せられました。
 
 ごみはゴミ箱に入れてください。
 
@@ -1015,6 +1246,19 @@
     <!-- 処理時間表示 -->
     <div id="processingTime" class="d-none" style="margin-top: 10px;">
         処理時間: <span id="timeElapsed">0.00</span> 秒
+    </div>
+    
+    <!-- 修正詳細モーダル -->
+    <div id="correctionModal" class="correction-modal">
+        <div class="correction-modal-content">
+            <span class="correction-modal-close">&times;</span>
+            <div class="correction-modal-header">
+                <h3 id="modalTitle" style="margin: 0; color: #374151; font-size: 20px; font-weight: 700;">修正詳細</h3>
+            </div>
+            <div class="correction-modal-body" id="modalBody">
+                <!-- モーダル内容がここに動的に挿入されます -->
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -1260,15 +1504,43 @@
         
         if (!corrections || corrections.length === 0) {
             container.innerHTML = '<p class="text-gray-500 italic">修正箇所はありません。</p>';
-                return;
-            }
-            
+            return;
+        }
+        
         // カテゴリー別に分類
         const categories = {
-            typo: { name: '誤字修正', icon: '🔴', items: [] },
-            expression: { name: '言い回し', icon: '🟣', items: [] },
-            dictionary: { name: '辞書ルール', icon: '🟡', items: [] },
-            contradiction: { name: '矛盾チェック', icon: '🟠', items: [] }
+            typo: { 
+                name: '誤字修正', 
+                icon: '🔤', 
+                description: 'タイポや誤字脱字の修正',
+                color: '#dc2626', /* より濃い赤 */
+                bgColor: '#fef2f2',
+                items: [] 
+            },
+            expression: { 
+                name: '言い回し改善', 
+                icon: '✨', 
+                description: 'より自然で読みやすい表現への変更',
+                color: '#7c3aed', /* より濃い紫 */
+                bgColor: '#faf5ff',
+                items: [] 
+            },
+            dictionary: { 
+                name: '辞書ルール', 
+                icon: '📚', 
+                description: '表記統一や辞書に基づく修正',
+                color: '#d97706', /* より濃いオレンジ */
+                bgColor: '#fffbeb',
+                items: [] 
+            },
+            contradiction: { 
+                name: '矛盾チェック', 
+                icon: '⚠️', 
+                description: '論理的矛盾や不整合の指摘',
+                color: '#c2410c', /* より濃いオレンジ */
+                bgColor: '#fff7ed',
+                items: [] 
+            }
         };
         
         corrections.forEach(corr => {
@@ -1277,44 +1549,83 @@
         });
         
         let html = '';
+        let totalCorrections = 0;
         
         // カテゴリー別に表示
         Object.keys(categories).forEach(categoryKey => {
             const category = categories[categoryKey];
             if (category.items.length > 0) {
-                html += `
-                    <div class="category-section">
-                        <div class="category-header category-header-${categoryKey}">
-                            <div class="flex items-center">
-                                <span class="category-icon">${category.icon}</span>
-                                <span>${category.name}</span>
-                            </div>
-                            <span class="category-count">${category.items.length}件</span>
-                        </div>
-                        <div class="category-items">
-                `;
+                totalCorrections += category.items.length;
                 
-                category.items.forEach(corr => {
+                category.items.forEach((corr, index) => {
                     html += `
-                        <div class="correction-item correction-item-${categoryKey} mb-3 p-3 bg-white rounded-lg">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <span class="original-text">${corr.original || ''}</span>
-                                <span class="popup-arrow text-gray-400">→</span>
-                                <span class="corrected-text">${corr.corrected || ''}</span>
+                        <div class="correction-item correction-item-${categoryKey}">
+                            <div class="category-badge" style="background: ${category.color}; color: white; border: 4px solid white; padding: 16px 50px; border-radius: 35px; font-size: 18px; font-weight: 800; min-width: 200px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; letter-spacing: 1.2px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.4); transform: translateY(-3px); margin-bottom: 24px;">
+                                ${category.icon} ${category.name}
                             </div>
-                            <div class="reason-text text-sm">${corr.reason || ''}</div>
+                            <div class="correction-content">
+                                <div class="correction-texts">
+                                    <div class="original-text" title="修正前の文字列">
+                                        ${escapeHtml(corr.original || '')}
+                                    </div>
+                                    <div class="correction-arrow">→</div>
+                                    <div class="corrected-text" title="修正後の文字列">
+                                        ${escapeHtml(corr.corrected || '')}
+                                    </div>
+                                </div>
+                                <div class="reason-text" style="border-left-color: ${category.color};">
+                                    ${escapeHtml(corr.reason || '')}
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
-                
-                html += `
-                        </div>
-                    </div>
-                `;
             }
         });
         
-        container.innerHTML = html;
+        // 統計情報を追加
+        const statsHtml = `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; 
+                        padding: 20px; 
+                        border-radius: 16px; 
+                        margin-bottom: 24px;
+                        text-align: center;
+                        box-shadow: 0 6px 24px rgba(102, 126, 234, 0.3);">
+                <h3 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 700;">
+                    📊 校正結果サマリー
+                </h3>
+                <p style="margin: 0; font-size: 16px; opacity: 0.95;">
+                    合計 <strong style="font-size: 18px; color: #fbbf24;">${totalCorrections}</strong> 箇所の修正を提案しました
+                </p>
+                <div style="margin-top: 12px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                    ${Object.keys(categories).map(key => {
+                        const cat = categories[key];
+                        if (cat.items.length > 0) {
+                            return `
+                                <span style="background: rgba(255,255,255,0.2); 
+                                           padding: 4px 12px; 
+                                           border-radius: 20px; 
+                                           font-size: 12px; 
+                                           font-weight: 600;">
+                                    ${cat.icon} ${cat.name}: ${cat.items.length}件
+                                </span>
+                            `;
+                        }
+                        return '';
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = statsHtml + html;
+    }
+
+    // HTMLエスケープ関数を追加
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // 設定の保存・復元機能
@@ -1582,48 +1893,104 @@
                 category: category
             });
             
-            // 現在の状態を追跡（true: 修正後, false: 元の文字列）
-            span.dataset.showingCorrected = 'true';
-            
             span.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const isShowingCorrected = this.dataset.showingCorrected === 'true';
-                const textSpan = this.querySelector(`.correction-${category}, .correction-text`);
+                // モーダルを表示
+                showCorrectionModal(originalText, correctedText, reason, category);
                 
-                if (isShowingCorrected) {
-                    // 修正後 → 元の文字列
-                    textSpan.textContent = originalText;
-                    this.dataset.showingCorrected = 'false';
-                    // 元の文字列表示時は赤色背景で明確に区別
-                    textSpan.style.backgroundColor = '#fee2e2';
-                    textSpan.style.color = '#dc2626';
-                    textSpan.style.fontWeight = 'bold';
-                    console.log(`🔄 ${index + 1}番目を元の文字列に変更:`, originalText);
-                } else {
-                    // 元の文字列 → 修正後
-                    textSpan.textContent = correctedText;
-                    this.dataset.showingCorrected = 'true';
-                    // 元のカテゴリー色に戻す
-                    textSpan.style.backgroundColor = '';
-                    textSpan.style.color = '';
-                    textSpan.style.fontWeight = '';
-                    console.log(`🔄 ${index + 1}番目を修正後に変更:`, correctedText);
-                }
-                
-                // クリック時のアニメーション効果
-                textSpan.style.transform = 'scale(1.05)';
-                setTimeout(() => {
-                    textSpan.style.transform = '';
-                }, 150);
+                console.log(`🔍 ${index + 1}番目の修正詳細をモーダル表示:`, originalText);
             });
             
             // ホバー時のヒント表示
-            span.title = `クリックで「${originalText}」⇔「${correctedText}」を切り替え`;
+            span.title = `クリックで修正詳細を表示`;
         });
         
         console.log('✅ 修正箇所クリックイベント設定完了');
     }
+    
+    // 修正詳細モーダルを表示する関数
+    function showCorrectionModal(original, corrected, reason, category) {
+        const modal = document.getElementById('correctionModal');
+        const modalBody = document.getElementById('modalBody');
+        
+        // カテゴリー別の色設定
+        const categoryColors = {
+            'tone': '#8b5cf6',
+            'typo': '#ef4444', 
+            'dict': '#f59e0b',
+            'inconsistency': '#ea580c'
+        };
+        
+        const categoryNames = {
+            'tone': '✨ 言い回し改善',
+            'typo': '🔤 誤字修正',
+            'dict': '📚 辞書ルール', 
+            'inconsistency': '⚠️ 矛盾チェック'
+        };
+        
+        const categoryColor = categoryColors[category] || '#6b7280';
+        const categoryName = categoryNames[category] || '📝 修正';
+        
+        // モーダル内容を構築
+        modalBody.innerHTML = `
+            <div class="modal-correction-item" style="--modal-category-color: ${categoryColor};">
+                <div style="margin-bottom: 15px;">
+                    <span style="background: ${categoryColor}; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                        ${categoryName}
+                    </span>
+                </div>
+                <div class="modal-original-text">${escapeHtml(original)}</div>
+                <div class="modal-corrected-text">${escapeHtml(corrected)}</div>
+                <div class="modal-reason-text">${escapeHtml(reason)}</div>
+            </div>
+        `;
+        
+        // モーダルを表示
+        modal.style.display = 'block';
+        
+        // アニメーション効果
+        setTimeout(() => {
+            modal.style.opacity = '1';
+        }, 10);
+    }
+    
+    // モーダルを閉じる関数
+    function closeCorrectionModal() {
+        const modal = document.getElementById('correctionModal');
+        modal.style.display = 'none';
+    }
+    
+    // モーダル関連のイベントリスナーを設定
+    document.addEventListener('DOMContentLoaded', function() {
+        // モーダル閉じるボタン
+        const closeBtn = document.querySelector('.correction-modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeCorrectionModal);
+        }
+        
+        // モーダル背景クリックで閉じる
+        const modal = document.getElementById('correctionModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeCorrectionModal();
+                }
+            });
+        }
+        
+        // ESCキーでモーダルを閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCorrectionModal();
+            }
+        });
+        
+        // 以下、既存のDOMContentLoadedコード...
+        
+        // 設定の復元
+        loadSettings();
+    });
 </script>
 {% endblock %}
