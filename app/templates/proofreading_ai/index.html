@@ -1255,6 +1255,276 @@
     .clickable-correction:hover::after {
         left: 100%;
     }
+    
+    /* 校正クイズゲーム用CSS */
+    .correction-quiz {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .quiz-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .quiz-header h4 {
+        color: white;
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .quiz-stats {
+        display: flex;
+        gap: 16px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 600;
+    }
+    
+    .quiz-question {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    #quizQuestionText {
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+    }
+    
+    .quiz-category {
+        margin-bottom: 8px;
+    }
+    
+    .category-badge-small {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .quiz-option {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 12px 16px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+    }
+    
+    .quiz-option:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+    
+    .quiz-option.selected {
+        background: rgba(16, 185, 129, 0.3);
+        border-color: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+    
+    .quiz-option.correct {
+        background: rgba(16, 185, 129, 0.3);
+        border-color: #10b981;
+        animation: correctPulse 0.6s ease;
+    }
+    
+    .quiz-option.incorrect {
+        background: rgba(239, 68, 68, 0.3);
+        border-color: #ef4444;
+        animation: incorrectShake 0.6s ease;
+    }
+    
+    @keyframes correctPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    @keyframes incorrectShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+    }
+    
+    .option-label {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    
+    .option-text {
+        flex: 1;
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .quiz-feedback {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .quiz-result {
+        color: white;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .quiz-result.correct {
+        color: #10b981;
+    }
+    
+    .quiz-result.incorrect {
+        color: #ef4444;
+    }
+    
+    .quiz-explanation {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    
+    .quiz-next-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .quiz-next-btn:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .quiz-progress {
+        margin-top: 16px;
+    }
+    
+    .quiz-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+    
+    .quiz-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+        position: relative;
+    }
+    
+    .quiz-progress-fill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: progressShimmer 1.5s infinite;
+    }
+    
+    @keyframes progressShimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    .quiz-progress-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 480px) {
+        .correction-quiz {
+            padding: 16px;
+            margin-top: 16px;
+        }
+        
+        .quiz-header {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        
+        .quiz-stats {
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .quiz-option {
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+        
+        .option-label {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1671,6 +1941,54 @@
                 </div>
             </div>
             
+            <!-- 校正クイズゲーム -->
+            <div id="correctionQuiz" class="correction-quiz" style="display: none;">
+                <div class="quiz-header">
+                    <h4>📚 待ち時間クイズ</h4>
+                    <div class="quiz-stats">
+                        <span>スコア: <span id="quizScore">0</span>/<span id="quizTotal">0</span></span>
+                        <span>正解率: <span id="quizAccuracy">0%</span></span>
+                    </div>
+                </div>
+                
+                <div class="quiz-content">
+                    <div class="quiz-question">
+                        <p id="quizQuestionText">どちらが正しいでしょうか？</p>
+                        <div class="quiz-category">
+                            <span id="quizCategoryBadge" class="category-badge-small">📝 校正クイズ</span>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-options">
+                        <button id="quizOption1" class="quiz-option" onclick="selectQuizAnswer(1)">
+                            <span class="option-label">A</span>
+                            <span class="option-text" id="quizOption1Text">選択肢1</span>
+                        </button>
+                        <button id="quizOption2" class="quiz-option" onclick="selectQuizAnswer(2)">
+                            <span class="option-label">B</span>
+                            <span class="option-text" id="quizOption2Text">選択肢2</span>
+                        </button>
+                    </div>
+                    
+                    <div id="quizFeedback" class="quiz-feedback" style="display: none;">
+                        <div id="quizResult" class="quiz-result"></div>
+                        <div id="quizExplanation" class="quiz-explanation"></div>
+                        <button id="quizNextBtn" class="quiz-next-btn" onclick="nextQuizQuestion()">
+                            次の問題 →
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="quiz-progress">
+                    <div class="quiz-progress-bar">
+                        <div id="quizProgressFill" class="quiz-progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="quiz-progress-text">
+                        問題 <span id="quizCurrentNumber">1</span> / <span id="quizTotalQuestions">10</span>
+                    </div>
+                </div>
+            </div>
+            
             <!-- キャンセルボタン -->
             <button id="cancelProcessing" class="cancel-button" style="display: none;">
                 処理をキャンセル
@@ -1700,9 +2018,6 @@
 
 {% block extra_js %}
 <script>
-    // 置換辞書データの受け取り
-    const replacementDict = JSON.parse('{{ replacement_dict|safe }}' || '{}');
-    
     // テキストエリアの高さを自動調整する関数
     function autoResizeTextarea(textarea) {
         // 一時的に高さをリセット
@@ -2515,7 +2830,28 @@
         // 即座に100%に更新
         document.getElementById('progressBar').style.width = '100%';
         document.getElementById('progressPercentage').textContent = '100%';
-        updateLoadingStep('🎉 校正完了！', '結果を表示します...');
+        updateLoadingStep('🎉 校正完了！', '最後の問題に答えて終了しましょう！');
+        
+        // クイズが実行中の場合、最終問題モードに切り替え
+        if (currentQuizState.isActive) {
+            console.log('🏆 処理完了 - 最終問題モードに切り替え');
+            currentQuizState.processingCompleted = true;
+            currentQuizState.isFinalQuestion = true;
+            
+            // 最終問題を表示（まだ問題が残っている場合はそのまま、終了していたら新しい問題を追加）
+            if (currentQuizState.currentIndex >= currentQuizState.questions.length) {
+                // 追加の最終問題を1問出す
+                const allQuizData = generateQuizDataFromCSV();
+                const finalQuestion = shuffleArray(allQuizData)[0];
+                currentQuizState.questions.push(finalQuestion);
+                currentQuizState.totalQuestions++;
+                document.getElementById('quizTotalQuestions').textContent = currentQuizState.totalQuestions;
+                showQuestion();
+            }
+            
+            // UIメッセージ更新
+            document.getElementById('quizQuestionText').textContent = '🏁 最終問題！答えたら結果が表示されます';
+        }
     }
 
     // 修正箇所のクリックイベントを設定（校正結果内のハイライト用）
@@ -2953,6 +3289,534 @@
         URL.revokeObjectURL(url);
         
         console.log('📁 デバッグ情報をエクスポートしました:', debugInfo);
+    }
+    
+    // 置換辞書データの受け取り
+    const replacementDict = JSON.parse('{{ replacement_dict|safe }}' || '{}');
+    
+    // 校正クイズ用データ（CSV全229件を完全活用）
+    const fullCSVData = [
+        ['溢れる', 'あふれる', '開く', '1'],
+        ['あきらか', '明らか', '閉じる', '2'],
+        ['あげる', '上げる', '閉じる', '3'],
+        ['あいだ', '間', '閉じる', '4'],
+        ['あいさつ', '挨拶', '閉じる', '5'],
+        ['貴方', 'あなた', '開く', '6'],
+        ['貴女', 'あなた', '開く', '7'],
+        ['あと', '後', '閉じる', '8'],
+        ['予め', 'あらかじめ', '開く', '9'],
+        ['あく', '空く', '閉じる', '10'],
+        ['あまみ', '甘み', '閉じる', '12'],
+        ['あつかう', '扱う', '閉じる', '13'],
+        ['いぬ', '犬', '閉じる', '14'],
+        ['色々', 'いろいろ', '開く', '15'],
+        ['いったい', '一体', '閉じる', '16'],
+        ['頂く', 'いただく', '開く', '17'],
+        ['一旦', 'いったん', '開く', '18'],
+        ['良い', 'よい', '開く', '19'],
+        ['いっかい', '一回', '閉じる', '20'],
+        ['いま', '今', '閉じる', '21'],
+        ['言う', 'いう', '開く', '22'],
+        ['いいわけ', '言い訳', '閉じる', '23'],
+        ['致します', 'いたします', '開く', '24'],
+        ['いちいん', '一員', '閉じる', '25'],
+        ['いちど・１度', '一度', '閉じる', '26'],
+        ['いちばん', '一番', '閉じる', '27'],
+        ['いっさい', '一切', '閉じる', '28'],
+        ['イジメ', 'いじめ', '開く', '29'],
+        ['いっぽ', '一歩', '閉じる', '30'],
+        ['いかす', '生かす', '閉じる', '31'],
+        ['活かす', '生かす', '閉じる', '32'],
+        ['いたる', '至る', '閉じる', '33'],
+        ['羨ましい', 'うらやましい', '開く', '34'],
+        ['促す', 'うながす', '開く', '35'],
+        ['Webサイト', 'ウェブサイト', '閉じる', '36'],
+        ['うれしい', '嬉しい', '閉じる', '37'],
+        ['上手い', 'うまい', '開く', '38'],
+        ['頷く', 'うなずく', '開く', '39'],
+        ['伺う', 'うかがう', '開く', '40'],
+        ['えり', '襟', '閉じる', '41'],
+        ['おもしろい', '面白い', '閉じる', '42'],
+        ['大いに', 'おおいに', '開く', '43'],
+        ['おれ', '俺', '閉じる', '44'],
+        ['及び', 'および', '開く', '45'],
+        ['おどろく', '驚く', '閉じる', '47'],
+        ['おそるおそる', '恐るおそる', '閉じる', '48'],
+        ['おさななじみ', '幼馴染', '閉じる', '49'],
+        ['おもちゃ', 'オモチャ', '開く', '50'],
+        ['癌', 'がん', '開く', '51'],
+        ['可愛い', 'かわいい', '開く', '52'],
+        ['かし', '菓子', '閉じる', '53'],
+        ['かさ', '傘', '閉じる', '54'],
+        ['かた', '方', '閉じる', '55'],
+        ['から', '～', '開く', '56'],
+        ['ヶ月', 'か月', '開く', '57'],
+        ['唐揚げ', 'から揚げ', '開く', '58'],
+        ['からあげ', 'から揚げ', '閉じる', '59'],
+        ['亀', 'カメ', '開く', '60'],
+        ['かつら', 'カツラ', '開く', '61'],
+        ['がんばる', '頑張る', '閉じる', '62'],
+        ['可哀想', 'かわいそう', '開く', '63'],
+        ['可哀相', 'かわいそう', '開く', '64'],
+        ['きづく', '気付く', '閉じる', '65'],
+        ['きめる※動詞', '決める', '閉じる', '66'],
+        ['綺麗', 'きれい', '開く', '67'],
+        ['下さい', 'ください', '開く', '68'],
+        ['君', 'きみ', '開く', '69'],
+        ['車椅子', '車いす', '開く', '70'],
+        ['けっして', '決して', '閉じる', '71'],
+        ['喧嘩', 'ケンカ', '開く', '72'],
+        ['けんか', 'ケンカ', '閉じる', '73'],
+        ['怪我', 'ケガ', '開く', '74'],
+        ['けが', 'ケガ', '閉じる', '75'],
+        ['牽引', 'けん引', '開く', '76'],
+        ['けんいん', 'けん引', '閉じる', '77'],
+        ['事', 'こと', '開く', '78'],
+        ['子ども', '子供', '閉じる', '79'],
+        ['こども', '子供', '閉じる', '80'],
+        ['如く', 'ごとく', '開く', '81'],
+        ['毎', 'ごと', '開く', '82'],
+        ['例：ご卒業', 'ご～', '開く', '83'],
+        ['ことし', '今年', '閉じる', '84'],
+        ['ころ、ごろ', '頃', '閉じる', '85'],
+        ['ごみ', 'ゴミ', '閉じる', '86'],
+        ['様々', 'さまざま', '開く', '229'],
+        ['更に', 'さらに', '開く', '88'],
+        ['さっそく', '早速', '閉じる', '89'],
+        ['晒す', 'さらす', '開く', '90'],
+        ['寂しい', 'さびしい', '開く', '91'],
+        ['淋しい', 'さびしい', '開く', '92'],
+        ['爽やか', 'さわやか', '開く', '93'],
+        ['しょうがい', '障がい', '閉じる', '94'],
+        ['しあう', 'し合う', '閉じる', '95'],
+        ['じゅうぶん', '十分', '閉じる', '96'],
+        ['賞賛', '称賛', '閉じる', '97'],
+        ['しょうゆ', '醤油', '閉じる', '98'],
+        ['過ぎる', 'すぎる', '開く', '99'],
+        ['直ぐ', 'すぐ', '開く', '100'],
+        ['すし', '寿司', '閉じる', '101'],
+        ['既に', 'すでに', '開く', '102'],
+        ['全て', 'すべて', '開く', '103'],
+        ['スゴイ', 'すごい', '開く', '104'],
+        ['凄い', 'すごい', '開く', '105'],
+        ['すさまじい', '凄まじい', '閉じる', '106'],
+        ['３DCG', '3DCG', '開く', '107'],
+        ['是非', 'ぜひ', '開く', '108'],
+        ['蕎麦', 'そば', '開く', '109'],
+        ['傍、側', 'そば', '開く', '110'],
+        ['さげる', '下げる', '閉じる', '111'],
+        ['揃う', 'そろう', '開く', '112'],
+        ['そで', '袖', '閉じる', '113'],
+        ['為', 'ため', '開く', '114'],
+        ['但し', 'ただし', '開く', '115'],
+        ['沢山', 'たくさん', '開く', '116'],
+        ['たぶん', '多分', '閉じる', '117'],
+        ['たしかに', '確かに', '閉じる', '118'],
+        ['達', 'たち', '開く', '119'],
+        ['度々', 'たびたび', '開く', '120'],
+        ['只', 'ただ', '開く', '121'],
+        ['たとえば', '例えば', '閉じる', '122'],
+        ['だれ', '誰', '閉じる', '123'],
+        ['段ボール', 'ダンボール', '開く', '124'],
+        ['躊躇', 'ちゅうちょ', '開く', '125'],
+        ['つづく', '続く', '閉じる', '126'],
+        ['遂に', 'ついに', '開く', '127'],
+        ['綴る', 'つづる', '開く', '128'],
+        ['辛い', 'つらい', '開く', '129'],
+        ['繋ぐ', 'つなぐ', '開く', '130'],
+        ['共に', 'ともに', '開く', '140'],
+        ['ドーナッツ', 'ドーナツ', '開く', '146'],
+        ['無い', 'ない', '開く', '150'],
+        ['等', 'など', '開く', '151'],
+        ['何て～', 'なんて～', '開く', '154'],
+        ['何と～', 'なんと～', '開く', '155'],
+        ['何故、ナゼ', 'なぜ', '開く', '157'],
+        ['撫でる', 'なでる', '開く', '158']
+    ];
+    
+    // CSVデータからクイズデータを生成する関数（全229件対応）
+    function generateQuizDataFromCSV() {
+        console.log('📚 CSV全229件からクイズ生成開始');
+        
+        const csvQuizData = [];
+        
+        fullCSVData.forEach(([wrong, correct, rule, id]) => {
+            if (wrong && correct && rule) {
+                const reason = generateExplanation(wrong, correct, rule);
+                csvQuizData.push({
+                    wrong: wrong.trim(),
+                    correct: correct.trim(),
+                    rule: rule.trim(),
+                    reason: reason,
+                    id: id
+                });
+            }
+        });
+        
+        console.log('✅ 全CSVデータクイズ生成完了:', csvQuizData.length, '問');
+        return csvQuizData;
+    }
+    
+    // ルールに基づいて解説を自動生成する関数
+    function generateExplanation(wrong, correct, rule) {
+        const isHiragana = /^[あ-ん]+$/.test(correct);
+        const isKanji = /[一-龯]/.test(correct);
+        const isKatakana = /^[ァ-ヶー]+$/.test(correct);
+        
+        let explanation = '';
+        
+        if (rule === '開く') {
+            if (isHiragana) {
+                explanation = `「${correct}」は一般的にひらがなで表記します`;
+            } else if (isKatakana) {
+                explanation = `「${correct}」はカタカナで表記するのが一般的です`;
+            } else {
+                explanation = `「${correct}」は「開く」表記が推奨されています`;
+            }
+            
+            // 特殊ケースの説明
+            if (correct.includes('ください')) {
+                explanation = '補助動詞の「ください」はひらがなで表記します';
+            } else if (correct.includes('いただく')) {
+                explanation = '補助動詞の「いただく」はひらがなで表記します';
+            } else if (correct.includes('ない')) {
+                explanation = '否定の「ない」は一般的にひらがなで表記します';
+            }
+            
+        } else if (rule === '閉じる') {
+            if (isKanji) {
+                explanation = `「${correct}」は漢字で表記するのが一般的です`;
+            } else {
+                explanation = `「${correct}」は「閉じる」表記が推奨されています`;
+            }
+            
+            // 特殊ケースの説明
+            if (correct.includes('問い合わせ')) {
+                explanation = '「問い合わせ」は送り仮名を含めて表記します';
+            } else if (correct.includes('一体') || correct.includes('確か')) {
+                explanation = `「${correct}」は漢字で表記するのが一般的です`;
+            }
+        }
+        
+        return explanation;
+    }
+    
+    // クイズの状態管理
+    let currentQuizState = {
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        totalQuestions: 20,  // 10問 → 20問に増加（229件から厳選した難問クイズ）
+        isActive: false,
+        selectedAnswer: null,
+        showingFeedback: false,
+        processingCompleted: false,  // 校正処理完了フラグ
+        isFinalQuestion: false       // 最終問題フラグ
+    };
+    
+    // クイズを開始する関数
+    function startQuiz() {
+        console.log('🎮 校正クイズ開始');
+        
+        // CSVデータからクイズデータを生成
+        const allQuizData = generateQuizDataFromCSV();
+        
+        // ランダムに問題を選択
+        const shuffledQuestions = shuffleArray(allQuizData).slice(0, currentQuizState.totalQuestions);
+        
+        currentQuizState = {
+            questions: shuffledQuestions,
+            currentIndex: 0,
+            score: 0,
+            totalQuestions: shuffledQuestions.length,
+            isActive: true,
+            selectedAnswer: null,
+            showingFeedback: false,
+            processingCompleted: false,  // 校正処理完了フラグ
+            isFinalQuestion: false       // 最終問題フラグ
+        };
+        
+        // UI初期化
+        document.getElementById('quizScore').textContent = '0';
+        document.getElementById('quizTotal').textContent = currentQuizState.totalQuestions;
+        document.getElementById('quizAccuracy').textContent = '0%';
+        document.getElementById('quizTotalQuestions').textContent = currentQuizState.totalQuestions;
+        
+        // 最初の問題を表示
+        showQuestion();
+        
+        // クイズ表示
+        document.getElementById('correctionQuiz').style.display = 'block';
+    }
+    
+    // 配列をシャッフルする関数
+    function shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+    
+    // 問題を表示する関数
+    function showQuestion() {
+        if (!currentQuizState.isActive || currentQuizState.currentIndex >= currentQuizState.questions.length) {
+            endQuiz();
+            return;
+        }
+        
+        const question = currentQuizState.questions[currentQuizState.currentIndex];
+        const isCorrectFirst = Math.random() > 0.5; // ランダムに選択肢の順序を決定
+        
+        // 問題文更新
+        document.getElementById('quizQuestionText').textContent = 'どちらが適切な表記でしょうか？';
+        
+        // カテゴリーバッジ更新
+        const ruleText = question.rule === '開く' ? '📖 ひらがな表記' : '📚 漢字表記';
+        document.getElementById('quizCategoryBadge').textContent = ruleText;
+        
+        // 選択肢設定
+        const option1 = document.getElementById('quizOption1');
+        const option2 = document.getElementById('quizOption2');
+        
+        if (isCorrectFirst) {
+            document.getElementById('quizOption1Text').textContent = question.correct;
+            document.getElementById('quizOption2Text').textContent = question.wrong;
+            option1.dataset.correct = 'true';
+            option2.dataset.correct = 'false';
+        } else {
+            document.getElementById('quizOption1Text').textContent = question.wrong;
+            document.getElementById('quizOption2Text').textContent = question.correct;
+            option1.dataset.correct = 'false';
+            option2.dataset.correct = 'true';
+        }
+        
+        // ボタン状態リセット
+        [option1, option2].forEach(btn => {
+            btn.classList.remove('selected', 'correct', 'incorrect');
+            btn.disabled = false;
+        });
+        
+        // フィードバック非表示
+        document.getElementById('quizFeedback').style.display = 'none';
+        currentQuizState.selectedAnswer = null;
+        currentQuizState.showingFeedback = false;
+        
+        // 進捗更新
+        updateQuizProgress();
+    }
+    
+    // 進捗を更新する関数
+    function updateQuizProgress() {
+        const progress = ((currentQuizState.currentIndex + 1) / currentQuizState.totalQuestions) * 100;
+        document.getElementById('quizProgressFill').style.width = progress + '%';
+        document.getElementById('quizCurrentNumber').textContent = currentQuizState.currentIndex + 1;
+        
+        // 正解率更新
+        const accuracy = currentQuizState.currentIndex === 0 ? 0 : Math.round((currentQuizState.score / currentQuizState.currentIndex) * 100);
+        document.getElementById('quizAccuracy').textContent = accuracy + '%';
+    }
+    
+    // 回答を選択する関数
+    function selectQuizAnswer(optionNumber) {
+        if (currentQuizState.showingFeedback || !currentQuizState.isActive) return;
+        
+        const selectedButton = document.getElementById(`quizOption${optionNumber}`);
+        const otherButton = document.getElementById(`quizOption${optionNumber === 1 ? 2 : 1}`);
+        const isCorrect = selectedButton.dataset.correct === 'true';
+        const question = currentQuizState.questions[currentQuizState.currentIndex];
+        
+        currentQuizState.selectedAnswer = optionNumber;
+        currentQuizState.showingFeedback = true;
+        
+        // ボタンを無効化
+        [selectedButton, otherButton].forEach(btn => btn.disabled = true);
+        
+        // 正解の場合
+        if (isCorrect) {
+            currentQuizState.score++;
+            selectedButton.classList.add('correct');
+            
+            // フィードバック表示
+            showQuizFeedback(true, question);
+        } else {
+            // 不正解の場合
+            selectedButton.classList.add('incorrect');
+            // 正解の選択肢を強調
+            otherButton.classList.add('correct');
+            
+            // フィードバック表示
+            showQuizFeedback(false, question);
+        }
+        
+        // スコア更新
+        document.getElementById('quizScore').textContent = currentQuizState.score;
+        
+        console.log(`🎯 回答: ${isCorrect ? '正解' : '不正解'} (${currentQuizState.score}/${currentQuizState.currentIndex + 1})`);
+    }
+    
+    // フィードバックを表示する関数
+    function showQuizFeedback(isCorrect, question) {
+        const feedback = document.getElementById('quizFeedback');
+        const result = document.getElementById('quizResult');
+        const explanation = document.getElementById('quizExplanation');
+        
+        // 結果表示
+        if (isCorrect) {
+            result.textContent = '🎉 正解！';
+            result.className = 'quiz-result correct';
+        } else {
+            result.textContent = '❌ 不正解';
+            result.className = 'quiz-result incorrect';
+        }
+        
+        // 解説表示
+        explanation.innerHTML = `
+            <strong>正解：</strong>${question.correct}<br>
+            <strong>理由：</strong>${question.reason}
+        `;
+        
+        feedback.style.display = 'block';
+    }
+    
+    // 次の問題に進む関数
+    function nextQuizQuestion() {
+        currentQuizState.currentIndex++;
+        
+        // 最終問題に答えた場合は結果を表示して終了
+        if (currentQuizState.isFinalQuestion && currentQuizState.processingCompleted) {
+            console.log('🏁 最終問題完了 - 校正結果を表示して終了');
+            endQuizAndShowResults();
+            return;
+        }
+        
+        if (currentQuizState.currentIndex < currentQuizState.questions.length) {
+            showQuestion();
+        } else {
+            endQuiz();
+        }
+    }
+    
+    // クイズ終了
+    function endQuiz() {
+        console.log('🏁 クイズ終了');
+        
+        const finalScore = currentQuizState.score;
+        const totalQuestions = currentQuizState.questions.length;
+        const accuracy = Math.round((finalScore / totalQuestions) * 100);
+        
+        // 終了メッセージ
+        let message = '';
+        if (accuracy >= 90) {
+            message = '🏆 素晴らしい！校正マスターですね！';
+        } else if (accuracy >= 70) {
+            message = '✨ よくできました！';
+        } else if (accuracy >= 50) {
+            message = '📖 もう少し頑張りましょう！';
+        } else {
+            message = '💪 練習を重ねて上達しましょう！';
+        }
+        
+        // 結果表示
+        document.getElementById('quizQuestionText').textContent = 'クイズ完了！';
+        document.getElementById('quizCategoryBadge').textContent = `📊 最終結果`;
+        
+        const feedback = document.getElementById('quizFeedback');
+        const result = document.getElementById('quizResult');
+        const explanation = document.getElementById('quizExplanation');
+        
+        result.textContent = message;
+        result.className = 'quiz-result';
+        
+        explanation.innerHTML = `
+            <strong>最終スコア：</strong>${finalScore}/${totalQuestions} (${accuracy}%)<br>
+            <strong>校正知識レベル：</strong>${getSkillLevel(accuracy)}
+        `;
+        
+        feedback.style.display = 'block';
+        
+        // 次へボタンを「もう一度」に変更
+        const nextBtn = document.getElementById('quizNextBtn');
+        nextBtn.textContent = '🔄 もう一度挑戦';
+        nextBtn.onclick = () => {
+            startQuiz();
+        };
+        
+        // 選択肢を非表示
+        document.getElementById('quizOption1').style.display = 'none';
+        document.getElementById('quizOption2').style.display = 'none';
+        
+        currentQuizState.isActive = false;
+        
+        console.log(`📊 最終結果: ${finalScore}/${totalQuestions} (${accuracy}%)`);
+    }
+    
+    // スキルレベル判定
+    function getSkillLevel(accuracy) {
+        if (accuracy >= 95) return '📜 校正マスター';
+        if (accuracy >= 85) return '🎓 校正上級者';
+        if (accuracy >= 70) return '📚 校正中級者';
+        if (accuracy >= 50) return '✏️ 校正初級者';
+        return '📖 校正学習者';
+    }
+    
+    // ローディング表示時にクイズ開始
+    function showLoadingOverlay() {
+        console.log('🔄 showLoadingOverlay() 開始');
+        
+        const overlay = document.getElementById('loadingOverlay');
+        const inputText = document.getElementById('inputText').value;
+        const charCount = inputText.length;
+        const estimatedTokens = Math.ceil(charCount / 3);
+        
+        if (!overlay) {
+            console.error('❌ loadingOverlay要素が見つかりません');
+            return;
+        }
+        
+        // オーバーレイを表示
+        overlay.style.display = 'flex';
+        
+        // 初期値を設定
+        document.getElementById('inputChars').textContent = charCount.toLocaleString();
+        document.getElementById('estimatedTokens').textContent = estimatedTokens.toLocaleString();
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercentage').textContent = '0%';
+        document.getElementById('elapsedTime').textContent = '00:00';
+        
+        // 進捗管理を開始
+        window.loadingStartTime = Date.now();
+        window.loadingProgress = {
+            currentStep: 0,
+            steps: [
+                { progress: 5, message: 'テキストを解析しています...', info: 'Amazon Web Service に接続中...' },
+                { progress: 15, message: 'AWS Bedrock に接続中...', info: 'Claude 4 モデルを初期化中...' },
+                { progress: 25, message: 'Claude 4 で文章を解析中...', info: '自然言語処理を実行中...' },
+                { progress: 40, message: '誤字・脱字をチェック中...', info: '辞書ベースの検証を実行中...' },
+                { progress: 55, message: '文体・表現を改善中...', info: 'スタイル分析を実行中...' },
+                { progress: 70, message: '論理的矛盾を確認中...', info: '内容の一貫性をチェック中...' },
+                { progress: 85, message: '4色ハイライトを生成中...', info: 'カテゴリー別分類を実行中...' },
+                { progress: 90, message: '結果を受信中...', info: 'Claude 4 からの応答を待機中...' }
+                // 100%は実際にレスポンス受信時のみ表示
+            ]
+        };
+        
+        // プログレス更新開始
+        startProgressUpdate();
+        
+        // 経過時間カウンター開始
+        window.elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
+        
+        // 15秒後にクイズを開始
+        setTimeout(() => {
+            if (currentQuizState.isActive === false && document.getElementById('loadingOverlay').style.display !== 'none') {
+                console.log('🎮 15秒経過 - クイズ開始');
+                startQuiz();
+            }
+        }, 1000);
+        
+        console.log('✅ 改良版ローディングオーバーレイ表示完了（クイズ機能付き）');
     }
 </script>
 {% endblock %}
