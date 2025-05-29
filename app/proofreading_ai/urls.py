@@ -11,4 +11,8 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('dictionary/', views.dictionary, name='dictionary'),
     path('dictionary/add/', views.add_dictionary, name='add_dictionary'),
+    
+    # デバッグエンドポイント
+    path('debug/aws-auth/', views.debug_aws_auth, name='debug_aws_auth'),
+    path('debug/server-status/', views.debug_server_status, name='debug_server_status'),
 ] 
