@@ -15,6 +15,7 @@ import traceback
 import boto3
 import os
 from django.conf import settings
+import csv
 
 from .models import ProofreadingRequest, ProofreadingResult, ReplacementDictionary
 # 本番用とモック用両方をインポート
@@ -547,4 +548,57 @@ def debug_server_status(request):
             'success': False,
             'error': str(e),
             'stack_trace': traceback.format_exc()
+        })
+
+
+def dictionary_viewer(request):
+    """
+    校正AIページからアクセス可能な辞書表示機能
+    """
+    try:
+        # CSVファイルから辞書データを読み込み
+        csv_path = os.path.join(settings.BASE_DIR, 'app', 'proofreading', 'replacement_dict.csv')
+        dictionary_entries = []
+        
+        if os.path.exists(csv_path):
+            with open(csv_path, 'r', encoding='utf-8') as file:
+                csv_reader = csv.reader(file)
+                for row_num, row in enumerate(csv_reader, 1):
+                    if len(row) >= 4:  # 最低4列必要（元の単語, 修正後, 状態, ID）
+                        dictionary_entries.append({
+                            'id': row_num,
+                            'original_word': row[0],
+                            'corrected_word': row[1], 
+                            'state': row[2],  # '開く' or '閉じる'
+                            'entry_id': row[3] if len(row) > 3 else row_num
+                        })
+        
+        # 辞書データをカテゴリ別に分類
+        open_entries = [entry for entry in dictionary_entries if entry['state'] == '開く']
+        close_entries = [entry for entry in dictionary_entries if entry['state'] == '閉じる']
+        
+        # 統計情報
+        stats = {
+            'total_entries': len(dictionary_entries),
+            'open_entries': len(open_entries),
+            'close_entries': len(close_entries)
+        }
+        
+        logger.info(f"📚 辞書表示: 総エントリ数 {stats['total_entries']}件")
+        
+        return render(request, 'proofreading_ai/dictionary_viewer.html', {
+            'dictionary_entries': dictionary_entries,
+            'open_entries': open_entries,
+            'close_entries': close_entries,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ 辞書表示エラー: {str(e)}")
+        return render(request, 'proofreading_ai/dictionary_viewer.html', {
+            'dictionary_entries': [],
+            'open_entries': [],
+            'close_entries': [],
+            'stats': {'total_entries': 0, 'open_entries': 0, 'close_entries': 0},
+            'error': str(e)
         }) 

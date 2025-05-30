@@ -1,0 +1,221 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/aws/lambda/EC2CorrectAiStatusToChatWork",
+            "creationTime": 1725872559470,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/EC2CorrectAiStatusToChatWork:*",
+            "storedBytes": 55098,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/EC2CorrectAiStatusToChatWork"
+        },
+        {
+            "logGroupName": "/aws/lambda/cost_notification",
+            "creationTime": 1732174273996,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/cost_notification:*",
+            "storedBytes": 116106,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/cost_notification"
+        },
+        {
+            "logGroupName": "/aws/lambda/grape-github-guide-bot",
+            "creationTime": 1733210769621,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape-github-guide-bot:*",
+            "storedBytes": 104549,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape-github-guide-bot"
+        },
+        {
+            "logGroupName": "/aws/lambda/grape-github-guide-bot-dev-slack_events",
+            "creationTime": 1733285054583,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape-github-guide-bot-dev-slack_events:*",
+            "storedBytes": 7959,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape-github-guide-bot-dev-slack_events"
+        },
+        {
+            "logGroupName": "/aws/lambda/grape_wp_text_correction_dev",
+            "creationTime": 1723606322297,
+            "retentionInDays": 90,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape_wp_text_correction_dev:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape_wp_text_correction_dev"
+        },
+        {
+            "logGroupName": "/aws/lambda/grape_wp_text_correction_lambda_dev",
+            "creationTime": 1723690575863,
+            "retentionInDays": 90,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape_wp_text_correction_lambda_dev:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/grape_wp_text_correction_lambda_dev"
+        },
+        {
+            "logGroupName": "/aws/lambda/headless-browser-test",
+            "creationTime": 1746783946516,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/headless-browser-test:*",
+            "storedBytes": 629,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/headless-browser-test"
+        },
+        {
+            "logGroupName": "/aws/lambda/insta_test_puppeteer",
+            "creationTime": 1746605549726,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/insta_test_puppeteer:*",
+            "storedBytes": 123242,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/insta_test_puppeteer"
+        },
+        {
+            "logGroupName": "/aws/lambda/lambda-slack-bedrock-backend",
+            "creationTime": 1733307822463,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/lambda-slack-bedrock-backend:*",
+            "storedBytes": 44876,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/lambda-slack-bedrock-backend"
+        },
+        {
+            "logGroupName": "/aws/lambda/pupeteer_scraping_trends24",
+            "creationTime": 1727680699090,
+            "retentionInDays": 7,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/pupeteer_scraping_trends24:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/pupeteer_scraping_trends24"
+        },
+        {
+            "logGroupName": "/aws/lambda/scraping_amazon_timesale_to_s3",
+            "creationTime": 1726819878500,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/scraping_amazon_timesale_to_s3:*",
+            "storedBytes": 4590,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/scraping_amazon_timesale_to_s3"
+        },
+        {
+            "logGroupName": "/aws/lambda/scraping_amazon_winter_recommender_dev1",
+            "creationTime": 1737098418962,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/scraping_amazon_winter_recommender_dev1:*",
+            "storedBytes": 917725459,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/scraping_amazon_winter_recommender_dev1"
+        },
+        {
+            "logGroupName": "/aws/lambda/slack-bedrock-bot-dev-slack_events",
+            "creationTime": 1733291967671,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/slack-bedrock-bot-dev-slack_events:*",
+            "storedBytes": 327725,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/aws/lambda/slack-bedrock-bot-dev-slack_events"
+        },
+        {
+            "logGroupName": "/ecs/",
+            "creationTime": 1726104753462,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/:*",
+            "storedBytes": 5219,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/"
+        },
+        {
+            "logGroupName": "/ecs/django-app-new",
+            "creationTime": 1745487888030,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-new:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-new"
+        },
+        {
+            "logGroupName": "/ecs/django-app-production",
+            "creationTime": 1746063864367,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-production:*",
+            "storedBytes": 412321,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-production"
+        },
+        {
+            "logGroupName": "/ecs/django-app-staging",
+            "creationTime": 1745489296132,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-staging:*",
+            "storedBytes": 341380,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-staging"
+        },
+        {
+            "logGroupName": "/ecs/ecs-app",
+            "creationTime": 1744277097477,
+            "retentionInDays": 30,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/ecs-app:*",
+            "storedBytes": 56837593,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/ecs-app"
+        },
+        {
+            "logGroupName": "/ecs/grape-app",
+            "creationTime": 1726103182847,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-app:*",
+            "storedBytes": 381,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-app"
+        },
+        {
+            "logGroupName": "/ecs/grape-checker",
+            "creationTime": 1746078080026,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-checker:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-checker"
+        },
+        {
+            "logGroupName": "/ecs/grape-checker-staging",
+            "creationTime": 1746079132187,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-checker-staging:*",
+            "storedBytes": 8956473,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/grape-checker-staging"
+        },
+        {
+            "logGroupName": "/ecs/proofread-ai-dev",
+            "creationTime": 1744271170892,
+            "retentionInDays": 7,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/proofread-ai-dev:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/proofread-ai-dev"
+        },
+        {
+            "logGroupName": "amazon_scraping_dev4",
+            "creationTime": 1727262442357,
+            "retentionInDays": 30,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:amazon_scraping_dev4:*",
+            "storedBytes": 0,
+            "logGroupClass": "STANDARD",
+            "logGroupArn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:amazon_scraping_dev4"
+        }
+    ]
+}

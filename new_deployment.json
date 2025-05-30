@@ -1,0 +1,622 @@
+{
+    "service": {
+        "serviceArn": "arn:aws:ecs:ap-northeast-1:026090540679:service/django-ecs-cluster-production/django-ecs-service-production",
+        "serviceName": "django-ecs-service-production",
+        "clusterArn": "arn:aws:ecs:ap-northeast-1:026090540679:cluster/django-ecs-cluster-production",
+        "loadBalancers": [
+            {
+                "targetGroupArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227",
+                "containerName": "django-app",
+                "containerPort": 8000
+            }
+        ],
+        "serviceRegistries": [],
+        "status": "ACTIVE",
+        "desiredCount": 1,
+        "runningCount": 1,
+        "pendingCount": 0,
+        "launchType": "FARGATE",
+        "platformVersion": "LATEST",
+        "platformFamily": "Linux",
+        "taskDefinition": "arn:aws:ecs:ap-northeast-1:026090540679:task-definition/django-app:7",
+        "deploymentConfiguration": {
+            "deploymentCircuitBreaker": {
+                "enable": false,
+                "rollback": false
+            },
+            "maximumPercent": 200,
+            "minimumHealthyPercent": 100,
+            "alarms": {
+                "alarmNames": [],
+                "rollback": false,
+                "enable": false
+            }
+        },
+        "deployments": [
+            {
+                "id": "ecs-svc/3366941555273793273",
+                "status": "PRIMARY",
+                "taskDefinition": "arn:aws:ecs:ap-northeast-1:026090540679:task-definition/django-app:7",
+                "desiredCount": 0,
+                "pendingCount": 0,
+                "runningCount": 0,
+                "failedTasks": 0,
+                "createdAt": "2025-05-30T15:18:39.610000+09:00",
+                "updatedAt": "2025-05-30T15:18:39.610000+09:00",
+                "launchType": "FARGATE",
+                "platformVersion": "1.4.0",
+                "platformFamily": "Linux",
+                "networkConfiguration": {
+                    "awsvpcConfiguration": {
+                        "subnets": [
+                            "subnet-0d1cffbfc0ffbdbd9",
+                            "subnet-0bf3ed139f157061b"
+                        ],
+                        "securityGroups": [
+                            "sg-07505687008e51c45"
+                        ],
+                        "assignPublicIp": "ENABLED"
+                    }
+                },
+                "rolloutState": "IN_PROGRESS",
+                "rolloutStateReason": "ECS deployment ecs-svc/3366941555273793273 in progress."
+            },
+            {
+                "id": "ecs-svc/9676711145235330030",
+                "status": "ACTIVE",
+                "taskDefinition": "arn:aws:ecs:ap-northeast-1:026090540679:task-definition/django-app:7",
+                "desiredCount": 1,
+                "pendingCount": 0,
+                "runningCount": 1,
+                "failedTasks": 0,
+                "createdAt": "2025-05-30T15:07:06.500000+09:00",
+                "updatedAt": "2025-05-30T15:09:54.014000+09:00",
+                "launchType": "FARGATE",
+                "platformVersion": "1.4.0",
+                "platformFamily": "Linux",
+                "networkConfiguration": {
+                    "awsvpcConfiguration": {
+                        "subnets": [
+                            "subnet-0d1cffbfc0ffbdbd9",
+                            "subnet-0bf3ed139f157061b"
+                        ],
+                        "securityGroups": [
+                            "sg-07505687008e51c45"
+                        ],
+                        "assignPublicIp": "ENABLED"
+                    }
+                },
+                "rolloutState": "COMPLETED",
+                "rolloutStateReason": "ECS deployment ecs-svc/9676711145235330030 completed."
+            }
+        ],
+        "roleArn": "arn:aws:iam::026090540679:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS",
+        "events": [
+            {
+                "id": "9b166f54-1b1b-4f38-a973-844c3df76747",
+                "createdAt": "2025-05-30T15:09:54.023000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "4f40fa8e-4a54-4fbe-8ce2-5799c141188f",
+                "createdAt": "2025-05-30T15:09:54.022000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/9676711145235330030) deployment completed."
+            },
+            {
+                "id": "df724cf1-acf3-449f-9f34-c7cb2be291b4",
+                "createdAt": "2025-05-30T15:08:53.476000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/5411639219789935905) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "19d1f92b-911a-4aa1-9a90-c07eebad9441",
+                "createdAt": "2025-05-30T15:08:53.471000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "58f52b4c-bfc9-4be2-9641-d60b8fc0268a",
+                "createdAt": "2025-05-30T15:08:42.600000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task f6ff8a6f461a40e68e20d598b49e9a9e)."
+            },
+            {
+                "id": "62ae5a38-91b2-4859-ba12-df9f1710f87f",
+                "createdAt": "2025-05-30T15:07:51.965000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "fd521a6d-22e8-4404-b164-ee4fdd95ec39",
+                "createdAt": "2025-05-30T15:07:20.679000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task f1e32a3a61e14763bf446bd168f280a4)."
+            },
+            {
+                "id": "50f6b0b3-3221-449f-8001-b0f4b00e8d57",
+                "createdAt": "2025-05-30T14:55:49.630000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "e2b0bfd5-f70b-475b-9d5d-0a41056ebf7c",
+                "createdAt": "2025-05-30T14:55:49.628000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/5411639219789935905) deployment completed."
+            },
+            {
+                "id": "ea266f99-0111-442e-9c07-9be944284831",
+                "createdAt": "2025-05-30T14:54:57.703000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/4683165222790480950) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "4c3183bd-99c2-40a3-99bd-26c829dbf64e",
+                "createdAt": "2025-05-30T14:54:57.700000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "ea37bf2a-41e3-4288-97e8-6c55f840a920",
+                "createdAt": "2025-05-30T14:54:46.458000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task d0e10c3b7ca94cd98e91ad15d2e57c42)."
+            },
+            {
+                "id": "6542cb63-3a83-4535-a141-797891bbbd28",
+                "createdAt": "2025-05-30T14:53:55.520000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "e46cd91b-6ff9-43ef-9a5a-7f875c9ba210",
+                "createdAt": "2025-05-30T14:53:24.636000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task f6ff8a6f461a40e68e20d598b49e9a9e)."
+            },
+            {
+                "id": "9632035c-4543-4ad9-b339-cf1bdc155566",
+                "createdAt": "2025-05-30T14:44:47.727000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "a7a469ca-6393-4f30-939c-3a9157082a45",
+                "createdAt": "2025-05-30T14:44:47.726000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/4683165222790480950) deployment completed."
+            },
+            {
+                "id": "e3de6b31-fe0d-466b-ad09-bac18cba6824",
+                "createdAt": "2025-05-30T14:43:47.080000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/9347620192170538887) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "b11cdc0f-238b-4c31-9138-b913e674070d",
+                "createdAt": "2025-05-30T14:43:47.074000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "08b446e0-d836-4ffb-a9fd-35752aabbcbd",
+                "createdAt": "2025-05-30T14:43:36.730000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task e177f47e87a140c5a2ea0aa8a245b696)."
+            },
+            {
+                "id": "d92060c2-eb27-4fa6-91ca-f63ed97248dd",
+                "createdAt": "2025-05-30T14:42:45.782000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "b4891a8c-ce69-43f2-8c45-4017b73b8f95",
+                "createdAt": "2025-05-30T14:42:03.947000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task d0e10c3b7ca94cd98e91ad15d2e57c42)."
+            },
+            {
+                "id": "df804824-ea1b-404a-bcd7-df3797289d60",
+                "createdAt": "2025-05-30T14:30:11.431000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "99d8cb46-7ed3-42e1-a1c1-d401845f30d8",
+                "createdAt": "2025-05-30T14:30:11.430000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/9347620192170538887) deployment completed."
+            },
+            {
+                "id": "7b9996c2-924d-47a9-8132-418563e6957a",
+                "createdAt": "2025-05-30T14:29:08.664000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/7956601000590220223) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "ddec4286-bf68-4e3b-bd00-c75d7fcc153e",
+                "createdAt": "2025-05-30T14:29:08.658000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "c78f2631-3a9a-4caa-90a7-a9e03b9b8730",
+                "createdAt": "2025-05-30T14:28:59.158000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task 00e2e36f320b44f7913a059f52cdc9fb)."
+            },
+            {
+                "id": "067e748a-cda1-4fe1-abe6-a2a8790b5c8e",
+                "createdAt": "2025-05-30T14:28:08.528000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "52af85fd-4bd5-49c4-8dff-282dcc51892b",
+                "createdAt": "2025-05-30T14:27:27.732000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task e177f47e87a140c5a2ea0aa8a245b696)."
+            },
+            {
+                "id": "d74e3da7-8ece-433a-9873-e2654c70ee17",
+                "createdAt": "2025-05-30T14:22:47.766000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "5c3aa75f-7bd7-43da-b55b-80a5b7c2fa31",
+                "createdAt": "2025-05-30T14:22:47.764000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/7956601000590220223) deployment completed."
+            },
+            {
+                "id": "b7bf3c9e-e418-4a88-ad1c-9d84702d92bc",
+                "createdAt": "2025-05-30T14:21:54.730000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/9603090586045853907) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "6ea88bed-c345-4223-aa27-c8bcc9615303",
+                "createdAt": "2025-05-30T14:21:54.726000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "069e6637-2eb7-4e15-9b29-f04ebb4c895a",
+                "createdAt": "2025-05-30T14:21:45.533000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task 9617122d06f14dee9d548d83ff96fcb0)."
+            },
+            {
+                "id": "3ca29e71-22f1-4c01-8949-f652deee3fa5",
+                "createdAt": "2025-05-30T14:20:53.965000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "3d68a900-faad-4a5e-9fd8-046593c3c4e1",
+                "createdAt": "2025-05-30T14:20:23.216000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task 00e2e36f320b44f7913a059f52cdc9fb)."
+            },
+            {
+                "id": "02ceadad-8019-45d3-9e94-73280ff7da0a",
+                "createdAt": "2025-05-30T14:08:09.862000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "11d4cab1-bb9d-4f7a-bfd4-d465e8d7bead",
+                "createdAt": "2025-05-30T14:08:09.861000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/9603090586045853907) deployment completed."
+            },
+            {
+                "id": "4a42fcdf-5dc2-4a85-bcce-22e9dd2b789f",
+                "createdAt": "2025-05-30T14:06:56.944000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/2015364606624250519) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "122db186-04dc-49e0-8869-e286c302b065",
+                "createdAt": "2025-05-30T14:06:56.937000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "bbd0e265-1064-410d-b137-454858fe22fb",
+                "createdAt": "2025-05-30T14:06:47.470000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task a8b7d1995f8945ebacafabbf1f89af57)."
+            },
+            {
+                "id": "97956ec4-abf7-4b66-b1d1-1e68c7fcb8d8",
+                "createdAt": "2025-05-30T14:05:56.682000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "c2ab525e-24ab-41c3-b35a-515797687537",
+                "createdAt": "2025-05-30T14:05:25.618000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task 9617122d06f14dee9d548d83ff96fcb0)."
+            },
+            {
+                "id": "3fa1cc13-7ca0-4d74-b4e8-898cd9067c4c",
+                "createdAt": "2025-05-30T13:57:51.334000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "484c78f1-def3-4ac2-8150-5dde961e8a2d",
+                "createdAt": "2025-05-30T13:57:51.333000+09:00",
+                "message": "(service django-ecs-service-production) (deployment ecs-svc/2015364606624250519) deployment completed."
+            },
+            {
+                "id": "8b556e16-d269-43ea-9742-c2b47d2c419e",
+                "createdAt": "2025-05-30T13:56:58.457000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/0156076031390756205) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "0e2ffd2e-876e-4f6c-9e06-8343d378977f",
+                "createdAt": "2025-05-30T13:56:58.450000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "92f44029-c0cb-4e56-8e48-7d802dd3d5ae",
+                "createdAt": "2025-05-30T13:56:48.590000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task d7014d5161284e6aab551e85338b597b)."
+            },
+            {
+                "id": "9e151daf-bbe4-47d9-9eda-373751a664bf",
+                "createdAt": "2025-05-30T13:55:56.673000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "961d38bf-bca4-437f-b994-2d1186a82986",
+                "createdAt": "2025-05-30T13:55:27.667000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task a8b7d1995f8945ebacafabbf1f89af57)."
+            },
+            {
+                "id": "6ec39485-8b9f-48c6-b4e7-4a2c770af8f8",
+                "createdAt": "2025-05-30T09:05:20.285000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "4f58bfb9-663d-4fd9-80eb-0f6e4c193182",
+                "createdAt": "2025-05-30T03:05:11.253000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "2156cc6b-d906-4399-89d3-3aaff934d207",
+                "createdAt": "2025-05-29T21:04:45.234000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "bb433c0a-c9f7-492c-9deb-fb293e9a31ea",
+                "createdAt": "2025-05-29T15:04:07.066000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "62a858ee-bdab-4c95-9f50-414dc4d14c4b",
+                "createdAt": "2025-05-29T09:03:25.044000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "8feffc8a-ef0d-4416-b7c5-c0c0e9a99e08",
+                "createdAt": "2025-05-29T03:03:14.595000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "7db6b411-10b5-4183-bed4-d7ab358a0581",
+                "createdAt": "2025-05-28T21:02:48.764000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "62e56c37-0e5c-42f1-ad92-df4132b6d51f",
+                "createdAt": "2025-05-28T15:02:21.778000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "6524fcd4-85e8-446b-a0f1-de36ca2883c4",
+                "createdAt": "2025-05-28T09:02:01.563000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "2337f1d0-a874-4b91-9d45-19ae3eb2e21f",
+                "createdAt": "2025-05-28T03:01:28.400000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "20e046f0-a260-43eb-98c5-1a34aca72e20",
+                "createdAt": "2025-05-27T21:01:01.216000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "024a46b4-b3fd-43a1-b0af-4c576a659cdc",
+                "createdAt": "2025-05-27T15:00:53.825000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "d74370d2-be7f-4bcb-b7dd-abb6eefebffd",
+                "createdAt": "2025-05-27T09:00:15.082000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "7dad844c-6af5-4cfa-8600-53f5ba089d6f",
+                "createdAt": "2025-05-27T03:00:12.124000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "2c97a196-f18d-494d-a012-b284d90b035b",
+                "createdAt": "2025-05-26T20:59:45.655000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "8c111568-3108-44e1-af7f-e3456ed0d440",
+                "createdAt": "2025-05-26T14:59:09.246000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "dbc444fc-155d-4514-9cdc-109f7669b978",
+                "createdAt": "2025-05-26T08:58:37.564000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "fd0be44c-8bab-4b33-b397-1be12d209fc4",
+                "createdAt": "2025-05-26T02:57:58.244000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "5fd7d59a-6ccd-4b66-b67e-d5343270e591",
+                "createdAt": "2025-05-25T20:57:13.497000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "883ddcf1-eee3-4658-8961-6f5756e76217",
+                "createdAt": "2025-05-25T14:56:30.898000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "6954ce4e-491c-4e9c-85f5-4cce536d0ab7",
+                "createdAt": "2025-05-25T08:55:50.282000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "9751673c-8954-4c14-ae3f-12d1c71d49c9",
+                "createdAt": "2025-05-25T02:55:07.905000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "5322df60-01a1-4dda-96ec-80481a4e72ab",
+                "createdAt": "2025-05-24T20:54:46.249000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "ed391972-d8f9-4065-94eb-25ae198522b2",
+                "createdAt": "2025-05-24T14:54:35.688000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "987a87fb-1b38-4af3-9d87-c5cf9fedabc3",
+                "createdAt": "2025-05-24T08:54:18.990000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "4924f7cf-c5cb-4e53-866a-8d6db2c4c18a",
+                "createdAt": "2025-05-24T02:53:50.120000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "19244210-815b-407e-a2c3-032acb4a5ddf",
+                "createdAt": "2025-05-23T20:53:09.571000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "ea00f3e3-4820-4fde-a4aa-b00be5088f33",
+                "createdAt": "2025-05-23T14:53:01.519000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "6127876a-27f0-464b-bc1e-3484f6ba44a6",
+                "createdAt": "2025-05-23T08:52:52.247000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "54401e3f-7b34-4ed6-bd5f-21680a8dde91",
+                "createdAt": "2025-05-23T02:52:45.308000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "35e2d52e-9d8a-4bf8-ab21-d64680120363",
+                "createdAt": "2025-05-22T20:52:12.544000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "4ec4dae3-1e4a-492b-9f87-7702d98f2964",
+                "createdAt": "2025-05-22T14:52:04.647000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "b4869886-abdf-44db-8971-22270eb25bdf",
+                "createdAt": "2025-05-22T08:51:45.542000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "740e0924-8b90-41a4-905b-346d5f6324fc",
+                "createdAt": "2025-05-22T02:51:01.467000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "733bb7a4-df9d-4712-b5db-969e80051148",
+                "createdAt": "2025-05-21T20:50:27.596000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "0bb2e6d0-82bc-496e-a5a4-57a4c729bd2b",
+                "createdAt": "2025-05-21T14:50:24.204000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "abf48a82-6b14-4e76-af3e-82815231d4c3",
+                "createdAt": "2025-05-21T08:49:56.950000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "a1e8b831-2b81-4845-b34d-90dba54e0d2e",
+                "createdAt": "2025-05-21T02:49:31.957000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "0255497a-39cf-4e5b-aebf-041fa1b147ff",
+                "createdAt": "2025-05-20T20:49:18.803000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "2b0869fc-bea5-47a4-87cd-a62d7e14cd3e",
+                "createdAt": "2025-05-20T14:49:17.703000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "4b241f4f-b54f-4062-8207-ed3819122640",
+                "createdAt": "2025-05-20T08:49:16.287000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "1970e84f-54ac-427b-8912-4d9d67d62103",
+                "createdAt": "2025-05-20T08:49:16.271000+09:00",
+                "message": "(service django-ecs-service-production, taskSet ecs-svc/0156076031390756205) has begun draining connections on 1 tasks."
+            },
+            {
+                "id": "45c3908a-f9a4-4a9e-97cd-0ef24d39a523",
+                "createdAt": "2025-05-20T08:49:16.264000+09:00",
+                "message": "(service django-ecs-service-production) deregistered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "cb9497a6-835e-42f4-8121-526b5b6bc83d",
+                "createdAt": "2025-05-20T08:49:06.446000+09:00",
+                "message": "(service django-ecs-service-production) has stopped 1 running tasks: (task 892d480e9bfa43e183a597d42123f146)."
+            },
+            {
+                "id": "f6518e81-dcb8-4a01-b123-00304a6c6687",
+                "createdAt": "2025-05-20T08:48:09.426000+09:00",
+                "message": "(service django-ecs-service-production) registered 1 targets in (target-group arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227)"
+            },
+            {
+                "id": "ffabab34-9806-4f43-8166-7a2884cf854e",
+                "createdAt": "2025-05-20T08:47:31.467000+09:00",
+                "message": "(service django-ecs-service-production) has started 1 tasks: (task d7014d5161284e6aab551e85338b597b)."
+            },
+            {
+                "id": "88f9054c-766e-4805-8def-ce55105ca738",
+                "createdAt": "2025-05-20T05:59:02.740000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "13f644cc-37b9-4d38-a7ce-37465f308f54",
+                "createdAt": "2025-05-19T23:59:01.505000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "cd8cd99e-ec4d-481f-a123-268922683805",
+                "createdAt": "2025-05-19T17:58:43.211000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "0641aa33-7938-43a6-91b0-3423871f27d2",
+                "createdAt": "2025-05-19T11:58:24.525000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            },
+            {
+                "id": "0a3d1922-0962-4bcd-97d2-eebd5350afdf",
+                "createdAt": "2025-05-19T05:58:02.512000+09:00",
+                "message": "(service django-ecs-service-production) has reached a steady state."
+            }
+        ],
+        "createdAt": "2025-05-01T11:25:15.465000+09:00",
+        "placementConstraints": [],
+        "placementStrategy": [],
+        "networkConfiguration": {
+            "awsvpcConfiguration": {
+                "subnets": [
+                    "subnet-0d1cffbfc0ffbdbd9",
+                    "subnet-0bf3ed139f157061b"
+                ],
+                "securityGroups": [
+                    "sg-07505687008e51c45"
+                ],
+                "assignPublicIp": "ENABLED"
+            }
+        },
+        "healthCheckGracePeriodSeconds": 60,
+        "schedulingStrategy": "REPLICA",
+        "deploymentController": {
+            "type": "ECS"
+        },
+        "createdBy": "arn:aws:iam::026090540679:user/yasutoshi.yanagimoto",
+        "enableECSManagedTags": false,
+        "propagateTags": "NONE",
+        "enableExecuteCommand": false,
+        "availabilityZoneRebalancing": "DISABLED"
+    }
+}

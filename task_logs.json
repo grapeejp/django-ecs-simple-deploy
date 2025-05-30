@@ -1,0 +1,181 @@
+{
+    "events": [
+        {
+            "timestamp": 1748582447757,
+            "message": "[2025-05-30 05:20:47 +0000] [1] [INFO] Starting gunicorn 21.2.0",
+            "ingestionTime": 1748582450702
+        },
+        {
+            "timestamp": 1748582447760,
+            "message": "[2025-05-30 05:20:47 +0000] [1] [INFO] Listening at: http://0.0.0.0:8000 (1)",
+            "ingestionTime": 1748582450702
+        },
+        {
+            "timestamp": 1748582447760,
+            "message": "[2025-05-30 05:20:47 +0000] [1] [INFO] Using worker: sync",
+            "ingestionTime": 1748582450702
+        },
+        {
+            "timestamp": 1748582447763,
+            "message": "[2025-05-30 05:20:47 +0000] [7] [INFO] Booting worker with pid: 7",
+            "ingestionTime": 1748582450702
+        },
+        {
+            "timestamp": 1748582574865,
+            "message": "⚠️ モデル一覧取得エラー: 'BedrockRuntime' object has no attribute 'list_foundation_models'",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575082,
+            "message": "⚠️ モデルアクセス権限確認エラー: 'BedrockRuntime' object has no attribute 'list_foundation_models'",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "❌ モデル呼び出しエラー発生",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "🔍 エラータイプ: AccessDeniedException",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "🔍 エラーメッセージ: An error occurred (AccessDeniedException) when calling the InvokeModel operation: User: arn:aws:sts::026090540679:assumed-role/django-ecs-cluster-production-ECSTaskExecutionRole-YqNx8j1P2iQC/00e2e36f320b44f7913a059f52cdc9fb is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0 because no identity-based policy allows the bedrock:InvokeModel action",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "🚫 アクセス拒否エラー詳細:",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "   - 試行したモデル: arn:aws:bedrock:ap-northeast-1:026090540679:inference-profile/apac.anthropic.claude-sonnet-4-20250514-v1:0",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "   - リージョン: ap-northeast-1",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "   - アプリケーション推論プロファイルARN: arn:aws:bedrock:ap-northeast-1:026090540679:inference-profile/apac.anthropic.claude-sonnet-4-20250514-v1:0",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "   - 推論プロファイルが存在するか確認が必要",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575318,
+            "message": "   - IAMポリシーでbedrock:InvokeModelの権限が必要",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "📋 完全なスタックトレース:",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "Traceback (most recent call last):",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "  File \"/app/proofreading_ai/services/bedrock_client.py\", line 361, in _invoke_model_with_profile",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "    response = self.bedrock_runtime.invoke_model(",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "  File \"/usr/local/lib/python3.11/site-packages/botocore/client.py\", line 595, in _api_call",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "    return self._make_api_call(operation_name, kwargs)",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "  File \"/usr/local/lib/python3.11/site-packages/botocore/context.py\", line 123, in wrapper",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "    return func(*args, **kwargs)",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "           ^^^^^^^^^^^^^^^^^^^^^",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "  File \"/usr/local/lib/python3.11/site-packages/botocore/client.py\", line 1058, in _make_api_call",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "    raise error_class(parsed_response, operation_name)",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "botocore.errorfactory.AccessDeniedException: An error occurred (AccessDeniedException) when calling the InvokeModel operation: User: arn:aws:sts::026090540679:assumed-role/django-ecs-cluster-production-ECSTaskExecutionRole-YqNx8j1P2iQC/00e2e36f320b44f7913a059f52cdc9fb is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0 because no identity-based policy allows the bedrock:InvokeModel action",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582575321,
+            "message": "❌ Claude Sonnet 4でエラー: An error occurred (AccessDeniedException) when calling the InvokeModel operation: User: arn:aws:sts::026090540679:assumed-role/django-ecs-cluster-production-ECSTaskExecutionRole-YqNx8j1P2iQC/00e2e36f320b44f7913a059f52cdc9fb is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0 because no identity-based policy allows the bedrock:InvokeModel action",
+            "ingestionTime": 1748582575666
+        },
+        {
+            "timestamp": 1748582604921,
+            "message": "[2025-05-30 05:23:24 +0000] [1] [CRITICAL] WORKER TIMEOUT (pid:7)",
+            "ingestionTime": 1748582605671
+        },
+        {
+            "timestamp": 1748582604922,
+            "message": "[2025-05-30 14:23:24 +0900] [7] [INFO] Worker exiting (pid: 7)",
+            "ingestionTime": 1748582605671
+        },
+        {
+            "timestamp": 1748582605654,
+            "message": "[2025-05-30 05:23:25 +0000] [1] [ERROR] Worker (pid:7) exited with code 1",
+            "ingestionTime": 1748582610645
+        },
+        {
+            "timestamp": 1748582605655,
+            "message": "[2025-05-30 05:23:25 +0000] [1] [ERROR] Worker (pid:7) exited with code 1.",
+            "ingestionTime": 1748582610645
+        },
+        {
+            "timestamp": 1748582605657,
+            "message": "[2025-05-30 05:23:25 +0000] [8] [INFO] Booting worker with pid: 8",
+            "ingestionTime": 1748582610645
+        }
+    ],
+    "nextForwardToken": "f/38994695147339508782648336027460555085603621120623050754/s",
+    "nextBackwardToken": "b/38994691626051841934662941785611349169423951404119949312/s"
+}

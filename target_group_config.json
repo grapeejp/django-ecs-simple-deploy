@@ -1,0 +1,28 @@
+{
+    "TargetGroups": [
+        {
+            "TargetGroupArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227",
+            "TargetGroupName": "django-Targe-RA4FD37KA0BG",
+            "Protocol": "HTTP",
+            "Port": 80,
+            "VpcId": "vpc-06653468c93ee29a7",
+            "HealthCheckProtocol": "HTTP",
+            "HealthCheckPort": "traffic-port",
+            "HealthCheckEnabled": true,
+            "HealthCheckIntervalSeconds": 30,
+            "HealthCheckTimeoutSeconds": 5,
+            "HealthyThresholdCount": 2,
+            "UnhealthyThresholdCount": 2,
+            "HealthCheckPath": "/proofreading_ai/",
+            "Matcher": {
+                "HttpCode": "200"
+            },
+            "LoadBalancerArns": [
+                "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/django-Appli-21kFlF5Lv7wZ/aa6dffce814c1a0b"
+            ],
+            "TargetType": "ip",
+            "ProtocolVersion": "HTTP1",
+            "IpAddressType": "ipv4"
+        }
+    ]
+}

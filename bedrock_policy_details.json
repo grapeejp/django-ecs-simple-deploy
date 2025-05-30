@@ -1,0 +1,15 @@
+{
+    "Policy": {
+        "PolicyName": "BedrockAccessForDjangoECS",
+        "PolicyId": "ANPAQMEY6B2DSRCVXYUW7",
+        "Arn": "arn:aws:iam::026090540679:policy/BedrockAccessForDjangoECS",
+        "Path": "/",
+        "DefaultVersionId": "v1",
+        "AttachmentCount": 1,
+        "PermissionsBoundaryUsageCount": 0,
+        "IsAttachable": true,
+        "CreateDate": "2025-05-30T05:19:34+00:00",
+        "UpdateDate": "2025-05-30T05:19:34+00:00",
+        "Tags": []
+    }
+}

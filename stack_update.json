@@ -1,0 +1,109 @@
+{
+    "Stacks": [
+        {
+            "StackId": "arn:aws:cloudformation:ap-northeast-1:026090540679:stack/django-ecs-cluster-production/c90cf9e0-262d-11f0-ae6b-0aa4e111fbf5",
+            "StackName": "django-ecs-cluster-production",
+            "Description": "Django ECS Cluster",
+            "Parameters": [
+                {
+                    "ParameterKey": "Environment",
+                    "ParameterValue": "production"
+                }
+            ],
+            "CreationTime": "2025-05-01T01:44:13.786000+00:00",
+            "LastUpdatedTime": "2025-05-30T06:05:29.645000+00:00",
+            "RollbackConfiguration": {},
+            "StackStatus": "UPDATE_IN_PROGRESS",
+            "DisableRollback": false,
+            "NotificationARNs": [],
+            "Capabilities": [
+                "CAPABILITY_IAM"
+            ],
+            "Outputs": [
+                {
+                    "OutputKey": "ALBSecurityGroup",
+                    "OutputValue": "sg-0a7426993bdeddf65",
+                    "Description": "ALB Security Group ID",
+                    "ExportName": "django-ecs-cluster-production-ALBSecurityGroup"
+                },
+                {
+                    "OutputKey": "VPC",
+                    "OutputValue": "vpc-06653468c93ee29a7",
+                    "Description": "VPC ID",
+                    "ExportName": "django-ecs-cluster-production-VPC"
+                },
+                {
+                    "OutputKey": "ECSTaskExecutionRole",
+                    "OutputValue": "arn:aws:iam::026090540679:role/django-ecs-cluster-production-ECSTaskExecutionRole-YqNx8j1P2iQC",
+                    "Description": "ECS Task Execution Role ARN",
+                    "ExportName": "django-ecs-cluster-production-ECSTaskExecutionRole"
+                },
+                {
+                    "OutputKey": "ECSCluster",
+                    "OutputValue": "django-ecs-cluster-production",
+                    "Description": "ECS Cluster Name",
+                    "ExportName": "django-ecs-cluster-production-ECSCluster"
+                },
+                {
+                    "OutputKey": "LoadBalancerDNSName",
+                    "OutputValue": "django-Appli-21kFlF5Lv7wZ-1653648924.ap-northeast-1.elb.amazonaws.com",
+                    "Description": "Load Balancer DNS Name",
+                    "ExportName": "django-ecs-cluster-production-ALBDNS"
+                },
+                {
+                    "OutputKey": "PrivateSubnet1",
+                    "OutputValue": "subnet-051859615df44ecf8",
+                    "Description": "Private Subnet 1 ID",
+                    "ExportName": "django-ecs-cluster-production-PrivateSubnet1"
+                },
+                {
+                    "OutputKey": "ALBListener",
+                    "OutputValue": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:listener/app/django-Appli-21kFlF5Lv7wZ/aa6dffce814c1a0b/51594e378d3fadf6",
+                    "Description": "ALB Listener ARN",
+                    "ExportName": "django-ecs-cluster-production-ALBListener"
+                },
+                {
+                    "OutputKey": "PrivateSubnet2",
+                    "OutputValue": "subnet-00d5d20101d0f0533",
+                    "Description": "Private Subnet 2 ID",
+                    "ExportName": "django-ecs-cluster-production-PrivateSubnet2"
+                },
+                {
+                    "OutputKey": "ECSSecurityGroup",
+                    "OutputValue": "sg-07505687008e51c45",
+                    "Description": "ECS Security Group ID",
+                    "ExportName": "django-ecs-cluster-production-ECSSecurityGroup"
+                },
+                {
+                    "OutputKey": "ApplicationLoadBalancer",
+                    "OutputValue": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/django-Appli-21kFlF5Lv7wZ/aa6dffce814c1a0b",
+                    "Description": "ALB ARN",
+                    "ExportName": "django-ecs-cluster-production-ALB"
+                },
+                {
+                    "OutputKey": "TargetGroup",
+                    "OutputValue": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:targetgroup/django-Targe-RA4FD37KA0BG/98b92618113b8227",
+                    "Description": "Target Group ARN",
+                    "ExportName": "django-ecs-cluster-production-TargetGroup"
+                },
+                {
+                    "OutputKey": "PublicSubnet2",
+                    "OutputValue": "subnet-0d1cffbfc0ffbdbd9",
+                    "Description": "Public Subnet 2 ID",
+                    "ExportName": "django-ecs-cluster-production-PublicSubnet2"
+                },
+                {
+                    "OutputKey": "PublicSubnet1",
+                    "OutputValue": "subnet-0bf3ed139f157061b",
+                    "Description": "Public Subnet 1 ID",
+                    "ExportName": "django-ecs-cluster-production-PublicSubnet1"
+                }
+            ],
+            "Tags": [],
+            "EnableTerminationProtection": false,
+            "DriftInformation": {
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        }
+    ]
+}

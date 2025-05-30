@@ -1,0 +1,66 @@
+{
+    "Stacks": [
+        {
+            "StackId": "arn:aws:cloudformation:ap-northeast-1:026090540679:stack/django-ecs-service-production/7c853e60-2633-11f0-880c-0e4c66c0095b",
+            "StackName": "django-ecs-service-production",
+            "ChangeSetId": "arn:aws:cloudformation:ap-northeast-1:026090540679:changeSet/awscli-cloudformation-package-deploy-1746066302/2d0bea92-b632-4af2-aa22-33c109960f82",
+            "Description": "Django ECS Service",
+            "Parameters": [
+                {
+                    "ParameterKey": "ContainerMemory",
+                    "ParameterValue": "512"
+                },
+                {
+                    "ParameterKey": "ContainerCpu",
+                    "ParameterValue": "256"
+                },
+                {
+                    "ParameterKey": "ImageUrl",
+                    "ParameterValue": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/django-ecs-app:latest"
+                },
+                {
+                    "ParameterKey": "Environment",
+                    "ParameterValue": "production"
+                },
+                {
+                    "ParameterKey": "DesiredCount",
+                    "ParameterValue": "1"
+                }
+            ],
+            "CreationTime": "2025-05-01T02:25:02.378000+00:00",
+            "LastUpdatedTime": "2025-05-01T02:25:07.802000+00:00",
+            "RollbackConfiguration": {},
+            "StackStatus": "CREATE_COMPLETE",
+            "DisableRollback": false,
+            "NotificationARNs": [],
+            "Capabilities": [
+                "CAPABILITY_NAMED_IAM"
+            ],
+            "Outputs": [
+                {
+                    "OutputKey": "TaskDefinition",
+                    "OutputValue": "arn:aws:ecs:ap-northeast-1:026090540679:task-definition/django-app:7",
+                    "Description": "The Task Definition",
+                    "ExportName": "django-ecs-service-production-TaskDefinition"
+                },
+                {
+                    "OutputKey": "ServiceName",
+                    "OutputValue": "django-ecs-service-production",
+                    "Description": "The name of the ECS Service",
+                    "ExportName": "django-ecs-service-production-ServiceName"
+                },
+                {
+                    "OutputKey": "Service",
+                    "OutputValue": "arn:aws:ecs:ap-northeast-1:026090540679:service/django-ecs-cluster-production/django-ecs-service-production",
+                    "Description": "The ECS Service",
+                    "ExportName": "django-ecs-service-production-Service"
+                }
+            ],
+            "Tags": [],
+            "EnableTerminationProtection": false,
+            "DriftInformation": {
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        }
+    ]
+}

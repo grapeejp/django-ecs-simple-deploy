@@ -981,24 +981,52 @@
     /* ヘルプ機能 */
     .help-button {
         position: fixed;
-        bottom: 20px;
+        top: 20px;
         right: 20px;
-        background: rgba(76, 47, 116, 0.9);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
+        font-size: 24px;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         transition: all 0.3s ease;
         z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .help-button:hover {
-        background: rgba(76, 47, 116, 1);
-        transform: scale(1.1);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    .dictionary-button {
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        color: white;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .dictionary-button:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
     }
     
     .help-modal {
@@ -2013,6 +2041,11 @@
             </div>
         </div>
     </div>
+    
+    <!-- 辞書表示ボタン -->
+    <button id="dictionaryButton" class="dictionary-button" title="校正辞書" onclick="window.open('{% url 'proofreading_ai:dictionary_viewer' %}', '_blank')">
+        <i class="fas fa-book"></i>
+    </button>
 </div>
 {% endblock %}
 

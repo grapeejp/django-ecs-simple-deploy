@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI校正ツール | Claude 4</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        grape: {
+                            100: '#f4f1fa',
+                            200: '#e9e2f5',
+                            300: '#d4c6eb',
+                            400: '#b99ddc',
+                            500: '#9e74cd',
+                            600: '#8657c5',
+                            700: '#7348b3',
+                            800: '#5e3a91',
+                            900: '#4c2f74'
+                        }
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(76, 47, 116, 0.3);
+        }
+        
+        .glass-dark {
+            background: rgba(76, 47, 116, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                0 8px 32px 0 rgba(76, 47, 116, 0.25),
+                0 2px 10px 0 rgba(255, 255, 255, 0.6) inset,
+                0 -2px 10px 0 rgba(0, 0, 0, 0.15) inset;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.8s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 15px 40px 0 rgba(76, 47, 116, 0.3),
+                0 2px 10px 0 rgba(255, 255, 255, 0.6) inset,
+                0 -2px 10px 0 rgba(0, 0, 0, 0.15) inset;
+        }
+        
+        .glass-card:hover::before {
+            left: 100%;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #7348b3 0%, #4c2f74 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        /* テーブルのグラスモーフィズム効果 */
+        .glass-table thead {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .glass-table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .glass-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        /* ステータスバッジ */
+        .status-badge {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.15);
+        }
+        
+        /* グレイプスタイルのロゴ */
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            font-size: 1.0rem;
+            margin-right: 0.5rem;
+        }
+        
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    </style>
+    
+<style>
+    /* ========== モダンUIスタイル ========== */
+    
+    /* ヒーローセクション */
+    .hero-section {
+        background: linear-gradient(135deg, 
+            rgba(116, 72, 179, 0.95) 0%, 
+            rgba(76, 47, 116, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.3),
+            0 8px 32px rgba(116, 72, 179, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.6) 50%, 
+            transparent 100%);
+    }
+    
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+    
+    /* メインエディターエリア */
+    .editor-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        min-height: 60vh;
+    }
+    
+    @media (max-width: 1024px) {
+        .editor-container {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+    
+    .editor-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            0 8px 24px rgba(116, 72, 179, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    
+    .editor-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: 
+            0 32px 64px rgba(0, 0, 0, 0.15),
+            0 16px 32px rgba(116, 72, 179, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    
+    .editor-header {
+        background: linear-gradient(135deg, 
+            rgba(116, 72, 179, 0.9) 0%, 
+            rgba(94, 58, 145, 0.9) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+    }
+    
+    .editor-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.4) 50%, 
+            transparent 100%);
+    }
+    
+    .editor-content {
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* テキストエリアスタイル */
+    .modern-textarea {
+        width: 100%;
+        min-height: 400px;
+        resize: vertical;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 16px;
+        line-height: 1.8;
+        color: #374151;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        padding: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .modern-textarea:focus {
+        color: #111827;
+    }
+    
+    .modern-textarea::placeholder {
+        color: #9CA3AF;
+        font-style: italic;
+    }
+    
+    /* ツールバー */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+        background: rgba(249, 250, 251, 0.8);
+        border-top: 1px solid rgba(229, 231, 235, 0.5);
+        backdrop-filter: blur(8px);
+    }
+    
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .char-count {
+        font-size: 14px;
+        color: #6B7280;
+        font-weight: 500;
+    }
+    
+    /* CTAボタン */
+    .cta-button {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2.5rem;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 
+            0 8px 24px rgba(16, 185, 129, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .cta-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.2) 50%, 
+            transparent 100%);
+        transition: left 0.6s;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 16px 32px rgba(16, 185, 129, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .cta-button:hover::before {
+        left: 100%;
+    }
+    
+    .cta-button:active {
+        transform: translateY(0);
+    }
+    
+    .cta-button:disabled {
+        background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* 設定パネル */
+    .settings-toggle {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(229, 231, 235, 0.6);
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .settings-toggle:hover {
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(116, 72, 179, 0.3);
+        color: #7348b3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .settings-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 2rem;
+        margin-top: 1.5rem;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: top;
+    }
+    
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+    
+    .setting-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .setting-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .setting-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid rgba(229, 231, 235, 0.6);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        color: #374151;
+        transition: all 0.3s ease;
+    }
+    
+    .setting-input:focus {
+        outline: none;
+        border-color: #7348b3;
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0 0 0 3px rgba(116, 72, 179, 0.1);
+    }
+    
+    /* 結果表示エリア */
+    .result-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        margin-top: 2rem;
+    }
+    
+    .result-content {
+        padding: 2rem;
+        min-height: 300px;
+        font-size: 16px;
+        line-height: 1.8;
+        color: #374151;
+    }
+    
+    /* ステータスバー */
+    .status-bar {
+        background: linear-gradient(135deg, 
+            rgba(249, 250, 251, 0.9) 0%, 
+            rgba(243, 244, 246, 0.9) 100%);
+        backdrop-filter: blur(12px);
+        padding: 1rem 2rem;
+        border-top: 1px solid rgba(229, 231, 235, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #6B7280;
+    }
+    
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-value {
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    /* ローディング状態 */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    
+    .loading-content {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.2);
+    }
+    
+    .loading-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(116, 72, 179, 0.2);
+        border-top: 4px solid #7348b3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .loading-step {
+        font-size: 14px;
+        color: #6B7280;
+    }
+    
+    /* 修正ハイライト */
+    .correction-highlight {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        border-radius: 6px;
+        padding: 2px 6px;
+        border: 1px solid #F59E0B;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .correction-highlight:hover {
+        background: linear-gradient(135deg, #FDE68A 0%, #FBBF24 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    /* アニメーション */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .animate-slide-in {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease;
+    }
+    
+    /* レスポンシブ調整 */
+    @media (max-width: 640px) {
+        .editor-content {
+            padding: 1.5rem;
+        }
+        
+        .toolbar {
+            padding: 1rem 1.5rem;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .cta-button {
+            padding: 1rem 2rem;
+            font-size: 16px;
+        }
+        
+        .settings-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+</style>
+
+</head>
+<body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
+    <!-- サイドバーナビゲーション -->
+    <div class="flex h-screen overflow-hidden">
+        <div class="glass-dark text-white w-64 flex-shrink-0 hidden md:block">
+            <div class="p-4">
+                <div class="logo flex justify-center">
+                    <img src="/static/images/grape_logo.png" alt="校正AI" class="logo-img">
+                </div>
+                <p class="text-lg text-purple-100 mt-2 text-center">グレイプ社内効率化ツール</p>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="/" class="flex items-center">
+                            <i class="fas fa-home mr-3"></i>
+                            <span>ダッシュボード</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="/proofreading_ai/" class="flex items-center">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span>文章校正</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="/tags/" class="flex items-center">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span>タグ推薦</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="#" class="flex items-center">
+                            <i class="fas fa-history mr-3"></i>
+                            <span>履歴</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1 transition-all">
+                        <a href="#" class="flex items-center">
+                            <i class="fas fa-cog mr-3"></i>
+                            <span>設定</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- メインコンテンツ -->
+        <div class="flex-1 overflow-auto">
+            <!-- ヘッダー -->
+            <header class="glass sticky top-0 z-10">
+                <div class="flex items-center justify-between p-4">
+                    <button class="md:hidden text-white" id="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <button class="flex items-center text-white focus:outline-none">
+                                <span class="mr-2">ユーザー名</span>
+                                <i class="fas fa-user-circle text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- コンテンツエリア -->
+            <main class="p-6">
+                
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-8">
+    <!-- ヒーローセクション -->
+    <div class="hero-section p-8 text-center animate-slide-in">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="hero-gradient-text text-4xl md:text-6xl font-bold mb-4">
+                AI校正ツール
+            </h1>
+            <p class="text-xl md:text-2xl text-white/90 mb-6 font-medium">
+                Claude 4の高度なAIで、あなたの文章を完璧に校正
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-white/80">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    <span>HTMLタグ対応</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-lightning-bolt text-yellow-400"></i>
+                    <span>リアルタイム処理</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shield-alt text-blue-400"></i>
+                    <span>高精度校正</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-magic text-purple-400"></i>
+                    <span>4つのカテゴリー対応</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- メインエディターエリア -->
+    <div class="editor-container animate-fade-in">
+        <!-- 入力パネル -->
+        <div class="editor-panel">
+            <div class="editor-header">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-edit"></i>
+                    入力テキスト
+                </h2>
+            </div>
+            <div class="editor-content">
+                <textarea 
+                    id="inputText" 
+                    class="modern-textarea"
+                    placeholder="校正したい文章をここに入力してください。HTMLタグも保持されます。
+
+例：
+<div class='comment'>２０２４年、増加期傾向にある売上げについて検討します。</div>
+
+AIが以下をチェックします：
+• 誤字脱字の修正
+• HTMLタグ名・属性の修正  
+• より自然な表現への提案
+• 文章の一貫性チェック"><dv class="comment">
+２０２４年、増加期傾向にある売上げについて検討します。
+</dv></textarea>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <div class="char-count">
+                        <i class="fas fa-text-width text-gray-400 mr-1"></i>
+                        <span id="charCount">0</span> 文字
+                    </div>
+                    <div class="char-count">
+                        <i class="fas fa-coins text-gray-400 mr-1"></i>
+                        約 <span id="tokenEstimate">0</span> トークン
+                    </div>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="settings-toggle" onclick="toggleSettings()">
+                        <i class="fas fa-cog mr-2"></i>
+                        詳細設定
+                    </button>
+                    <button type="button" class="cta-button" onclick="performCorrection()" id="correctButton">
+                        <i class="fas fa-magic mr-2"></i>
+                        校正開始
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 出力パネル -->
+        <div class="editor-panel">
+            <div class="editor-header">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-check-circle"></i>
+                    校正結果
+                </h2>
+            </div>
+            <div class="editor-content">
+                <div id="resultContent" class="modern-textarea" style="min-height: 400px; background: #f9fafb; border-radius: 12px; padding: 1.5rem; color: #6b7280; font-style: italic;">
+                    校正結果がここに表示されます。
+                    
+                    Claude 4が以下の観点で文章をチェックします：
+                    • 🔴 誤字修正 - 明確な誤字脱字の修正
+                    • 🟣 言い回し改善 - より自然な表現への提案  
+                    • 🟡 表記統一 - 社内ルールに基づく統一
+                    • 🟠 矛盾チェック - 論理的整合性の確認
+                </div>
+            </div>
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <div class="char-count">
+                        <i class="fas fa-clock text-gray-400 mr-1"></i>
+                        処理時間: <span id="processingTime">-</span>秒
+                    </div>
+                    <div class="char-count">
+                        <i class="fas fa-yen-sign text-gray-400 mr-1"></i>
+                        コスト: <span id="estimatedCost">-</span>円
+                    </div>
+                </div>
+                <div class="toolbar-group">
+                    <button type="button" class="settings-toggle" onclick="copyResult()">
+                        <i class="fas fa-copy mr-2"></i>
+                        結果をコピー
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 詳細設定パネル -->
+    <div id="settingsPanel" class="settings-panel" style="display: none;">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-sliders-h text-purple-600"></i>
+            詳細設定
+        </h3>
+        <div class="settings-grid">
+            <div class="setting-group">
+                <label class="setting-label">
+                    <i class="fas fa-thermometer-half text-orange-500"></i>
+                    温度設定 (創造性)
+                </label>
+                <input type="range" min="0" max="1" step="0.1" value="0.1" class="setting-input" id="temperature">
+                <div class="text-xs text-gray-500">現在: <span id="tempValue">0.1</span> (低いほど一貫性重視)</div>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">
+                    <i class="fas fa-percentage text-blue-500"></i>
+                    Top-P設定 (多様性)
+                </label>
+                <input type="range" min="0" max="1" step="0.1" value="0.7" class="setting-input" id="topP">
+                <div class="text-xs text-gray-500">現在: <span id="topPValue">0.7</span> (低いほど集中的)</div>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">
+                    <i class="fas fa-robot text-purple-500"></i>
+                    使用モデル
+                </label>
+                <select class="setting-input" id="modelSelect">
+                    <option value="claude4">Claude Sonnet 4 (推奨)</option>
+                    <option value="claude3.5">Claude 3.5 Sonnet (フォールバック)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">
+                    <i class="fas fa-language text-green-500"></i>
+                    校正強度
+                </label>
+                <select class="setting-input" id="correctionLevel">
+                    <option value="standard">標準 (バランス重視)</option>
+                    <option value="strict">厳密 (詳細チェック)</option>
+                    <option value="light">軽微 (明確なエラーのみ)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 修正詳細パネル -->
+    <div id="correctionsPanel" class="result-panel" style="display: none;">
+        <div class="editor-header">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                <i class="fas fa-list-alt"></i>
+                修正詳細 (<span id="correctionCount">0</span>件)
+            </h2>
+        </div>
+        <div class="result-content">
+            <div id="correctionsList" class="space-y-3">
+                <!-- 修正詳細がここに表示されます -->
+            </div>
+        </div>
+        <div class="status-bar">
+            <div class="status-item">
+                <i class="fas fa-info-circle"></i>
+                <span>修正内容をクリックすると元の位置にジャンプします</span>
+            </div>
+            <div class="status-item">
+                使用モデル: <span class="status-value" id="usedModel">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ローディングオーバーレイ -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Claude 4で校正中...</div>
+        <div class="loading-step" id="loadingStep">テキストを解析しています</div>
+    </div>
+</div>
+
+<script>
+// ========== JavaScript機能 ==========
+
+let isProcessing = false;
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 設定の復元
+    loadSettings();
+    
+    // イベントリスナー設定
+    setupEventListeners();
+    
+    // 初期統計更新
+    updateStats();
+    
+    // 初期フォーカス
+    document.getElementById('inputText').focus();
+});
+
+// イベントリスナー設定
+function setupEventListeners() {
+    const inputText = document.getElementById('inputText');
+    const temperature = document.getElementById('temperature');
+    const topP = document.getElementById('topP');
+    
+    // テキスト入力時の統計更新
+    inputText.addEventListener('input', function() {
+        updateStats();
+        autoSave();
+    });
+    
+    // 設定変更時の保存
+    temperature.addEventListener('input', function() {
+        document.getElementById('tempValue').textContent = this.value;
+        saveSettings();
+    });
+    
+    topP.addEventListener('input', function() {
+        document.getElementById('topPValue').textContent = this.value;
+        saveSettings();
+    });
+    
+    // キーボードショートカット
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'Enter':
+                    e.preventDefault();
+                    if (!isProcessing) {
+                        performCorrection();
+                    }
+                    break;
+                case ',':
+                    e.preventDefault();
+                    toggleSettings();
+                    break;
+            }
+        }
+        
+        if (e.key === 'Escape') {
+            hideSettings();
+        }
+    });
+}
+
+// 統計情報更新
+function updateStats() {
+    const text = document.getElementById('inputText').value;
+    const charCount = text.length;
+    const tokenEstimate = Math.ceil(charCount * 1.5);
+    
+    document.getElementById('charCount').textContent = charCount.toLocaleString();
+    document.getElementById('tokenEstimate').textContent = tokenEstimate.toLocaleString();
+}
+
+// 設定パネルの表示切替
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const isVisible = panel.style.display !== 'none';
+    
+    if (isVisible) {
+        panel.style.transform = 'scaleY(0)';
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 200);
+    } else {
+        panel.style.display = 'block';
+        panel.style.transform = 'scaleY(0)';
+        setTimeout(() => {
+            panel.style.transform = 'scaleY(1)';
+        }, 10);
+    }
+}
+
+function hideSettings() {
+    const panel = document.getElementById('settingsPanel');
+    panel.style.transform = 'scaleY(0)';
+    setTimeout(() => {
+        panel.style.display = 'none';
+    }, 200);
+}
+
+// 校正実行
+async function performCorrection() {
+    if (isProcessing) return;
+    
+    const inputText = document.getElementById('inputText').value.trim();
+    if (!inputText) {
+        alert('校正するテキストを入力してください。');
+        return;
+    }
+    
+    isProcessing = true;
+    showLoading();
+    updateLoadingStep('HTMLタグを解析中...');
+    
+    const startTime = Date.now();
+    
+    try {
+        // API呼び出し
+        const response = await fetch('/proofreading_ai/proofread-async/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': 'qQzRMULnQWYChcJyOZdEjRPOZAKZjkVqWGzaGzRiqE6DG7iY86Mzhb5Mndi8di0X'
+            },
+            body: JSON.stringify({
+                text: inputText,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                top_p: parseFloat(document.getElementById('topP').value)
+            })
+        });
+        
+        updateLoadingStep('Claude 4で校正中...');
+        
+        if (!response.ok) {
+            throw new Error('サーバーエラーが発生しました');
+        }
+        
+        const data = await response.json();
+        
+        updateLoadingStep('結果を整理中...');
+        
+        // 結果表示
+        displayResults(data, Date.now() - startTime);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showError('校正処理中にエラーが発生しました: ' + error.message);
+    } finally {
+        isProcessing = false;
+        hideLoading();
+    }
+}
+
+// 結果表示
+function displayResults(data, processingTime) {
+    // 校正結果表示
+    const resultContent = document.getElementById('resultContent');
+    resultContent.innerHTML = data.corrected_text || 'エラーが発生しました';
+    resultContent.style.color = '#374151';
+    resultContent.style.fontStyle = 'normal';
+    resultContent.style.background = 'white';
+    
+    // 統計情報更新
+    document.getElementById('processingTime').textContent = (processingTime / 1000).toFixed(1);
+    document.getElementById('estimatedCost').textContent = (data.cost_info?.total_cost || 0).toFixed(2);
+    document.getElementById('usedModel').textContent = data.cost_info?.model_id ? 'Claude Sonnet 4' : '-';
+    
+    // 修正詳細表示
+    if (data.corrections && data.corrections.length > 0) {
+        displayCorrections(data.corrections);
+    }
+    
+    // 成功フィードバック
+    showSuccessMessage(`校正が完了しました！${data.corrections?.length || 0}件の修正を発見`);
+}
+
+// 修正詳細表示
+function displayCorrections(corrections) {
+    const panel = document.getElementById('correctionsPanel');
+    const list = document.getElementById('correctionsList');
+    const count = document.getElementById('correctionCount');
+    
+    count.textContent = corrections.length;
+    
+    list.innerHTML = corrections.map((correction, index) => {
+        const categoryIcons = {
+            'typo': '🔴',
+            'tone': '🟣', 
+            'dict': '🟡',
+            'inconsistency': '🟠'
+        };
+        
+        const categoryNames = {
+            'typo': '誤字修正',
+            'tone': '言い回し改善',
+            'dict': '表記統一', 
+            'inconsistency': '矛盾チェック'
+        };
+        
+        return `
+            <div class="correction-item bg-white rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition-all cursor-pointer"
+                 onclick="highlightCorrection(${index})">
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl">${categoryIcons[correction.category] || '📝'}</div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-gray-800 mb-1">
+                            ${categoryNames[correction.category] || correction.category}
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div>
+                                <span class="text-red-600 font-mono bg-red-50 px-2 py-1 rounded">${correction.original}</span>
+                                <span class="mx-2">→</span>
+                                <span class="text-green-600 font-mono bg-green-50 px-2 py-1 rounded">${correction.corrected}</span>
+                            </div>
+                            <div class="text-gray-600 text-xs mt-2">
+                                ${correction.reason || '修正理由が記録されていません'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    panel.style.display = 'block';
+    panel.classList.add('animate-slide-in');
+}
+
+// 結果のコピー
+function copyResult() {
+    const resultContent = document.getElementById('resultContent');
+    navigator.clipboard.writeText(resultContent.textContent).then(() => {
+        showSuccessMessage('結果をクリップボードにコピーしました');
+    }).catch(() => {
+        showError('コピーに失敗しました');
+    });
+}
+
+// ローディング表示
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    document.getElementById('correctButton').disabled = true;
+    document.getElementById('correctButton').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>処理中...';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('correctButton').disabled = false;
+    document.getElementById('correctButton').innerHTML = '<i class="fas fa-magic mr-2"></i>校正開始';
+}
+
+function updateLoadingStep(step) {
+    document.getElementById('loadingStep').textContent = step;
+}
+
+// 成功メッセージ表示
+function showSuccessMessage(message) {
+    // 簡易トースト通知（実装は省略）
+    console.log('Success:', message);
+}
+
+// エラーメッセージ表示  
+function showError(message) {
+    alert('エラー: ' + message);
+}
+
+// 設定の保存・復元
+function saveSettings() {
+    const settings = {
+        temperature: document.getElementById('temperature').value,
+        topP: document.getElementById('topP').value,
+        modelSelect: document.getElementById('modelSelect').value,
+        correctionLevel: document.getElementById('correctionLevel').value
+    };
+    localStorage.setItem('proofreadingSettings', JSON.stringify(settings));
+}
+
+function loadSettings() {
+    const saved = localStorage.getItem('proofreadingSettings');
+    if (saved) {
+        const settings = JSON.parse(saved);
+        document.getElementById('temperature').value = settings.temperature || 0.1;
+        document.getElementById('topP').value = settings.topP || 0.7;
+        document.getElementById('modelSelect').value = settings.modelSelect || 'claude4';
+        document.getElementById('correctionLevel').value = settings.correctionLevel || 'standard';
+        
+        // 表示値更新
+        document.getElementById('tempValue').textContent = settings.temperature || 0.1;
+        document.getElementById('topPValue').textContent = settings.topP || 0.7;
+    }
+}
+
+function autoSave() {
+    const text = document.getElementById('inputText').value;
+    localStorage.setItem('proofreadingDraft', text);
+}
+
+// ドラフト復元
+const savedDraft = localStorage.getItem('proofreadingDraft');
+if (savedDraft) {
+    document.getElementById('inputText').value = savedDraft;
+}
+</script>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- モバイルメニュー -->
+    <div class="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity hidden" id="mobile-menu-overlay">
+        <div class="glass-dark absolute inset-y-0 left-0 w-64 text-white transform -translate-x-full transition-transform duration-300" id="mobile-menu">
+            <!-- モバイルメニューの内容 -->
+            <div class="p-4">
+                <div class="logo flex justify-center">
+                    <img src="/static/images/grape_logo.png" alt="校正AI" class="logo-img">
+                </div>
+                <p class="text-sm text-purple-100 mt-2 text-center">社内効率化ツール</p>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="/" class="flex items-center">
+                            <i class="fas fa-home mr-3"></i>
+                            <span>ダッシュボード</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="/proofreading_ai/" class="flex items-center">
+                            <i class="fas fa-check-circle mr-3"></i>
+                            <span>文章校正</span>
+                        </a>
+                    </li>
+                    <li class="px-4 py-3 hover:bg-grape-800/80 rounded-lg mx-2 mb-1">
+                        <a href="/tags/" class="flex items-center">
+                            <i class="fas fa-tags mr-3"></i>
+                            <span>タグ推薦</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // モバイルメニュートグル
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const menu = document.getElementById('mobile-menu');
+            overlay.classList.toggle('hidden');
+            menu.classList.toggle('-translate-x-full');
+        });
+
+        document.getElementById('mobile-menu-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.getElementById('mobile-menu').classList.add('-translate-x-full');
+            }
+        });
+    </script>
+    
+</body>
+</html> 

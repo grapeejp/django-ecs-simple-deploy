@@ -1,0 +1,15 @@
+{
+    "logStreams": [
+        {
+            "logStreamName": "django-app/django-app/00e2e36f320b44f7913a059f52cdc9fb",
+            "creationTime": 1748582437427,
+            "firstEventTimestamp": 1748582447757,
+            "lastEventTimestamp": 1748582447763,
+            "lastIngestionTime": 1748582450702,
+            "uploadSequenceToken": "49039859631973189878763029649724631869892593616198632636",
+            "arn": "arn:aws:logs:ap-northeast-1:026090540679:log-group:/ecs/django-app-production:log-stream:django-app/django-app/00e2e36f320b44f7913a059f52cdc9fb",
+            "storedBytes": 0
+        }
+    ],
+    "NextToken": "eyJuZXh0VG9rZW4iOiBudWxsLCAiYm90b190cnVuY2F0ZV9hbW91bnQiOiAxfQ=="
+}

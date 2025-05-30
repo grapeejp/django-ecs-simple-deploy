@@ -1,0 +1,124 @@
+{
+    "LoadBalancers": [
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/ecs-load-balancer/9b2ab11116f25165",
+            "DNSName": "ecs-load-balancer-1097430175.ap-northeast-1.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z14GRHDCWA56QT",
+            "CreatedTime": "2025-04-10T09:25:11.052000+00:00",
+            "LoadBalancerName": "ecs-load-balancer",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-0e7498db62da3d217",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-northeast-1c",
+                    "SubnetId": "subnet-027cfaa7d89844bd1",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-northeast-1a",
+                    "SubnetId": "subnet-093c4d7910b13e2a6",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0e5a3421a6bda04b9"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/django-Appli-CmVfAede2U2e/d2645ea5727322c9",
+            "DNSName": "django-Appli-CmVfAede2U2e-919637212.ap-northeast-1.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z14GRHDCWA56QT",
+            "CreatedTime": "2025-04-24T09:45:11.678000+00:00",
+            "LoadBalancerName": "django-Appli-CmVfAede2U2e",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-01a651356262e67c9",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-northeast-1c",
+                    "SubnetId": "subnet-07c484a5bc3e6e921",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-northeast-1a",
+                    "SubnetId": "subnet-0b0f76060a143e787",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0b3b3b4fa58b4ea02"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/django-Appli-VSNxHzXCt8uR/3ed6e156d5b341f0",
+            "DNSName": "django-Appli-VSNxHzXCt8uR-72974778.ap-northeast-1.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z14GRHDCWA56QT",
+            "CreatedTime": "2025-04-24T10:08:39.363000+00:00",
+            "LoadBalancerName": "django-Appli-VSNxHzXCt8uR",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-0e96a4706cdc4835b",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-northeast-1c",
+                    "SubnetId": "subnet-006d7ce8442a8887c",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-northeast-1a",
+                    "SubnetId": "subnet-08a8a0a665007065a",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0c46e94b577933d33"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        },
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-northeast-1:026090540679:loadbalancer/app/django-Appli-21kFlF5Lv7wZ/aa6dffce814c1a0b",
+            "DNSName": "django-Appli-21kFlF5Lv7wZ-1653648924.ap-northeast-1.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z14GRHDCWA56QT",
+            "CreatedTime": "2025-05-01T01:44:48.452000+00:00",
+            "LoadBalancerName": "django-Appli-21kFlF5Lv7wZ",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-06653468c93ee29a7",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "ap-northeast-1a",
+                    "SubnetId": "subnet-0bf3ed139f157061b",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "ap-northeast-1c",
+                    "SubnetId": "subnet-0d1cffbfc0ffbdbd9",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-0a7426993bdeddf65"
+            ],
+            "IpAddressType": "ipv4",
+            "EnablePrefixForIpv6SourceNat": "off"
+        }
+    ]
+}
