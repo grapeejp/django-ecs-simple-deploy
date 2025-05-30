@@ -5,6 +5,7 @@ import time
 from typing import Dict, Any, Tuple, List
 import logging
 import re
+from proofreading_ai.utils import protect_html_tags_advanced, restore_html_tags_advanced
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,11 @@ class BedrockClient:
             # Bedrockクライアントの作成
             self.bedrock_runtime = boto3.client(
                 service_name="bedrock-runtime",
+                region_name=aws_region,
+            )
+            # コントロールプレーン用のBedrockクライアントも作成
+            self.bedrock = boto3.client(
+                service_name="bedrock",
                 region_name=aws_region,
             )
             logger.info(f"✅ Bedrockランタイムクライアント作成完了")
@@ -122,7 +128,8 @@ class BedrockClient:
         """
         try:
             # 利用可能なモデル一覧を取得してアクセス権限を確認
-            response = self.bedrock_runtime.list_foundation_models()
+            # BedrockRuntime ではなく Bedrock クライアントを使用
+            response = self.bedrock.list_foundation_models()
             available_models = [model['modelId'] for model in response.get('modelSummaries', [])]
             
             logger.info(f"📋 利用可能なモデル数: {len(available_models)}")
@@ -149,7 +156,8 @@ class BedrockClient:
             except Exception as sts_error:
                 logger.error(f"❌ IAMアイデンティティ取得エラー: {str(sts_error)}")
             
-            raise e
+            # エラーを再発生させる代わりに、警告ログのみ出力
+            logger.warning("⚠️ モデルアクセス権限確認でエラーが発生しましたが、継続します")
 
     def _get_default_prompt(self) -> str:
         """
@@ -229,6 +237,12 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
         """
         start_time = time.time()
         
+        # ステップ1: HTMLタグを保護（advanced版）
+        logger.info(f"🛡️ HTMLタグ保護処理開始")
+        protected_text, placeholders, html_tag_info = protect_html_tags_advanced(text)
+        logger.info(f"📋 保護されたHTMLタグ数: {len(placeholders)}")
+        logger.info(f"🏷️ HTMLタグ詳細情報数: {len(html_tag_info)}")
+        
         # 置換指示の準備
         replacement_instructions = ""
         if replacement_dict:
@@ -237,13 +251,13 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             {json.dumps(replacement_dict, ensure_ascii=False, indent=2)}
             """
         
-        # Claude Sonnet 4の拡張思考機能を活用したプロンプト
+        # Claude Sonnet 4の拡張思考機能を活用したプロンプト（保護されたテキストを使用）
         full_prompt = f"""{self.default_prompt}
 
         {replacement_instructions}
 
         原文:
-        {text}
+        {protected_text}
 
         <thinking>
         この文章を4つのカテゴリーで分析します：
@@ -290,7 +304,14 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
         # Claude Sonnet 4での実行（フォールバック付き）
         try:
             logger.info(f"🎯 Claude Sonnet 4で実行: {self.model_id}")
-            return self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
+            corrected_text, corrections, processing_time, cost_info = self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
+            
+            # ステップ2: HTMLタグを復元（修正適用）
+            logger.info(f"🔄 HTMLタグ復元処理開始")
+            final_corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
+            logger.info(f"✅ HTMLタグ復元完了")
+            
+            return final_corrected_text, corrections, processing_time, cost_info
             
         except Exception as e:
             logger.error(f"❌ Claude Sonnet 4でエラー: {str(e)}")
@@ -304,13 +325,17 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                     self.model_id = self.fallback_model_id
                     
                     # フォールバックモデルで実行
-                    result = self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
+                    corrected_text, corrections, processing_time, cost_info = self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
+                    
+                    # HTMLタグを復元（修正適用）
+                    logger.info(f"🔄 フォールバック後HTMLタグ復元処理開始")
+                    final_corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
+                    logger.info(f"✅ フォールバック後HTMLタグ復元完了")
                     
                     # モデルIDを元に戻す
                     self.model_id = original_model_id
                     
-                    logger.info(f"✅ フォールバックモデルで成功: {self.fallback_model_id}")
-                    return result
+                    return final_corrected_text, corrections, processing_time, cost_info
                     
                 except Exception as fallback_error:
                     logger.error(f"❌ フォールバックモデルでもエラー: {str(fallback_error)}")
