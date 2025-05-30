@@ -271,6 +271,8 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
            - 明確な誤字脱字
            - 変換ミス
            - 送り仮名の間違い
+           - HTMLタグ名の誤字（例：dv → div, sepn → span）
+           - HTML属性名の誤字（例：clss → class）
 
         3. 🟡 社内辞書ルール（dict）：
            - 統一表記ルールの適用
@@ -284,17 +286,20 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
            - 時系列の矛盾
 
         各修正について、カテゴリーと理由を明確にします。
+        HTMLタグ名や属性名の修正も必ず「✅修正箇所：」セクションに含めてください。
         </thinking>
 
         校正後のテキストをHTML形式で出力してください。HTMLタグの基本構造を保持しつつ、タグ名・属性名・属性値内の誤字は修正してください。
         必ず文章全体を出力し、途中で切らないこと。
+
+        重要：HTMLタグ名や属性名の修正も含めて、すべての修正を「✅修正箇所：」セクションに記載してください。
 
         出力形式：
         [校正後のテキスト全文]
 
         ✅修正箇所：
         - カテゴリー: tone | (変更前) -> (変更後): 理由
-        - カテゴリー: typo | (変更前) -> (変更後): 理由
+        - カテゴリー: typo | (変更前) -> (変更後): 理由  ← HTMLタグの修正もここに含める
         - カテゴリー: dict | (変更前) -> (変更後): 理由
         - カテゴリー: inconsistency | (変更前) -> (変更後): 理由
         """
@@ -310,6 +315,9 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             logger.info(f"🔄 HTMLタグ復元処理開始")
             final_corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
             logger.info(f"✅ HTMLタグ復元完了")
+            
+            # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
+            logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
             
             return final_corrected_text, corrections, processing_time, cost_info
             
@@ -334,6 +342,9 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                     
                     # モデルIDを元に戻す
                     self.model_id = original_model_id
+                    
+                    # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
+                    logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
                     
                     return final_corrected_text, corrections, processing_time, cost_info
                     
@@ -439,6 +450,9 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             corrections = self._parse_corrections_from_response(corrected_text)
             logger.info(f"📝 修正箇所解析結果: {len(corrections)}件")
             
+            # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
+            logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
+            
             return corrected_text, corrections, completion_time, cost_info
             
         except Exception as e:
@@ -481,7 +495,7 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
 
     def _parse_corrections_from_response(self, response_text: str) -> List[Dict]:
         """
-        Claude 4のレスポンスから修正箇所を解析する
+        Claude 4のレスポンスから修正箇所を解析する（括弧なし形式対応）
         
         Args:
             response_text: Claude 4からのレスポンステキスト
@@ -502,28 +516,55 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                     line = line.strip()
                     if line.startswith('- カテゴリー:'):
                         # パターン: - カテゴリー: tone | (変更前) -> (変更後): 理由
+                        # または: - カテゴリー: typo | <dv> -> <div> : 理由
+                        # または: - カテゴリー: typo | clss="commnet" -> class="comment" : 理由
                         try:
                             # カテゴリーを抽出
                             category_part = line.split('|')[0].replace('- カテゴリー:', '').strip()
                             
                             # 変更前後と理由を抽出
                             change_part = line.split('|')[1].strip()
-                            if ' -> ' in change_part and ': ' in change_part:
-                                before_after, reason = change_part.split(': ', 1)
-                                original, corrected = before_after.split(' -> ', 1)
+                            if ' -> ' in change_part:
+                                # 理由がある場合とない場合に対応
+                                if ': ' in change_part:
+                                    before_after, reason = change_part.split(': ', 1)
+                                else:
+                                    before_after = change_part
+                                    reason = ""
                                 
-                                # 括弧を除去
-                                original = original.strip('()')
-                                corrected = corrected.strip('()')
-                                
-                                corrections.append({
-                                    'original': original,
-                                    'corrected': corrected,
-                                    'reason': reason,
-                                    'category': category_part
-                                })
-                                
-                                logger.info(f"   解析成功: {category_part} | {original} -> {corrected}")
+                                if ' -> ' in before_after:
+                                    original, corrected = before_after.split(' -> ', 1)
+                                    
+                                    # 括弧、HTMLタグの<>、プレースホルダーなどを適切に処理
+                                    original = original.strip('()').strip('<>').strip()
+                                    corrected = corrected.strip('()').strip('<>').strip()
+                                    
+                                    # HTMLタグやプレースホルダーから実際の修正対象を抽出
+                                    # 例: "<dv>" → "dv", "__HTML_TAG_0__ dv __TAG_END_0__" → "dv"
+                                    original_clean = self._extract_core_word(original)
+                                    corrected_clean = self._extract_core_word(corrected)
+                                    
+                                    # 空でない場合のみ追加
+                                    if original_clean and corrected_clean and original_clean != corrected_clean:
+                                        corrections.append({
+                                            'original': original_clean,
+                                            'corrected': corrected_clean,
+                                            'reason': reason.strip(),
+                                            'category': category_part
+                                        })
+                                        
+                                        logger.info(f"   解析成功: {category_part} | {original_clean} -> {corrected_clean}")
+                                    
+                                    # HTMLタグ全体も保持（フォールバック用）
+                                    if original != original_clean or corrected != corrected_clean:
+                                        corrections.append({
+                                            'original': original,
+                                            'corrected': corrected,
+                                            'reason': reason.strip(),
+                                            'category': category_part
+                                        })
+                                        
+                                        logger.info(f"   タグ全体保持: {category_part} | {original} -> {corrected}")
                                 
                         except Exception as parse_error:
                             logger.warning(f"⚠️ 修正箇所解析エラー: {line} - {str(parse_error)}")
@@ -535,6 +576,44 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
         except Exception as e:
             logger.error(f"❌ 修正箇所解析エラー: {str(e)}")
             return []
+
+    def _extract_core_word(self, text: str) -> str:
+        """
+        HTMLタグやプレースホルダーから核となる単語を抽出
+        
+        Args:
+            text: 元のテキスト
+            
+        Returns:
+            核となる単語
+        """
+        import re
+        
+        # プレースホルダーパターンから単語を抽出
+        # 例: "__HTML_TAG_0__ dv __TAG_END_0__" → "dv"
+        placeholder_match = re.search(r'__HTML_TAG_\d+__ (\w+) __TAG_', text)
+        if placeholder_match:
+            return placeholder_match.group(1)
+        
+        # HTMLタグから要素名を抽出
+        # 例: "<dv>" → "dv", "</dv>" → "dv"
+        html_tag_match = re.search(r'</?(\w+)[^>]*>', text)
+        if html_tag_match:
+            return html_tag_match.group(1)
+        
+        # 属性パターンを抽出
+        # 例: 'clss="commnet"' → "clss" と "commnet" を両方抽出
+        attr_matches = re.findall(r'(\w+)="?(\w+)"?', text)
+        if attr_matches:
+            # 最初のマッチから属性名を返す（通常は属性名の誤字が重要）
+            return attr_matches[0][0]
+        
+        # 単純な単語を返す
+        word_match = re.search(r'\b\w+\b', text)
+        if word_match:
+            return word_match.group(0)
+        
+        return text.strip()
 
     def apply_replacement_dictionary(self, text: str, replacements: Dict[str, str]) -> str:
         """
