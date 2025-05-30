@@ -557,8 +557,14 @@ def dictionary_viewer(request):
     """
     try:
         # CSVファイルから辞書データを読み込み
-        csv_path = os.path.join(settings.BASE_DIR, 'app', 'proofreading', 'replacement_dict.csv')
+        # プロジェクトルートからの絶対パスを使用
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        csv_path = os.path.join(project_root, 'app', 'proofreading', 'replacement_dict.csv')
         dictionary_entries = []
+        
+        logger.info(f"📁 プロジェクトルート: {project_root}")
+        logger.info(f"📂 辞書ファイルパス: {csv_path}")
+        logger.info(f"🔍 ファイル存在確認: {os.path.exists(csv_path)}")
         
         if os.path.exists(csv_path):
             with open(csv_path, 'r', encoding='utf-8') as file:
@@ -572,6 +578,10 @@ def dictionary_viewer(request):
                             'state': row[2],  # '開く' or '閉じる'
                             'entry_id': row[3] if len(row) > 3 else row_num
                         })
+                        
+            logger.info(f"✅ 辞書読み込み成功: {len(dictionary_entries)}件")
+        else:
+            logger.error(f"❌ 辞書ファイルが見つかりません: {csv_path}")
         
         # 辞書データをカテゴリ別に分類
         open_entries = [entry for entry in dictionary_entries if entry['state'] == '開く']
