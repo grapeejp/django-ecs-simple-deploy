@@ -1628,11 +1628,17 @@
                     </div>
                 </div>
                 <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-orange-200">
-                    <p class="text-orange-900 text-sm leading-relaxed">
+                    <p class="text-orange-900 text-sm leading-relaxed mb-3">
                         <strong class="text-orange-800">対象：</strong>表記統一、送り仮名、漢字使い分け<br>
                         <strong class="text-orange-800">例：</strong>「下さい」→「ください」<br>
                         <strong class="text-orange-800">説明：</strong>辞書や表記ルールに基づいた統一を行います
                     </p>
+                    <div class="flex justify-center">
+                        <a href="{% url 'proofreading_ai:dictionary_viewer' %}" target="_blank" 
+                           class="inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            📖 辞書ルールを確認
+                        </a>
+                    </div>
                 </div>
             </div>
             
