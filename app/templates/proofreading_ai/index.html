@@ -3835,13 +3835,13 @@
         // 経過時間カウンター開始
         window.elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
         
-        // 15秒後にクイズを開始
+        // 3秒後にクイズを開始
         setTimeout(() => {
             if (currentQuizState.isActive === false && document.getElementById('loadingOverlay').style.display !== 'none') {
-                console.log('🎮 15秒経過 - クイズ開始');
+                console.log('🎮 3秒経過 - クイズ開始');
                 startQuiz();
             }
-        }, 1000);
+        }, 3000);
         
         console.log('✅ 改良版ローディングオーバーレイ表示完了（クイズ機能付き）');
     }

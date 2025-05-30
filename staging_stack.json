@@ -1,0 +1,70 @@
+{
+    "Stacks": [
+        {
+            "StackId": "arn:aws:cloudformation:ap-northeast-1:026090540679:stack/django-ecs-service-staging-20250527140004/769b97e0-3ab7-11f0-9bc3-0e2a6d286903",
+            "StackName": "django-ecs-service-staging-20250527140004",
+            "Description": "Django ECS Service for Staging Environment",
+            "Parameters": [
+                {
+                    "ParameterKey": "TimestampSuffix",
+                    "ParameterValue": "-20250527140004"
+                },
+                {
+                    "ParameterKey": "ContainerMemory",
+                    "ParameterValue": "512"
+                },
+                {
+                    "ParameterKey": "ContainerCpu",
+                    "ParameterValue": "256"
+                },
+                {
+                    "ParameterKey": "ImageUrl",
+                    "ParameterValue": "026090540679.dkr.ecr.ap-northeast-1.amazonaws.com/django-ecs-app:latest"
+                },
+                {
+                    "ParameterKey": "DesiredCount",
+                    "ParameterValue": "1"
+                }
+            ],
+            "CreationTime": "2025-05-27T05:00:09.235000+00:00",
+            "RollbackConfiguration": {},
+            "StackStatus": "CREATE_COMPLETE",
+            "DisableRollback": false,
+            "NotificationARNs": [],
+            "Capabilities": [
+                "CAPABILITY_IAM"
+            ],
+            "Outputs": [
+                {
+                    "OutputKey": "TaskDefinition",
+                    "OutputValue": "arn:aws:ecs:ap-northeast-1:026090540679:task-definition/django-app-staging:16",
+                    "Description": "The Task Definition",
+                    "ExportName": "django-ecs-service-staging-20250527140004-TaskDefinition"
+                },
+                {
+                    "OutputKey": "ServiceName",
+                    "OutputValue": "django-ecs-service-staging-20250527140004",
+                    "Description": "The name of the ECS Service",
+                    "ExportName": "django-ecs-service-staging-20250527140004-ServiceName"
+                },
+                {
+                    "OutputKey": "Service",
+                    "OutputValue": "arn:aws:ecs:ap-northeast-1:026090540679:service/django-ecs-cluster-staging/django-ecs-service-staging-20250527140004",
+                    "Description": "The ECS Service",
+                    "ExportName": "django-ecs-service-staging-20250527140004-Service"
+                },
+                {
+                    "OutputKey": "ServiceUrl",
+                    "OutputValue": "http://django-Appli-VSNxHzXCt8uR-72974778.ap-northeast-1.elb.amazonaws.com/",
+                    "Description": "The URL of the service",
+                    "ExportName": "django-ecs-service-staging-20250527140004-ServiceUrl"
+                }
+            ],
+            "Tags": [],
+            "EnableTerminationProtection": false,
+            "DriftInformation": {
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        }
+    ]
+}
