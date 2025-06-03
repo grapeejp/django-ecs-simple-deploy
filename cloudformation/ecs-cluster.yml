@@ -6,8 +6,44 @@ Parameters:
     Type: String
     Description: Deployment environment (staging or production)
     Default: staging
+  
+  ChatworkApiToken:
+    Type: String
+    Description: Chatwork API Token for error notifications
+    NoEcho: true
+    Default: ""
+  
+  ChatworkRoomId:
+    Type: String
+    Description: Chatwork Room ID for error notifications
+    Default: ""
+
+Conditions:
+  HasChatworkConfig: !And
+    - !Not [!Equals [!Ref ChatworkApiToken, ""]]
+    - !Not [!Equals [!Ref ChatworkRoomId, ""]]
 
 Resources:
+  # Secrets Manager for Chatwork credentials
+  ChatworkSecret:
+    Type: AWS::SecretsManager::Secret
+    Condition: HasChatworkConfig
+    Properties:
+      Name: !Sub "django-ecs-chatwork-${Environment}"
+      Description: "Chatwork API credentials for Django ECS application"
+      SecretString: !Sub |
+        {
+          "CHATWORK_API_TOKEN": "${ChatworkApiToken}",
+          "CHATWORK_ROOM_ID": "${ChatworkRoomId}"
+        }
+      Tags:
+        - Key: Application
+          Value: DjangoECS
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: ChatworkNotification
+
   # VPC and Network Configuration
   VPC:
     Type: AWS::EC2::VPC
@@ -165,6 +201,18 @@ Resources:
                   - bedrock:InvokeModelWithResponseStream
                   - bedrock:ListFoundationModels
                 Resource: '*'
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: !If
+                  - HasChatworkConfig
+                  - !Ref ChatworkSecret
+                  - !Ref "AWS::NoValue"
 
   # Application Load Balancer
   ApplicationLoadBalancer:
@@ -287,4 +335,11 @@ Outputs:
     Description: Load Balancer DNS Name
     Value: !GetAtt ApplicationLoadBalancer.DNSName
     Export:
-      Name: !Sub "${AWS::StackName}-ALBDNS" 
+      Name: !Sub "${AWS::StackName}-ALBDNS"
+  
+  ChatworkSecretArn:
+    Condition: HasChatworkConfig
+    Description: Chatwork Secret ARN
+    Value: !Ref ChatworkSecret
+    Export:
+      Name: !Sub "${AWS::StackName}-ChatworkSecretArn" 
