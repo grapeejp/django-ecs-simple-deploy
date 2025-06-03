@@ -2,14 +2,15 @@ import os
 import requests
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from django.conf import settings
+import traceback
 
 logger = logging.getLogger(__name__)
 
 class ChatworkNotificationService:
-    """チャットワークへのエラー通知サービス"""
+    """チャットワークへのエラー通知サービス（改良版）"""
     
     def __init__(self):
         """
@@ -19,8 +20,37 @@ class ChatworkNotificationService:
         self.room_id = getattr(settings, 'CHATWORK_ROOM_ID', os.environ.get('CHATWORK_ROOM_ID'))
         self.api_url = "https://api.chatwork.com/v2"
         
+        # 自分のアカウント情報（個人宛メンション用）
+        # TODO: find_my_chatwork_id.pyの実行結果で正確な値に更新する必要がある場合があります
+        self.my_account_id = "9575983"  # 柳本 安利さんの正しいアカウントID
+        self.my_chatwork_id = "yasutoshi-yanagimoto"  # 開発エンジニアの正しいChatwork ID
+        self.personal_room_id = "21235770"  # 個人ルームID（要確認）
+        
+        # 個人宛メンション設定（環境変数で制御可能）
+        self.use_personal_mention = os.environ.get('CHATWORK_USE_PERSONAL_MENTION', 'true').lower() == 'true'
+        
         if not self.api_token or not self.room_id:
             logger.warning("⚠️ チャットワーク設定が不完全です（API_TOKEN or ROOM_ID missing）")
+    
+    def _get_japan_time(self) -> str:
+        """
+        日本時間を取得（JST +9時間）
+        """
+        # UTC時間に9時間を追加してJSTにする
+        japan_time = datetime.utcnow() + timedelta(hours=9)
+        return japan_time.strftime("%Y年%m月%d日 %H時%M分")
+    
+    def _get_mention_prefix(self) -> str:
+        """
+        メンション用プレフィックスを取得
+        
+        Returns:
+            str: 個人宛メンション有効時は "[To:account_id] 名前さん\n"、無効時は "[To:all]\n"
+        """
+        if self.use_personal_mention:
+            return f"[To:{self.my_account_id}] 柳本さん\n"
+        else:
+            return "[To:all]\n"
     
     def is_configured(self) -> bool:
         """
@@ -30,7 +60,7 @@ class ChatworkNotificationService:
     
     def send_error_notification(self, error_type: str, error_message: str, context: Optional[Dict[str, Any]] = None) -> bool:
         """
-        エラー通知をチャットワークに送信
+        エラー通知をチャットワークに送信（改良版）
         
         Args:
             error_type: エラーの種類 (例: "BEDROCK_INIT_ERROR", "MODEL_INVOKE_ERROR")
@@ -49,51 +79,105 @@ class ChatworkNotificationService:
             message = self._build_error_message(error_type, error_message, context)
             
             # チャットワークAPIに送信
-            return self._send_message(message, "error")
+            success = self._send_message(message, "error")
+            
+            if success:
+                logger.info(f"✅ チャットワークエラー通知送信成功: {error_type}")
+            else:
+                logger.error(f"❌ チャットワークエラー通知送信失敗: {error_type}")
+            
+            return success
             
         except Exception as e:
             logger.error(f"❌ チャットワーク通知送信エラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
     
     def send_warning_notification(self, warning_message: str, context: Optional[Dict[str, Any]] = None) -> bool:
         """
-        警告通知をチャットワークに送信
+        警告通知をチャットワークに送信（改良版）
         """
         if not self.is_configured():
             return False
         
         try:
             message = self._build_warning_message(warning_message, context)
-            return self._send_message(message, "warning")
+            success = self._send_message(message, "warning")
+            
+            if success:
+                logger.info(f"✅ チャットワーク警告通知送信成功")
+            else:
+                logger.error(f"❌ チャットワーク警告通知送信失敗")
+            
+            return success
         except Exception as e:
             logger.error(f"❌ チャットワーク警告通知送信エラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
     
     def send_info_notification(self, info_message: str, context: Optional[Dict[str, Any]] = None) -> bool:
         """
-        情報通知をチャットワークに送信
+        情報通知をチャットワークに送信（改良版）
         """
         if not self.is_configured():
             return False
             
         try:
             message = self._build_info_message(info_message, context)
-            return self._send_message(message, "info")
+            success = self._send_message(message, "info")
+            
+            if success:
+                logger.info(f"✅ チャットワーク情報通知送信成功")
+            else:
+                logger.error(f"❌ チャットワーク情報通知送信失敗")
+            
+            return success
         except Exception as e:
             logger.error(f"❌ チャットワーク情報通知送信エラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
+            return False
+    
+    def send_feedback_notification(self, name: str, feedback: str, context: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        フィードバック通知をチャットワークに送信（新機能）
+        
+        Args:
+            name: 送信者名
+            feedback: フィードバック内容
+            context: 追加情報（post_id, user_id等）
+            
+        Returns:
+            bool: 送信成功した場合True
+        """
+        if not self.is_configured():
+            return False
+        
+        try:
+            message = self._build_feedback_message(name, feedback, context)
+            success = self._send_message(message, "feedback")
+            
+            if success:
+                logger.info(f"✅ チャットワークフィードバック通知送信成功: {name}")
+            else:
+                logger.error(f"❌ チャットワークフィードバック通知送信失敗: {name}")
+            
+            return success
+        except Exception as e:
+            logger.error(f"❌ チャットワークフィードバック通知送信エラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
     
     def _build_error_message(self, error_type: str, error_message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
-        エラーメッセージを構築
+        エラーメッセージを構築（日本時間対応・個人宛メンション対応）
         """
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        japan_time = self._get_japan_time()
+        mention_prefix = self._get_mention_prefix()
         
         message_parts = [
-            "[To:all]",
-            "🚨 【エラー発生】校正AIシステム",
+            mention_prefix + "🚨 【エラー発生】校正AIシステム",
             "",
-            f"⏰ 発生時刻: {timestamp}",
+            f"⏰ 発生時刻: {japan_time}",
             f"🔴 エラー種別: {error_type}",
             f"📝 メッセージ: {error_message}",
         ]
@@ -102,7 +186,7 @@ class ChatworkNotificationService:
             message_parts.append("")
             message_parts.append("📊 詳細情報:")
             for key, value in context.items():
-                if key.lower() in ['user_id', 'request_id', 'model_id', 'function_name']:
+                if key.lower() in ['user_id', 'request_id', 'model_id', 'function_name', 'post_id']:
                     message_parts.append(f"   - {key}: {value}")
         
         message_parts.extend([
@@ -115,18 +199,20 @@ class ChatworkNotificationService:
     
     def _build_warning_message(self, warning_message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
-        警告メッセージを構築
+        警告メッセージを構築（日本時間対応・個人宛メンション対応）
         """
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        japan_time = self._get_japan_time()
+        mention_prefix = self._get_mention_prefix()
         
         message_parts = [
-            "⚠️ 【警告】校正AIシステム",
+            mention_prefix + "⚠️ 【警告】校正AIシステム",
             "",
-            f"⏰ 発生時刻: {timestamp}",
+            f"⏰ 発生時刻: {japan_time}",
             f"📝 メッセージ: {warning_message}",
         ]
         
         if context:
+            message_parts.append("")
             message_parts.append("📊 詳細情報:")
             for key, value in context.items():
                 message_parts.append(f"   - {key}: {value}")
@@ -135,31 +221,60 @@ class ChatworkNotificationService:
     
     def _build_info_message(self, info_message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
-        情報メッセージを構築
+        情報メッセージを構築（日本時間対応・個人宛メンション対応）
         """
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        japan_time = self._get_japan_time()
+        mention_prefix = self._get_mention_prefix()
         
         message_parts = [
-            "ℹ️ 【情報】校正AIシステム",
+            mention_prefix + "ℹ️ 【情報】校正AIシステム",
             "",
-            f"⏰ 時刻: {timestamp}",
+            f"⏰ 発生時刻: {japan_time}",
             f"📝 メッセージ: {info_message}",
         ]
         
         if context:
+            message_parts.append("")
             message_parts.append("📊 詳細情報:")
             for key, value in context.items():
                 message_parts.append(f"   - {key}: {value}")
         
         return "\n".join(message_parts)
     
+    def _build_feedback_message(self, name: str, feedback: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """
+        フィードバックメッセージを構築（日本時間対応・個人宛メンション対応）
+        """
+        japan_time = self._get_japan_time()
+        mention_prefix = self._get_mention_prefix()
+        
+        message_parts = [
+            mention_prefix + "💬 【修正要望】校正AIシステム",
+            "",
+            f"⏰ 時刻: {japan_time}",
+            f"👤 名前: {name}",
+            f"📝 要望内容: {feedback}",
+        ]
+        
+        if context:
+            message_parts.append("")
+            message_parts.append("📊 詳細情報:")
+            for key, value in context.items():
+                if key in ['post_id', 'user_id', 'page_url', 'ip_address']:
+                    message_parts.append(f"   - {key}: {value}")
+        
+        message_parts.append("")
+        message_parts.append("🔗 対応状況は校正AIの管理画面で確認できます。")
+        
+        return "\n".join(message_parts)
+    
     def _send_message(self, message: str, priority: str = "info") -> bool:
         """
-        チャットワークAPIにメッセージを送信
+        チャットワークAPIにメッセージを送信（詳細ログ付き）
         
         Args:
             message: 送信するメッセージ
-            priority: 優先度 (error, warning, info)
+            priority: 優先度 (error, warning, info, feedback)
             
         Returns:
             bool: 送信成功した場合True
@@ -176,40 +291,55 @@ class ChatworkNotificationService:
             }
             
             logger.info(f"📤 チャットワーク通知送信開始 (優先度: {priority})")
+            logger.info(f"📋 送信先ルームID: {self.room_id}")
+            logger.info(f"📏 メッセージ長: {len(message)}文字")
             
             response = requests.post(url, headers=headers, data=data, timeout=10)
             
             if response.status_code == 200:
                 logger.info(f"✅ チャットワーク通知送信成功 (priority: {priority})")
+                logger.info(f"📊 レスポンス: {response.text}")
                 return True
             else:
-                logger.error(f"❌ チャットワーク通知送信失敗: {response.status_code} - {response.text}")
+                logger.error(f"❌ チャットワーク通知送信失敗: {response.status_code}")
+                logger.error(f"📋 レスポンス詳細: {response.text}")
                 return False
                 
         except requests.exceptions.Timeout:
-            logger.error("❌ チャットワーク通知送信タイムアウト")
+            logger.error("❌ チャットワーク通知送信タイムアウト（10秒）")
             return False
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ チャットワーク通知送信リクエストエラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
         except Exception as e:
             logger.error(f"❌ チャットワーク通知送信予期しないエラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
     
     def test_connection(self) -> bool:
         """
-        チャットワーク接続テスト
+        チャットワーク接続テスト（改良版）
         """
         if not self.is_configured():
             logger.error("❌ チャットワーク設定が不完全です")
             return False
         
         try:
-            test_message = f"🧪 【接続テスト】校正AIシステム\n\n⏰ テスト時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n✅ チャットワーク通知機能が正常に動作しています。"
+            japan_time = self._get_japan_time()
+            test_message = f"🧪 【接続テスト】校正AIシステム\n\n⏰ テスト時刻: {japan_time}\n✅ チャットワーク通知機能が正常に動作しています。"
             
-            return self._send_message(test_message, "info")
+            success = self._send_message(test_message, "test")
+            
+            if success:
+                logger.info("✅ チャットワーク接続テスト成功")
+            else:
+                logger.error("❌ チャットワーク接続テスト失敗")
+            
+            return success
         except Exception as e:
             logger.error(f"❌ チャットワーク接続テストエラー: {str(e)}")
+            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
             return False
 
 

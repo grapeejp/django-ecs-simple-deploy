@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-チャットワーク通知機能のテストスクリプト
+チャットワーク通知機能のテストスクリプト（改良版）
 """
 
 import os
@@ -75,7 +75,8 @@ def test_error_notification():
             "function_name": "test_error_notification",
             "error_type": "TestError",
             "test_mode": True,
-            "timestamp": datetime.now().isoformat()
+            "post_id": "test_123",
+            "user_id": "test_user"
         }
         
         success = chatwork_service.send_error_notification(
@@ -111,7 +112,8 @@ def test_warning_notification():
     try:
         context = {
             "test_mode": True,
-            "timestamp": datetime.now().isoformat()
+            "warning_level": "medium",
+            "component": "proofreading_system"
         }
         
         success = chatwork_service.send_warning_notification(
@@ -130,18 +132,85 @@ def test_warning_notification():
         print(f"❌ 警告通知テストでエラー: {str(e)}")
         return False
 
+def test_feedback_notification():
+    """
+    フィードバック通知のテスト（新機能）
+    """
+    print("\n💬 フィードバック通知テスト")
+    print("-" * 30)
+    
+    chatwork_service = ChatworkNotificationService()
+    
+    if not chatwork_service.is_configured():
+        print("❌ チャットワーク設定が不完全のため、テストをスキップします")
+        return False
+    
+    try:
+        context = {
+            "post_id": "article_789",
+            "user_id": "test_user_456",
+            "page_url": "https://example.com/proofreading/test",
+            "ip_address": "192.168.1.1",
+            "test_mode": True
+        }
+        
+        success = chatwork_service.send_feedback_notification(
+            "テストユーザー",
+            "これはテスト用のフィードバックです。校正機能の改善提案をお送りします。",
+            context
+        )
+        
+        if success:
+            print("✅ フィードバック通知テスト成功")
+            return True
+        else:
+            print("❌ フィードバック通知テスト失敗")
+            return False
+            
+    except Exception as e:
+        print(f"❌ フィードバック通知テストでエラー: {str(e)}")
+        return False
+
+def test_japan_time():
+    """
+    日本時間表示のテスト
+    """
+    print("\n🕐 日本時間表示テスト")
+    print("-" * 30)
+    
+    chatwork_service = ChatworkNotificationService()
+    
+    # 日本時間取得テスト
+    try:
+        japan_time = chatwork_service._get_japan_time()
+        print(f"📅 現在の日本時間: {japan_time}")
+        
+        # フォーマットが正しいかチェック
+        if "年" in japan_time and "月" in japan_time and "日" in japan_time and "時" in japan_time and "分" in japan_time:
+            print("✅ 日本時間フォーマットテスト成功")
+            return True
+        else:
+            print("❌ 日本時間フォーマットが不正です")
+            return False
+            
+    except Exception as e:
+        print(f"❌ 日本時間テストでエラー: {str(e)}")
+        return False
+
 def main():
     """
     メイン関数
     """
-    print("🔧 チャットワーク通知機能 統合テスト")
+    print("🔧 チャットワーク通知機能 統合テスト（改良版）")
     print(f"⏰ 実行時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
     tests = [
+        ("日本時間表示テスト", test_japan_time),
         ("接続テスト", test_chatwork_connection),
         ("エラー通知テスト", test_error_notification),
         ("警告通知テスト", test_warning_notification),
+        ("フィードバック通知テスト", test_feedback_notification),
     ]
     
     results = []
@@ -173,6 +242,11 @@ def main():
     if passed == total:
         print("🎉 すべてのテストが成功しました！")
         print("✅ チャットワーク通知機能は正常に動作しています。")
+        print("\n🆕 新機能:")
+        print("   - 日本時間対応（JST +9時間）")
+        print("   - フィードバック通知機能")
+        print("   - 詳細ログ出力")
+        print("   - 改良されたエラーハンドリング")
     else:
         print("⚠️ 一部のテストが失敗しました。")
         print("💡 設定やネットワーク接続を確認してください。")
