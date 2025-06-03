@@ -7,6 +7,14 @@ import logging
 import re
 from proofreading_ai.utils import protect_html_tags_advanced, restore_html_tags_advanced
 
+# チャットワーク通知サービスをインポート
+try:
+    from proofreading_ai.services.notification_service import chatwork_service
+    CHATWORK_AVAILABLE = True
+except ImportError:
+    CHATWORK_AVAILABLE = False
+    chatwork_service = None
+
 logger = logging.getLogger(__name__)
 
 class BedrockClient:
@@ -120,6 +128,23 @@ class BedrockClient:
             logger.error(f"🔍 エラータイプ: {type(e).__name__}")
             import traceback
             logger.error(f"📋 スタックトレース:\n{traceback.format_exc()}")
+            
+            # チャットワーク通知送信
+            if CHATWORK_AVAILABLE and chatwork_service and chatwork_service.is_configured():
+                try:
+                    context = {
+                        "function_name": "BedrockClient.__init__",
+                        "error_type": type(e).__name__,
+                        "aws_region": os.environ.get("AWS_REGION", "ap-northeast-1"),
+                    }
+                    chatwork_service.send_error_notification(
+                        "BEDROCK_INIT_ERROR",
+                        f"BedrockClient初期化に失敗しました: {str(e)}",
+                        context
+                    )
+                except Exception as notification_error:
+                    logger.error(f"📤 チャットワーク通知送信エラー: {str(notification_error)}")
+            
             raise e
 
     def _check_model_access(self):
@@ -460,36 +485,46 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             logger.error(f"🔍 エラータイプ: {type(e).__name__}")
             logger.error(f"🔍 エラーメッセージ: {str(e)}")
             
-            # AWS Bedrock特有のエラーの詳細分析
-            if 'AccessDenied' in str(e):
-                logger.error(f"🚫 アクセス拒否エラー詳細:")
-                logger.error(f"   - 試行したモデル: {self.model_id}")
-                logger.error(f"   - リージョン: {self.bedrock_runtime.meta.region_name}")
-                
-                # 推論プロファイルの詳細確認
-                logger.error(f"   - アプリケーション推論プロファイルARN: {self.model_id}")
-                logger.error(f"   - 推論プロファイルが存在するか確認が必要")
-                logger.error(f"   - IAMポリシーでbedrock:InvokeModelの権限が必要")
-                
-            elif 'ValidationException' in str(e):
-                logger.error(f"🔧 バリデーションエラー詳細:")
-                logger.error(f"   - モデルID形式: {self.model_id}")
-                logger.error(f"   - パラメータ: temperature={temperature}, top_p={top_p}")
-                logger.error(f"   - プロンプト長: {len(full_prompt)}文字")
-                
-            elif 'ThrottlingException' in str(e):
-                logger.error(f"⏱️ スロットリングエラー:")
-                logger.error(f"   - リクエスト頻度が高すぎる可能性")
-                logger.error(f"   - 少し待ってから再試行を推奨")
-                
-            elif 'ServiceUnavailableException' in str(e):
-                logger.error(f"🔧 サービス利用不可エラー:")
-                logger.error(f"   - Bedrockサービスが一時的に利用不可")
-                logger.error(f"   - しばらく待ってから再試行を推奨")
-            
             # 完全なスタックトレース
             import traceback
             logger.error(f"📋 完全なスタックトレース:\n{traceback.format_exc()}")
+            
+            # チャットワーク通知送信
+            if CHATWORK_AVAILABLE and chatwork_service and chatwork_service.is_configured():
+                try:
+                    context = {
+                        "function_name": "_invoke_model_with_profile",
+                        "model_id": self.model_id,
+                        "error_type": type(e).__name__,
+                        "temperature": temperature,
+                        "top_p": top_p,
+                        "input_tokens": input_tokens
+                    }
+                    
+                    # エラー種別に応じて詳細メッセージを作成
+                    if 'AccessDenied' in str(e):
+                        error_type = "MODEL_ACCESS_DENIED"
+                        error_message = f"モデルアクセス拒否: {self.model_id}"
+                    elif 'ValidationException' in str(e):
+                        error_type = "MODEL_VALIDATION_ERROR"
+                        error_message = f"モデルパラメータ検証エラー: {str(e)}"
+                    elif 'ThrottlingException' in str(e):
+                        error_type = "MODEL_THROTTLING_ERROR"
+                        error_message = f"モデル呼び出し頻度制限: {str(e)}"
+                    elif 'ServiceUnavailableException' in str(e):
+                        error_type = "MODEL_SERVICE_UNAVAILABLE"
+                        error_message = f"Bedrockサービス利用不可: {str(e)}"
+                    else:
+                        error_type = "MODEL_INVOKE_ERROR"
+                        error_message = f"モデル呼び出しエラー: {str(e)}"
+                    
+                    chatwork_service.send_error_notification(
+                        error_type,
+                        error_message,
+                        context
+                    )
+                except Exception as notification_error:
+                    logger.error(f"📤 チャットワーク通知送信エラー: {str(notification_error)}")
             
             raise e
 
