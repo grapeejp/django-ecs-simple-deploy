@@ -24,7 +24,10 @@ env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=True)
+
+# Basic認証設定（本番環境では外部で制御）
+BASIC_AUTH_ENABLED = env.bool("BASIC_AUTH_ENABLED", default=False) and not DEBUG
 
 # 環境変数から取得、存在しない場合はワイルドカードを使用
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
