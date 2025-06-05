@@ -1,14 +1,15 @@
 version: '3'
 
 services:
-  web:
+  # Djangoアプリケーション
+  django-app:
     image: python:3.11-slim
     platform: linux/amd64
     volumes:
       - ./app:/app
     working_dir: /app
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     command: >
       bash -c "pip install -r requirements.txt &&
                pip install django boto3 celery django-environ gunicorn &&
@@ -28,3 +29,23 @@ services:
       - CHATWORK_ROOM_ID=21235770
     env_file:
       - .env
+    networks:
+      - app-network
+
+  # Nginx プロキシ（Basic認証付き）
+  nginx-proxy:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - django-app
+    volumes:
+      - ./app/staticfiles:/app/staticfiles:ro
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
