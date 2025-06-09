@@ -140,3 +140,514 @@ AWS ECSデプロイ関連の支援をリクエストする際は以下の形式�
      - name: Lint with ruff
        run: ruff check app
      ``` 
+
+# AWS ECS デプロイ競合問題 - 技術書
+## 重要：生成AI必読！このセクションを理解してからECSデプロイ支援を行うこと
+
+### 🚨 発生した致命的問題
+2025年6月9日に発生した「ALBリスナールール競合地獄」により、2時間以上デプロイ不能状態が継続。
+39個の失敗スタックが蓄積され、503 Service Unavailableが続いた。
+
+### 📊 問題の根本原因
+
+#### 1. CloudFormationスタック設計の致命的欠陥
+```bash
+# 問題のあった設計
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+aws cloudformation create-stack \
+  --stack-name django-ecs-service-${ENVIRONMENT}-${TIMESTAMP}  # 毎回新規作成！
+```
+
+**問題点:**
+- タイムスタンプ付きスタック名で毎回新規作成
+- 共有リソース（ALB）への考慮なし
+- Update戦略の欠如
+
+#### 2. ALBリスナールールの競合構造
+```yaml
+# CloudFormationテンプレートの問題箇所
+LoadBalancerRule:
+  Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  Properties:
+    Priority: 150        # 固定値！
+    Conditions:
+      - Field: path-pattern
+        Values:
+          - /*           # 固定パターン！
+```
+
+**問題点:**
+- 本番・ステージング両方でPriority 150
+- 両方とも /* パターン
+- 必ず競合する設計
+
+#### 3. 無限ループの発生メカニズム
+```
+スタック作成 → ALB競合エラー → ロールバック → 
+新しいタイムスタンプで再試行 → また同じエラー → ループ継続
+```
+
+### ✅ 実装した根本的解決策
+
+#### 1. 固定スタック名 + Update戦略
+```bash
+# 改良後の設計
+CLUSTER_STACK_NAME="django-ecs-cluster-${ENVIRONMENT}"    # 固定名
+SERVICE_STACK_NAME="django-ecs-service-${ENVIRONMENT}"   # 固定名
+
+# 既存スタックチェック + Update戦略
+if ! aws cloudformation describe-stacks --stack-name $SERVICE_STACK_NAME &> /dev/null; then
+  aws cloudformation create-stack  # 初回のみ作成
+else
+  aws cloudformation update-stack  # 2回目以降は更新
+fi
+```
+
+#### 2. ALBルール環境分離設計
+```yaml
+# 本番環境 (ecs-service.yml)
+LoadBalancerRule:
+  Priority: 150
+  Conditions:
+    - Field: path-pattern
+      Values: [/*]
+
+# ステージング環境 (ecs-service-staging.yml)  
+StagingECSLoadBalancerRule:
+  Priority: 120                    # 異なるPriority
+  Conditions:
+    - Field: path-pattern
+      Values: [/staging/*]          # 異なるパスパターン
+```
+
+#### 3. CloudFormationパラメータの最適化
+```yaml
+# タイムスタンプパラメータ削除
+Parameters:
+  # TimestampSuffix:              # 削除！
+  #   Type: String
+  #   Default: ''
+
+# サービス名も固定化
+ServiceName: !Sub django-ecs-service-${Environment}  # タイムスタンプなし
+```
+
+### 🎯 生成AI向けデプロイガイドライン
+
+#### 絶対にやってはいけないこと
+1. **タイムスタンプ付きスタック名の乱用**
+   - `django-ecs-service-staging-20250609XXXXXX` のような命名
+   - 共有リソースがある場合は競合必至
+
+2. **ALBルールの重複Priority**
+   - 同じListenerで同じPriorityは絶対禁止
+   - 同じパスパターンも競合の原因
+
+3. **失敗スタックの放置**
+   - `ROLLBACK_COMPLETE`状態のスタックは削除必須
+   - 蓄積すると管理不能になる
+
+#### 必ず実行すべきこと
+1. **デプロイ前の状況確認**
+   ```bash
+   # 既存スタック確認
+   aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
+   
+   # ALBルール確認
+   aws elbv2 describe-rules --listener-arn <LISTENER_ARN>
+   ```
+
+2. **固定スタック名 + Update戦略の採用**
+   - 初回: `create-stack`
+   - 2回目以降: `update-stack`
+   - タイムスタンプは使用禁止
+
+3. **環境分離の徹底**
+   - 本番: Priority 150, /*
+   - ステージング: Priority 120, /staging/*
+   - 明確な分離ルール
+
+#### 🔧 トラブルシューティング手順
+1. **503エラー発生時**
+   ```bash
+   # ECSサービス状況確認
+   aws ecs list-services --cluster django-ecs-cluster-staging
+   
+   # ターゲットグループヘルス確認
+   aws elbv2 describe-target-health --target-group-arn <ARN>
+   ```
+
+2. **CloudFormation失敗時**
+   ```bash
+   # 失敗原因詳細確認
+   aws cloudformation describe-stack-events --stack-name <STACK_NAME> \
+     | jq '.StackEvents[] | select(.ResourceStatus == "CREATE_FAILED")'
+   ```
+
+3. **完全リセットが必要な場合**
+   ```bash
+   # 失敗スタック全削除
+   aws cloudformation list-stacks --stack-status-filter ROLLBACK_COMPLETE \
+     | jq -r '.StackSummaries[] | select(.StackName | contains("django-ecs")) | .StackName' \
+     | xargs -I {} aws cloudformation delete-stack --stack-name {}
+   ```
+
+### 📈 今後の運用方針
+
+#### デプロイフロー
+```bash
+# 正常なデプロイフロー
+./deploy.sh staging    # 初回: 新規作成
+./deploy.sh staging    # 2回目以降: Update（競合なし）
+```
+
+#### 環境管理
+| 環境 | スタック名 | ALB Priority | パスパターン | URL |
+|------|------------|--------------|--------------|-----|
+| 本番 | `django-ecs-service-production` | 150 | `/*` | `prod.grappe-app.jp` |
+| ステージング | `django-ecs-service-staging` | 120 | `/staging/*` | `staging.grape-app.jp` |
+
+#### 監視ポイント
+- CloudFormationスタック状態
+- ALBリスナールール競合
+- ECSサービス・タスク状況
+- ターゲットグループヘルス
+
+### ⚠️ 生成AI注意事項
+- **この技術書の内容を必ず理解してからECSデプロイ支援を行うこと**
+- **タイムスタンプ付きスタック名は絶対に提案しない**
+- **ALBルール競合の可能性を常にチェックする**
+- **問題発生時は根本原因を特定してから対処する**
+- **安易な「削除して再作成」ではなく、設計的解決を優先する**
+
+この問題は設計レベルの根本的欠陥が原因であり、対症療法では解決できない。
+必ず構造的・設計的な改善で対処すること。
+
+# 2025年6月9日 成功事例：ALBレス・シンプルデプロイ戦略
+## 🎉 問題解決の決定的ソリューション
+
+### 解決の核心：シンプルアーキテクチャへの転換
+**複雑なALB構成を完全に回避し、パブリックIP直接アクセス方式で成功**
+
+```yaml
+# 成功したCloudFormationテンプレート構造
+# cloudformation/ecs-service-staging-simple.yml
+Resources:
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: django-app-staging-simple
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: django-ecs-service-staging-simple
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED  # 🔑 キーポイント
+          SecurityGroups:
+            - Fn::ImportValue: !Sub 'django-ecs-cluster-staging-v2-ECSPublicSecurityGroup'
+```
+
+### 🔧 技術的成功要因
+
+#### 1. ALB完全回避戦略
+```diff
+- ALB → Target Group → Listener Rules → ECS Service
++ パブリックIP → セキュリティグループ → ECS Service (直接)
+```
+
+**メリット:**
+- リスナールール競合の完全回避
+- 複雑性の大幅削減  
+- デプロイ速度向上（3分 → 30秒）
+- デバッグ容易性
+
+#### 2. 固定スタック名 + 環境分離
+```bash
+# 成功したスタック命名規則
+CLUSTER_STACK="django-ecs-cluster-staging-v2"        # v2で明確な区別
+SERVICE_STACK="django-ecs-service-staging-simple"    # simpleで機能を明示
+```
+
+#### 3. セキュリティグループの専用設計
+```yaml
+# ECSパブリックアクセス専用セキュリティグループ
+ECSPublicSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Security group for ECS tasks with public access
+    SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 8000
+        ToPort: 8000
+        CidrIp: 0.0.0.0/0  # ステージング環境のため許可
+```
+
+### 📋 成功デプロイフロー詳細
+
+#### ステップ1: クラスタースタック更新
+```bash
+aws cloudformation update-stack \
+  --stack-name django-ecs-cluster-staging-v2 \
+  --template-body file://cloudformation/ecs-cluster.yml \
+  --parameters ParameterKey=Environment,ParameterValue=staging \
+  --capabilities CAPABILITY_IAM
+```
+
+#### ステップ2: シンプルサービス作成
+```bash
+aws cloudformation create-stack \
+  --stack-name django-ecs-service-staging-simple \
+  --template-body file://cloudformation/ecs-service-staging-simple.yml \
+  --parameters ParameterKey=ImageUrl,ParameterValue=${IMAGE_URL}
+```
+
+#### ステップ3: パブリックIP確認・アクセステスト
+```bash
+# タスクのENI ID取得
+aws ecs describe-tasks --cluster django-ecs-cluster-staging \
+  --tasks $(aws ecs list-tasks --cluster django-ecs-cluster-staging \
+    --service-name django-ecs-service-staging-simple --query 'taskArns[0]' --output text)
+
+# パブリックIP取得
+aws ec2 describe-network-interfaces --network-interface-ids $ENI_ID \
+  --query 'NetworkInterfaces[0].Association.PublicIp'
+
+# アクセステスト
+curl -I http://$PUBLIC_IP:8000/
+```
+
+### 🎯 教訓と今後の指針
+
+#### やってはいけないこと（学習済み）
+1. ❌ **複雑性の追求**: ALBやリスナールールの多段構成
+2. ❌ **タイムスタンプ命名**: 無限ループの元凶
+3. ❌ **共有リソース競合**: 環境間での同一Priority/Pattern使用
+
+#### 積極的に採用すべきこと（実証済み）
+1. ✅ **シンプリシティ原則**: 最小構成での動作確認優先
+2. ✅ **段階的複雑化**: 動作確認後の機能追加
+3. ✅ **環境完全分離**: 共有リソースの最小化
+4. ✅ **直接アクセス検証**: ALBを介さない動作テスト
+
+### 🔄 今後のアーキテクチャ進化戦略
+
+#### Phase 1: シンプル構成（完了✅）
+- パブリックIP + 直接ポートアクセス
+- セキュリティグループでの制御
+- 基本的なログ収集
+
+#### Phase 2: 本格運用構成（将来）
+- CloudFront + ALB（異なるPriority設定）
+- カスタムドメイン設定
+- HTTPS対応
+- WAF設定
+
+#### Phase 3: 高可用性構成（将来）
+- Multi-AZ配置
+- Auto Scaling
+- Blue/Green デプロイメント
+
+### 🚨 デプロイ前必須チェックリスト（更新版）
+
+#### 基本確認
+- [ ] `manage.py`が`app/`ディレクトリに存在するか
+- [ ] Dockerイメージが正しくビルドされているか  
+- [ ] プラットフォーム指定が`linux/amd64`か
+
+#### AWS環境確認
+- [ ] 既存スタック状態確認（`CREATE_COMPLETE`または`UPDATE_COMPLETE`）
+- [ ] 失敗スタック削除済み（`ROLLBACK_COMPLETE`状態なし）
+- [ ] IAMロール権限確認
+- [ ] セキュリティグループ設定確認
+
+#### デプロイ戦略確認
+- [ ] シンプル構成か複雑構成かの選択
+- [ ] 環境分離戦略の確認
+- [ ] ロールバック計画の策定
+
+この成功事例により、今後のデプロイ問題は大幅に軽減される見込み。
+シンプリシティを保ちつつ、段階的な機能拡張を行うことが重要。 
+
+# 2025年6月9日 追加成功事例：既存ALB活用によるドメイン対応
+## 🚀 既存リソース最大活用戦略
+
+### 成功の核心：新規作成せず既存ALB活用
+**CloudFormationスタック出力から既存リソースを特定し、最小限の変更でドメイン対応を実現**
+
+### 📊 実装手順（完全版）
+
+#### ステップ1: 既存CloudFormationスタックからリソース情報取得
+```bash
+# 既存クラスタースタックの出力確認
+aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-v2 \
+  --output json | jq '.Stacks[0].Outputs[] | {OutputKey: .OutputKey, OutputValue: .OutputValue}'
+
+# 重要な出力例:
+# - ApplicationLoadBalancer: ALB ARN
+# - ALBListener: リスナー ARN  
+# - TargetGroup: ターゲットグループ ARN
+# - VPC: VPC ID
+# - PublicSubnet1/2: パブリックサブネット
+```
+
+#### ステップ2: 既存ALBリスナールール確認（競合回避）
+```bash
+# 既存ルール確認
+aws elbv2 describe-rules --listener-arn "<LISTENER_ARN>" \
+  --output json | jq '.Rules[] | {Priority: .Priority, IsDefault: .IsDefault, Conditions: .Conditions}'
+
+# 空いているPriorityを選択（今回は100を使用）
+```
+
+#### ステップ3: 競合回避リスナールール追加
+```bash
+# ホストヘッダー分離でリスナールール追加
+aws elbv2 create-rule \
+  --listener-arn "<LISTENER_ARN>" \
+  --priority 100 \
+  --conditions Field=host-header,Values=staging.grape-app.jp \
+  --actions Type=forward,TargetGroupArn="<TARGET_GROUP_ARN>"
+```
+
+#### ステップ4: ECSサービスとALB連携
+```bash
+# タスク定義のコンテナ名確認
+aws ecs describe-task-definition --task-definition django-app-staging-simple \
+  --output json | jq '.taskDefinition.containerDefinitions[] | {name: .name}'
+
+# ECSサービスをターゲットグループに接続
+aws ecs update-service \
+  --cluster django-ecs-cluster-staging \
+  --service django-ecs-service-staging-simple \
+  --load-balancers targetGroupArn="<TARGET_GROUP_ARN>",containerName=django-app,containerPort=8000
+```
+
+#### ステップ5: Route53 DNS設定
+```bash
+# DNSレコード設定ファイル作成
+cat > staging-dns-record.json << EOF
+{
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "staging.grape-app.jp",
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": "<ALB_DNS_NAME>",
+          "EvaluateTargetHealth": false,
+          "HostedZoneId": "Z14GRHDCWA56QT"
+        }
+      }
+    }
+  ]
+}
+EOF
+
+# Route53にDNSレコード設定
+aws route53 change-resource-record-sets \
+  --hosted-zone-id <HOSTED_ZONE_ID> \
+  --change-batch file://staging-dns-record.json
+```
+
+### 🎯 成功要因分析
+
+#### 1. **既存リソース最大活用**
+- ❌ 新規ALB作成（複雑性増加）
+- ✅ 既存ALB活用（最小変更）
+
+#### 2. **CloudFormation出力からの情報取得**
+- ❌ EC2コンソールから手動確認
+- ✅ CloudFormationスタック出力から自動取得
+
+#### 3. **競合回避戦略**
+- ❌ 同じPriority使用
+- ✅ 空いているPriorityを事前確認
+
+#### 4. **段階的動作確認**
+- リスナールール追加 → ECS連携 → DNS設定 → 動作テスト
+
+### 📋 重要な学習ポイント
+
+#### なぜEC2を見る必要がないのか
+```bash
+# ❌ 間違ったアプローチ
+aws ec2 describe-vpcs --filters "Name=is-default,Values=true"
+
+# ✅ 正しいアプローチ  
+aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-v2
+```
+
+**理由:** CloudFormationで管理されているリソースは、スタック出力から取得するのがベストプラクティス
+
+#### コンテナ名の重要性
+```bash
+# エラー例: コンテナ名が間違っている
+# The container django-ecs-container does not exist in the task definition.
+
+# 解決: タスク定義から正確なコンテナ名を取得
+aws ecs describe-task-definition --task-definition <TASK_DEFINITION>
+```
+
+### 🔧 トラブルシューティング実例
+
+#### 問題1: ターゲットグループにタスクが登録されない
+```bash
+# 確認方法
+aws elbv2 describe-target-health --target-group-arn <TARGET_GROUP_ARN>
+
+# 原因: ECSサービスがターゲットグループに接続されていない
+# 解決: update-serviceでload-balancers設定
+```
+
+#### 問題2: DNS伝播の遅延
+```bash
+# ALB直接テスト（DNS伝播を待たずに確認）
+curl -I http://<ALB_DNS_NAME>/ -H "Host: staging.grape-app.jp"
+
+# 成功例: HTTP/1.1 302 Found（認証リダイレクト）
+```
+
+### 🏆 今回の成果
+
+| 項目 | Before | After |
+|------|--------|-------|
+| **アクセス方法** | パブリックIP:8000 | staging.grape-app.jp |
+| **アーキテクチャ** | シンプル構成 | ALB + ドメイン |
+| **デプロイ時間** | 30秒 | 5分（DNS伝播含む） |
+| **スケーラビリティ** | 限定的 | 高い |
+| **本番対応度** | 低い | 高い |
+
+### ⚡ 次のステップの選択肢
+
+#### Option A: HTTPSと証明書追加
+```bash
+# ACM証明書リクエスト
+aws acm request-certificate --domain-name staging.grape-app.jp
+```
+
+#### Option B: CloudFront追加
+```bash
+# キャッシュとCDN機能
+aws cloudfront create-distribution
+```
+
+#### Option C: 本番環境への同様適用
+```bash
+# Priority: 50（staging:100より優先）
+# Host: grape-app.jp, www.grape-app.jp
+```
+
+### 🚨 重要な注意事項
+
+1. **Priority管理**: 本番とステージングで重複させない
+2. **DNS設定**: HostedZone IDは環境に応じて確認
+3. **ターゲットグループ**: ECSサービス更新時はロードバランサー設定も更新
+4. **セキュリティ**: ステージング環境でも適切なセキュリティ設定を維持
+
+この手法により、既存環境を最大限活用しながら、段階的にアーキテクチャを発展させることが可能。 

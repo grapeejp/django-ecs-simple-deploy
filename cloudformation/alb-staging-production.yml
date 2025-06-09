@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ALB with staging.grape-app.jp domain support - Conflict-Free Design'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  VpcId:
+    Type: String
+    Description: VPC ID for ALB
+    Default: vpc-0b4b7b6b7b6b7b6b7
+
+  PublicSubnetIds:
+    Type: CommaDelimitedList
+    Description: Public subnet IDs for ALB
+    Default: "subnet-0a1a2a3a4a5a6a7a8,subnet-0b1b2b3b4b5b6b7b8"
+
+  ECSClusterName:
+    Type: String
+    Description: ECS Cluster name to import target group
+    Default: django-ecs-cluster-staging
+
+Resources:
+  # Security Group for ALB
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${Environment}-alb-security-group'
+      GroupDescription: Security group for ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP traffic
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTPS traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-alb-security-group'
+
+  # Application Load Balancer
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${Environment}-grape-app-alb'
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets: !Ref PublicSubnetIds
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-grape-app-alb'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Target Group for ECS Service
+  ECSTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${Environment}-grape-app-targets'
+      Port: 8000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /accounts/login/
+      HealthCheckProtocol: HTTP
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Matcher:
+        HttpCode: '200,302'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-grape-app-targets'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # HTTP Listener (Port 80)
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: '404'
+            ContentType: 'text/plain'
+            MessageBody: 'Page Not Found'
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # ✅ 安全な設計: 環境別Priority + ホストヘッダー分離
+  # Staging Rule (Priority: 200)
+  StagingHostRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: !Equals [!Ref Environment, 'staging']
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref ECSTargetGroup
+      Conditions:
+        - Field: host-header
+          Values:
+            - staging.grape-app.jp
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref HTTPListener
+      Priority: 200
+
+  # Production Rule (Priority: 100) - will be created only in production
+  ProductionHostRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: !Equals [!Ref Environment, 'production']
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref ECSTargetGroup
+      Conditions:
+        - Field: host-header
+          Values:
+            - grape-app.jp
+            - www.grape-app.jp
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref HTTPListener
+      Priority: 100
+
+Outputs:
+  LoadBalancerDNS:
+    Description: DNS name of the load balancer
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${Environment}-alb-dns'
+
+  LoadBalancerArn:
+    Description: ARN of the load balancer
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub '${Environment}-alb-arn'
+
+  TargetGroupArn:
+    Description: ARN of the target group
+    Value: !Ref ECSTargetGroup
+    Export:
+      Name: !Sub '${Environment}-target-group-arn'
+
+  SecurityGroupId:
+    Description: Security Group ID for ALB
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: !Sub '${Environment}-alb-security-group' 
