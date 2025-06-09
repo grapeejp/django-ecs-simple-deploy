@@ -198,12 +198,54 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="flex items-center">
-                        <div class="relative">
-                            <button class="flex items-center text-white focus:outline-none">
-                                <span class="mr-2">ユーザー名</span>
-                                <i class="fas fa-user-circle text-2xl"></i>
-                            </button>
-                        </div>
+                        {% if user.is_authenticated %}
+                            <div class="relative" id="user-menu">
+                                <button class="flex items-center text-white focus:outline-none" id="user-menu-button">
+                                    {% if user.socialaccount_set.all %}
+                                        <!-- Google認証ユーザーの場合 -->
+                                        {% for account in user.socialaccount_set.all %}
+                                            {% if account.get_avatar_url %}
+                                                <img src="{{ account.get_avatar_url }}" alt="プロフィール画像" class="w-8 h-8 rounded-full mr-2">
+                                            {% endif %}
+                                            <span class="mr-2">{{ account.extra_data.name|default:user.email }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- 通常ユーザーの場合 -->
+                                        <span class="mr-2">{{ user.first_name|default:user.username }}</span>
+                                        <i class="fas fa-user-circle text-2xl"></i>
+                                    {% endif %}
+                                    <i class="fas fa-chevron-down ml-2"></i>
+                                </button>
+                                <!-- ドロップダウンメニュー -->
+                                <div class="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg hidden" id="user-dropdown">
+                                    <div class="py-2">
+                                        <div class="px-4 py-2 border-b border-gray-200">
+                                            <p class="text-sm text-gray-600">ログイン中</p>
+                                            <p class="text-sm font-medium text-gray-900">{{ user.email }}</p>
+                                        </div>
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-user mr-2"></i>プロフィール
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-cog mr-2"></i>設定
+                                        </a>
+                                        <hr class="my-1">
+                                        <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>ログアウト
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'account_login' %}" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+                                    <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+                                </a>
+                                <a href="{% url 'account_signup' %}" class="bg-grape-600 hover:bg-grape-700 text-white px-4 py-2 rounded-lg transition-all">
+                                    <i class="fas fa-user-plus mr-2"></i>アカウント作成
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </header>
@@ -266,6 +308,24 @@
                 document.getElementById('mobile-menu').classList.add('-translate-x-full');
             }
         });
+
+        // ユーザーメニュードロップダウン
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        if (userMenuButton && userDropdown) {
+            userMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+            });
+
+            // ドロップダウン外をクリックしたら閉じる
+            document.addEventListener('click', function(e) {
+                if (!userDropdown.contains(e.target) && !userMenuButton.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

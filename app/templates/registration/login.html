@@ -1,0 +1,332 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}ログイン - グレイプ社内ツール{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="600" r="120" fill="url(%23a)"/><circle cx="700" cy="700" r="80" fill="url(%23a)"/></svg>');
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+    }
+    
+    .login-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 
+            0 25px 50px -12px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        width: 100%;
+        max-width: 420px;
+        padding: 2.5rem;
+        position: relative;
+        z-index: 10;
+        animation: slideUp 0.8s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .logo-section {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .logo-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .welcome-text {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .welcome-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+    
+    .google-btn {
+        background: linear-gradient(135deg, #db4437, #ea4335);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        border: none;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(219, 68, 55, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .google-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .google-btn:hover::before {
+        left: 100%;
+    }
+    
+    .google-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(219, 68, 55, 0.4);
+    }
+    
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+    
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    }
+    
+    .divider span {
+        margin: 0 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .form-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+    
+    .login-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        border: none;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        cursor: pointer;
+    }
+    
+    .login-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    }
+    
+    .footer-links {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .footer-links a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin: 0 0.5rem;
+        transition: color 0.3s ease;
+    }
+    
+    .footer-links a:hover {
+        color: white;
+    }
+    
+    .privacy-note {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 12px;
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i class="fas fa-grape-alt"></i>
+            </div>
+            <h1 class="welcome-text">おかえりなさい</h1>
+            <p class="welcome-subtitle">グレイプ社内効率化ツールにログイン</p>
+        </div>
+        
+        <!-- Google OAuth ログイン -->
+        <a href="{% provider_login_url 'google' %}" class="google-btn">
+            <i class="fab fa-google mr-3"></i>
+            Googleアカウントでログイン
+        </a>
+        
+        <div class="divider">
+            <span>または</span>
+        </div>
+        
+        <!-- 従来のログインフォーム -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username" class="form-label">
+                    <i class="fas fa-user mr-2"></i>ユーザー名またはメールアドレス
+                </label>
+                <input type="text" class="form-input" name="login" id="id_username" 
+                       placeholder="your@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password" class="form-label">
+                    <i class="fas fa-lock mr-2"></i>パスワード
+                </label>
+                <input type="password" class="form-input" name="password" id="id_password" 
+                       placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt mr-2"></i>ログイン
+            </button>
+        </form>
+        
+        <div class="footer-links">
+            <a href="{% url 'account_signup' %}">
+                <i class="fas fa-user-plus mr-1"></i>アカウント作成
+            </a>
+            <span style="color: rgba(255,255,255,0.4);">|</span>
+            <a href="{% url 'account_reset_password' %}">
+                <i class="fas fa-key mr-1"></i>パスワードを忘れた
+            </a>
+        </div>
+        
+        <div class="privacy-note">
+            <i class="fas fa-shield-alt mr-2"></i>
+            このサイトは最新のセキュリティ技術で保護されています
+        </div>
+    </div>
+</div>
+
+<script>
+// フォームのアニメーション効果
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.form-input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'scale(1.02)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+    
+    // ロード時のアニメーション
+    const card = document.querySelector('.login-card');
+    setTimeout(() => {
+        card.style.transform = 'translateY(0) scale(1)';
+    }, 100);
+});
+</script>
+{% endblock %} 
