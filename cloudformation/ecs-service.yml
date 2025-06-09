@@ -84,6 +84,17 @@ Resources:
               Value: '150'
             - Name: BEDROCK_PROMPT_PATH
               Value: '/app/proofreading_ai/prompt.md'
+          Secrets:
+            - Name: CHATWORK_API_TOKEN
+              ValueFrom: !Sub 
+                - "${SecretArn}:CHATWORK_API_TOKEN::"
+                - SecretArn: 
+                    Fn::ImportValue: !Sub 'django-ecs-cluster-${Environment}-ChatworkSecretArn'
+            - Name: CHATWORK_ROOM_ID
+              ValueFrom: !Sub 
+                - "${SecretArn}:CHATWORK_ROOM_ID::"
+                - SecretArn: 
+                    Fn::ImportValue: !Sub 'django-ecs-cluster-${Environment}-ChatworkSecretArn'
 
   # ECS Service
   Service:

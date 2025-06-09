@@ -5,7 +5,16 @@ import time
 from typing import Dict, Any, Tuple, List
 import logging
 import re
+import traceback
 from proofreading_ai.utils import protect_html_tags_advanced, restore_html_tags_advanced
+
+# チャットワーク通知サービスをインポート
+try:
+    from proofreading_ai.services.notification_service import ChatworkNotificationService
+    CHATWORK_AVAILABLE = True
+except ImportError:
+    CHATWORK_AVAILABLE = False
+    ChatworkNotificationService = None
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +129,25 @@ class BedrockClient:
             logger.error(f"🔍 エラータイプ: {type(e).__name__}")
             import traceback
             logger.error(f"📋 スタックトレース:\n{traceback.format_exc()}")
+            
+            # チャットワーク通知送信
+            if CHATWORK_AVAILABLE and ChatworkNotificationService:
+                try:
+                    chatwork_service = ChatworkNotificationService()
+                    if chatwork_service.is_configured():
+                        context = {
+                            "function_name": "BedrockClient.__init__",
+                            "error_type": type(e).__name__,
+                            "aws_region": os.environ.get("AWS_REGION", "ap-northeast-1"),
+                        }
+                        chatwork_service.send_error_notification(
+                            "BEDROCK_INIT_ERROR",
+                            f"BedrockClient初期化に失敗しました: {str(e)}",
+                            context
+                        )
+                except Exception as notification_error:
+                    logger.error(f"📤 チャットワーク通知送信エラー: {str(notification_error)}")
+            
             raise e
 
     def _check_model_access(self):
@@ -322,7 +350,37 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             return final_corrected_text, corrections, processing_time, cost_info
             
         except Exception as e:
-            logger.error(f"❌ Claude Sonnet 4でエラー: {str(e)}")
+            error_message = str(e)
+            error_type = type(e).__name__
+            stack_trace = traceback.format_exc()
+            
+            logger.error(f"❌ Claude Sonnet 4でエラー: {error_message}")
+            logger.error(f"📋 エラー詳細:\n{stack_trace}")
+            
+            # Chatwork通知を送信
+            if CHATWORK_AVAILABLE and ChatworkNotificationService:
+                try:
+                    chatwork_service = ChatworkNotificationService()
+                    if chatwork_service.is_configured():
+                        error_context = {
+                            'function': 'BedrockClient.proofread_text',
+                            'model_id': self.model_id,
+                            'error_type': error_type,
+                            'text_length': len(text),
+                            'temperature': temperature,
+                            'top_p': top_p,
+                            'input_tokens': input_tokens,
+                            'stack_trace': stack_trace
+                        }
+                        
+                        chatwork_service.send_error_notification(
+                            error_type="BEDROCK_PROOFREAD_ERROR",
+                            error_message=f"校正処理でエラーが発生: {error_message}",
+                            context=error_context
+                        )
+                        logger.info("✅ Chatworkエラー通知送信完了")
+                except Exception as notification_error:
+                    logger.error(f"❌ Chatworkエラー通知送信失敗: {str(notification_error)}")
             
             # フォールバックがある場合は試行
             if self.fallback_model_id:
@@ -343,13 +401,58 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                     # モデルIDを元に戻す
                     self.model_id = original_model_id
                     
+                    # フォールバック成功をChatworkに通知
+                    if CHATWORK_AVAILABLE and ChatworkNotificationService:
+                        try:
+                            chatwork_service = ChatworkNotificationService()
+                            if chatwork_service.is_configured():
+                                chatwork_service.send_warning_notification(
+                                    f"🔄 フォールバックモデル使用",
+                                    f"プライマリモデル({original_model_id})でエラーが発生したため、フォールバックモデル({self.fallback_model_id})で校正を完了しました。"
+                                )
+                                logger.info("✅ Chatworkフォールバック通知送信完了")
+                        except Exception as notification_error:
+                            logger.error(f"❌ Chatworkフォールバック通知送信失敗: {str(notification_error)}")
+                    
                     # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
                     logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
                     
                     return final_corrected_text, corrections, processing_time, cost_info
                     
                 except Exception as fallback_error:
-                    logger.error(f"❌ フォールバックモデルでもエラー: {str(fallback_error)}")
+                    fallback_error_message = str(fallback_error)
+                    fallback_error_type = type(fallback_error).__name__
+                    fallback_stack_trace = traceback.format_exc()
+                    
+                    logger.error(f"❌ フォールバックモデルでもエラー: {fallback_error_message}")
+                    logger.error(f"📋 フォールバックエラー詳細:\n{fallback_stack_trace}")
+                    
+                    # フォールバックエラーもChatworkに通知
+                    if CHATWORK_AVAILABLE and ChatworkNotificationService:
+                        try:
+                            chatwork_service = ChatworkNotificationService()
+                            if chatwork_service.is_configured():
+                                error_context = {
+                                    'function': 'BedrockClient.proofread_text_fallback',
+                                    'primary_model_id': original_model_id,
+                                    'fallback_model_id': self.fallback_model_id,
+                                    'primary_error': error_message,
+                                    'fallback_error': fallback_error_message,
+                                    'text_length': len(text),
+                                    'temperature': temperature,
+                                    'top_p': top_p,
+                                    'stack_trace': fallback_stack_trace
+                                }
+                                
+                                chatwork_service.send_error_notification(
+                                    error_type="BEDROCK_FALLBACK_ERROR",
+                                    error_message=f"プライマリとフォールバック両方でエラー: {fallback_error_message}",
+                                    context=error_context
+                                )
+                                logger.info("✅ Chatworkフォールバックエラー通知送信完了")
+                        except Exception as notification_error:
+                            logger.error(f"❌ Chatworkフォールバックエラー通知送信失敗: {str(notification_error)}")
+                    
                     # モデルIDを元に戻す
                     self.model_id = original_model_id
                     raise fallback_error
@@ -456,40 +559,40 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
             return corrected_text, corrections, completion_time, cost_info
             
         except Exception as e:
-            logger.error(f"❌ モデル呼び出しエラー発生")
-            logger.error(f"🔍 エラータイプ: {type(e).__name__}")
-            logger.error(f"🔍 エラーメッセージ: {str(e)}")
+            error_message = str(e)
+            error_type = type(e).__name__
+            stack_trace = traceback.format_exc()
+            processing_time = time.time() - start_time
             
-            # AWS Bedrock特有のエラーの詳細分析
-            if 'AccessDenied' in str(e):
-                logger.error(f"🚫 アクセス拒否エラー詳細:")
-                logger.error(f"   - 試行したモデル: {self.model_id}")
-                logger.error(f"   - リージョン: {self.bedrock_runtime.meta.region_name}")
-                
-                # 推論プロファイルの詳細確認
-                logger.error(f"   - アプリケーション推論プロファイルARN: {self.model_id}")
-                logger.error(f"   - 推論プロファイルが存在するか確認が必要")
-                logger.error(f"   - IAMポリシーでbedrock:InvokeModelの権限が必要")
-                
-            elif 'ValidationException' in str(e):
-                logger.error(f"🔧 バリデーションエラー詳細:")
-                logger.error(f"   - モデルID形式: {self.model_id}")
-                logger.error(f"   - パラメータ: temperature={temperature}, top_p={top_p}")
-                logger.error(f"   - プロンプト長: {len(full_prompt)}文字")
-                
-            elif 'ThrottlingException' in str(e):
-                logger.error(f"⏱️ スロットリングエラー:")
-                logger.error(f"   - リクエスト頻度が高すぎる可能性")
-                logger.error(f"   - 少し待ってから再試行を推奨")
-                
-            elif 'ServiceUnavailableException' in str(e):
-                logger.error(f"🔧 サービス利用不可エラー:")
-                logger.error(f"   - Bedrockサービスが一時的に利用不可")
-                logger.error(f"   - しばらく待ってから再試行を推奨")
+            logger.error(f"❌ Bedrock API呼び出しエラー: {error_message}")
+            logger.error(f"🔍 エラータイプ: {error_type}")
+            logger.error(f"📋 スタックトレース:\n{stack_trace}")
             
-            # 完全なスタックトレース
-            import traceback
-            logger.error(f"📋 完全なスタックトレース:\n{traceback.format_exc()}")
+            # Chatwork通知を送信
+            if CHATWORK_AVAILABLE and ChatworkNotificationService:
+                try:
+                    chatwork_service = ChatworkNotificationService()
+                    if chatwork_service.is_configured():
+                        error_context = {
+                            'function': 'BedrockClient._invoke_model_with_profile',
+                            'model_id': self.model_id,
+                            'error_type': error_type,
+                            'temperature': temperature,
+                            'top_p': top_p,
+                            'input_tokens': input_tokens,
+                            'processing_time': processing_time,
+                            'payload_size': len(body) if 'body' in locals() else 0,
+                            'stack_trace': stack_trace
+                        }
+                        
+                        chatwork_service.send_error_notification(
+                            error_type="BEDROCK_API_ERROR",
+                            error_message=f"Bedrock API呼び出しでエラー: {error_message}",
+                            context=error_context
+                        )
+                        logger.info("✅ Chatwork API エラー通知送信完了")
+                except Exception as notification_error:
+                    logger.error(f"❌ Chatwork API エラー通知送信失敗: {str(notification_error)}")
             
             raise e
 

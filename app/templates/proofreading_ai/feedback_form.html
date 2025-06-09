@@ -1,0 +1,115 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}フィードバック送信 - 校正AI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">📝 修正要望・フィードバック送信</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">校正AIの改善にご協力ください。修正要望やご意見をお聞かせください。</p>
+                    
+                    <form id="feedbackForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">お名前 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="post_id" class="form-label">記事ID（任意）</label>
+                            <input type="text" class="form-control" id="post_id" name="post_id" 
+                                   placeholder="関連する記事や投稿のIDがあれば入力してください">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label">フィードバック内容 <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="5" 
+                                      placeholder="修正要望、改善提案、バグ報告など、お気軽にお聞かせください" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> 送信
+                            </button>
+                            <button type="reset" class="btn btn-secondary ms-2">
+                                <i class="fas fa-undo"></i> クリア
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 結果表示エリア -->
+                    <div id="result" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 送信中...';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(this);
+    const data = {
+        name: formData.get('name'),
+        post_id: formData.get('post_id'),
+        feedback: formData.get('feedback')
+    };
+    
+    try {
+        const response = await fetch('{% url "proofreading_ai:submit_feedback" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        const resultDiv = document.getElementById('result');
+        
+        if (result.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> ${result.message}
+                </div>
+            `;
+            this.reset(); // フォームクリア
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> エラー: ${result.error}
+                </div>
+            `;
+        }
+        
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+        
+    } catch (error) {
+        console.error('送信エラー:', error);
+        document.getElementById('result').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> 送信に失敗しました。ネットワーク接続を確認してください。
+            </div>
+        `;
+        document.getElementById('result').style.display = 'block';
+    }
+    
+    // ボタンを元に戻す
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+});
+</script>
+{% endblock %} 

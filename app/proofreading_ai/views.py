@@ -16,12 +16,23 @@ import boto3
 import os
 from django.conf import settings
 import csv
+from datetime import datetime, timezone, timedelta
+from django.core.cache import cache
+from django.utils import timezone as django_timezone
 
 from .models import ProofreadingRequest, ProofreadingResult, ReplacementDictionary
 # 本番用とモック用両方をインポート
 from .services.bedrock_client import BedrockClient
 from .services.mock_bedrock_client import MockBedrockClient
-from .utils import get_html_diff, protect_html_tags_advanced, restore_html_tags_advanced, format_corrections, parse_corrections_from_text
+from .utils import (
+    protect_html_tags_advanced, 
+    restore_html_tags_advanced, 
+    format_corrections,
+    parse_corrections_from_text
+)
+
+# チャットワーク通知サービスをインポート
+from .services.notification_service import chatwork_service, ChatworkNotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +55,7 @@ def get_replacement_dict():
         logger.error(f"❌ 置換辞書取得エラー: {str(e)}")
         return {}
 
+@login_required
 def index(request):
     """
     校正AIのメインページを表示
@@ -159,19 +171,64 @@ def proofread(request):
         
     except Exception as e:
         total_time = time.time() - start_time
-        logger.error(f"💥 校正処理中にエラー発生: {str(e)}")
-        logger.error(f"📋 エラー詳細:\n{traceback.format_exc()}")
+        error_message = str(e)
+        error_type = type(e).__name__
+        stack_trace = traceback.format_exc()
+        
+        logger.error(f"💥 校正処理中にエラー発生: {error_message}")
+        logger.error(f"📋 エラー詳細:\n{stack_trace}")
+        
+        # Chatwork通知を送信
+        try:
+            chatwork_service = ChatworkNotificationService()
+            
+            # クライアント情報を取得
+            def get_client_ip(request):
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    return x_forwarded_for.split(',')[0]
+                return request.META.get('REMOTE_ADDR', '不明')
+            
+            client_ip = get_client_ip(request)
+            user_agent = request.META.get('HTTP_USER_AGENT', '不明')
+            
+            # エラー情報をまとめる
+            error_context = {
+                'error_type': error_type,
+                'error_message': error_message,
+                'function': 'proofread',
+                'processing_time': total_time,
+                'client_ip': client_ip,
+                'user_agent': user_agent,
+                'text_length': len(text) if 'text' in locals() else 0,
+                'temperature': temperature if 'temperature' in locals() else None,
+                'top_p': top_p if 'top_p' in locals() else None,
+                'stack_trace': stack_trace
+            }
+            
+            # Chatworkにエラー通知を送信
+            chatwork_service.send_error_notification(
+                error_type=error_type,
+                error_message=error_message,
+                context=error_context
+            )
+            
+            logger.info("✅ Chatworkエラー通知送信完了")
+            
+        except Exception as notification_error:
+            logger.error(f"❌ Chatworkエラー通知送信失敗: {str(notification_error)}")
+            logger.error(f"📋 通知エラー詳細:\n{traceback.format_exc()}")
         
         return JsonResponse({
             'success': False,
-            'error': str(e),
-            'error_type': type(e).__name__,
+            'error': error_message,
+            'error_type': error_type,
             'processing_time': total_time,
             'debug_info': {
                 'text_length': len(text) if 'text' in locals() else 0,
                 'temperature': temperature if 'temperature' in locals() else None,
                 'top_p': top_p if 'top_p' in locals() else None,
-                'stack_trace': traceback.format_exc()
+                'stack_trace': stack_trace
             }
         })
 
@@ -266,7 +323,6 @@ def process_proofread_async(process_id, original_text, temperature, top_p):
         )
         
         # 結果をキャッシュに保存
-        from django.core.cache import cache
         cache.set(f'proofread_result_{process_id}', {
             'original_text': original_text,
             'corrected_text': highlighted_html,
@@ -293,7 +349,6 @@ def process_proofread_async(process_id, original_text, temperature, top_p):
     except Exception as e:
         logger.error(f"非同期校正処理中にエラーが発生しました: {str(e)}")
         # エラー情報をキャッシュに保存
-        from django.core.cache import cache
         cache.set(
             f"proofread_result_{process_id}",
             {
@@ -322,7 +377,6 @@ def check_proofread_status(request):
             })
         
         # キャッシュから処理結果を取得
-        from django.core.cache import cache
         result = cache.get(f"proofread_result_{process_id}")
         
         if result is None:
@@ -611,4 +665,96 @@ def dictionary_viewer(request):
             'close_entries': [],
             'stats': {'total_entries': 0, 'open_entries': 0, 'close_entries': 0},
             'error': str(e)
-        }) 
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def submit_feedback(request):
+    """
+    修正要望の送信（参考コードを元にした改良版）
+    """
+    try:
+        # POST データの取得
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            name = data.get('name', '')
+            post_id = data.get('post_id', '')
+            feedback = data.get('feedback', '')
+        else:
+            name = request.POST.get('name', '')
+            post_id = request.POST.get('post_id', '')
+            feedback = request.POST.get('feedback', '')
+        
+        # バリデーション
+        if not all([name, feedback]):
+            return JsonResponse({
+                'success': False,
+                'error': '名前とフィードバック内容は必須です。'
+            }, status=400)
+        
+        logger.info(f"📝 修正要望が送信されました: {feedback[:50]}... (名前: {name}, 投稿ID: {post_id})")
+        
+        # IPアドレス取得
+        def get_client_ip(request):
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+            return ip
+        
+        # チャットワークに通知するためのコンテキスト
+        context = {
+            "post_id": post_id,
+            "user_id": getattr(request.user, 'id', 'anonymous'),
+            "page_url": request.build_absolute_uri(),
+            "ip_address": get_client_ip(request),
+            "user_agent": request.META.get('HTTP_USER_AGENT', ''),
+        }
+        
+        # チャットワークに通知送信
+        try:
+            success = chatwork_service.send_feedback_notification(
+                name=name,
+                feedback=feedback,
+                context=context
+            )
+            
+            if success:
+                logger.info(f"✅ チャットワークへのフィードバック通知に成功しました: {name}")
+            else:
+                logger.error(f"❌ チャットワークへのフィードバック通知に失敗しました: {name}")
+                
+        except Exception as e:
+            logger.error(f"❌ チャットワークへの通知でエラー: {str(e)}")
+            # 通知の失敗はユーザーには表示しない（内部エラー）
+        
+        # 成功レスポンス
+        return JsonResponse({
+            'success': True,
+            'message': 'フィードバックが正常に送信されました。ありがとうございます！'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'JSONデータの形式が正しくありません。'
+        }, status=400)
+        
+    except Exception as e:
+        logger.error(f"❌ フィードバック送信でエラー: {str(e)}")
+        import traceback
+        logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
+        
+        return JsonResponse({
+            'success': False,
+            'error': 'サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。'
+        }, status=500)
+
+
+def feedback_form(request):
+    """
+    フィードバックフォーム表示
+    """
+    return render(request, 'proofreading_ai/feedback_form.html') 

@@ -24,7 +24,10 @@ env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=True)
+
+# Basic認証設定（本番環境では外部で制御）
+BASIC_AUTH_ENABLED = env.bool("BASIC_AUTH_ENABLED", default=False) and not DEBUG
 
 # 環境変数から取得、存在しない場合はワイルドカードを使用
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
@@ -39,6 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # allauth required
+    # django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     # 自作アプリケーション
     "core",
     "proofreading_ai",
@@ -47,11 +56,13 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # "core.middleware.BasicAuthMiddleware",  # nginx プロキシでBasic認証を行うため無効化
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # allauth required
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -65,6 +76,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
@@ -129,3 +141,57 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# django-allauth設定
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    # デフォルトのDjango認証バックエンド
+    'django.contrib.auth.backends.ModelBackend',
+    # allauth用認証バックエンド
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# ログイン・ログアウト後のリダイレクト先
+LOGIN_URL = '/accounts/login/'  # 未ログインユーザーのリダイレクト先
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# allauth設定
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # 社内利用のため
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_SIGNUP_REDIRECT_URL = '/'
+ACCOUNT_LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# 新規登録を無効化（社内メンバーのみ）
+ACCOUNT_ALLOW_REGISTRATION = False
+
+# Google OAuth設定
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'hd': 'grapee.co.jp',  # Google Workspaceドメイン制限
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+# Social accountの設定
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  # 自動でアカウント作成（@grapee.co.jpのみ）
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_STORE_TOKENS = True
+
+# @grapee.co.jpドメインのみ許可
+SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'

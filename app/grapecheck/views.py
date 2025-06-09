@@ -3,6 +3,7 @@ from django.views.generic import FormView, DetailView, ListView
 from django.http import JsonResponse
 from django.contrib import messages
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Category, GrapeCheck
 from .forms import GrapeCheckForm
@@ -13,7 +14,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
-class GrapeCheckFormView(FormView):
+class GrapeCheckFormView(LoginRequiredMixin, FormView):
     """グレイプらしさチェックフォームビュー"""
     template_name = 'grapecheck/check_form.html'
     form_class = GrapeCheckForm
@@ -61,14 +62,14 @@ class GrapeCheckFormView(FormView):
             return self.form_invalid(form)
 
 
-class GrapeCheckResultView(DetailView):
+class GrapeCheckResultView(LoginRequiredMixin, DetailView):
     """グレイプらしさチェック結果ビュー"""
     model = GrapeCheck
     template_name = 'grapecheck/check_result.html'
     context_object_name = 'result'
     
 
-class GrapeCheckHistoryListView(ListView):
+class GrapeCheckHistoryListView(LoginRequiredMixin, ListView):
     """グレイプらしさチェック履歴一覧ビュー"""
     model = GrapeCheck
     template_name = 'grapecheck/check_history.html'
