@@ -30,6 +30,7 @@ urlpatterns = [
     # path("", welcome, name="welcome"),  # コメントアウト
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
+    path('accounts/', include('allauth.urls')),  # django-allauth
     path('', include('core.urls')),  # ダッシュボード
     path('proofreading_ai/', include('proofreading_ai.urls')),  # 校正AIアプリ
     path('tags/', include('tags.urls')),  # タグ推薦アプリ

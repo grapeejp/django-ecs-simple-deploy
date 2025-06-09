@@ -55,6 +55,7 @@ def get_replacement_dict():
         logger.error(f"❌ 置換辞書取得エラー: {str(e)}")
         return {}
 
+@login_required
 def index(request):
     """
     校正AIのメインページを表示

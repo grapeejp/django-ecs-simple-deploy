@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
+@login_required
 def tag_list(request):
     """タグ一覧を表示するビュー"""
     tags = []  # 将来的にはデータベースからタグを取得
