@@ -2894,34 +2894,12 @@
         document.getElementById('progressBar').style.width = '100%';
         document.getElementById('progressPercentage').textContent = '100%';
         
-        // クイズが実行中の場合、最終問題モードに切り替え
-        if (currentQuizState.isActive) {
-            console.log('🏆 処理完了 - 最終問題モードに切り替え');
-            updateLoadingStep('🎉 校正完了！', '最後の問題に答えて終了しましょう！');
-            currentQuizState.processingCompleted = true;
-            currentQuizState.isFinalQuestion = true;
-            
-            // 最終問題を表示（まだ問題が残っている場合はそのまま、終了していたら新しい問題を追加）
-            if (currentQuizState.currentIndex >= currentQuizState.questions.length) {
-                // 追加の最終問題を1問出す
-                const allQuizData = generateQuizDataFromCSV();
-                const finalQuestion = shuffleArray(allQuizData)[0];
-                currentQuizState.questions.push(finalQuestion);
-                currentQuizState.totalQuestions++;
-                document.getElementById('quizTotalQuestions').textContent = currentQuizState.totalQuestions;
-                showQuestion();
-            }
-            
-            // UIメッセージ更新
-            document.getElementById('quizQuestionText').textContent = '🏁 最終問題！答えたら結果が表示されます';
-        } else {
-            // クイズが実行中でない場合は即座に結果表示
-            console.log('✅ 処理完了 - クイズ未実行のため即座に結果表示');
-            updateLoadingStep('🎉 校正完了！', '結果を表示します...');
-            setTimeout(() => {
-                hideLoadingOverlay();
-            }, 1000);
-        }
+        // 常に即座に結果表示（クイズをスキップ）
+        console.log('✅ 処理完了 - 即座に結果表示');
+        updateLoadingStep('🎉 校正完了！', '結果を表示します...');
+        setTimeout(() => {
+            hideLoadingOverlay();
+        }, 1000);
     }
 
     // 修正箇所のクリックイベントを設定（校正結果内のハイライト用）
