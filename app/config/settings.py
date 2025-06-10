@@ -168,8 +168,12 @@ ACCOUNT_SIGNUP_REDIRECT_URL = '/'
 ACCOUNT_LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-# 新規登録を無効化（社内メンバーのみ）
-ACCOUNT_ALLOW_REGISTRATION = False
+# 新規登録を有効化（社内メンバー用テストアカウント作成可能）
+ACCOUNT_ALLOW_REGISTRATION = True
+
+# Emailとusernameの両方でログイン可能
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
 
 # Google OAuth設定
 SOCIALACCOUNT_PROVIDERS = {
