@@ -43,6 +43,8 @@ RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'python manage.py migrate --noinput' >> /app/start.sh && \
     echo 'echo "静的ファイル収集中..."' >> /app/start.sh && \
     echo 'python manage.py collectstatic --noinput' >> /app/start.sh && \
+    echo 'echo "デモユーザー作成中..."' >> /app/start.sh && \
+    echo 'python manage.py create_demo_users' >> /app/start.sh && \
     echo 'echo "Gunicornサーバー起動中..."' >> /app/start.sh && \
     echo 'exec gunicorn --bind 0.0.0.0:8000 --timeout 180 --workers 2 config.wsgi:application' >> /app/start.sh && \
     chmod +x /app/start.sh
