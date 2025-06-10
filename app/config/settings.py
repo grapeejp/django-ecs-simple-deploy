@@ -160,8 +160,7 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 # allauth設定
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 社内利用のため
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
 ACCOUNT_SIGNUP_REDIRECT_URL = '/'
@@ -171,9 +170,12 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 # 新規登録を有効化（社内メンバー用テストアカウント作成可能）
 ACCOUNT_ALLOW_REGISTRATION = True
 
-# Emailとusernameの両方でログイン可能
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
+# 新しい形式の設定（非推奨警告を解消）
+ACCOUNT_LOGIN_METHODS = ['username', 'email']  # ユーザー名とメールの両方でログイン可能
+ACCOUNT_SIGNUP_FIELDS = ['email', 'username', 'password1', 'password2']
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m',  # 5回失敗で5分間ロック
+}
 
 # Google OAuth設定
 SOCIALACCOUNT_PROVIDERS = {
