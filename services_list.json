@@ -1,6 +1,0 @@
-{
-    "serviceArns": [
-        "arn:aws:ecs:ap-northeast-1:026090540679:service/django-ecs-cluster-production/django-ecs-service-production",
-        "arn:aws:ecs:ap-northeast-1:026090540679:service/django-ecs-cluster-production/django-ecs-service-production20250515175225"
-    ]
-}

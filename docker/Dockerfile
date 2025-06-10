@@ -37,4 +37,14 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "180", "--workers", "2", "config.wsgi:application"] 
+# マイグレーション実行とGunicorn起動をまとめたスクリプト作成
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'echo "データベースマイグレーション実行中..."' >> /app/start.sh && \
+    echo 'python manage.py migrate --noinput' >> /app/start.sh && \
+    echo 'echo "静的ファイル収集中..."' >> /app/start.sh && \
+    echo 'python manage.py collectstatic --noinput' >> /app/start.sh && \
+    echo 'echo "Gunicornサーバー起動中..."' >> /app/start.sh && \
+    echo 'exec gunicorn --bind 0.0.0.0:8000 --timeout 180 --workers 2 config.wsgi:application' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+CMD ["/app/start.sh"] 

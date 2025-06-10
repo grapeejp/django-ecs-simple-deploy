@@ -26,11 +26,6 @@ Parameters:
     Type: String
     Description: Deployment environment (staging or production)
     Default: production
-    
-  TimestampSuffix:
-    Type: String
-    Description: Timestamp suffix for unique service names
-    Default: ''
 
 Resources:
   # ECS Task Definition
@@ -101,7 +96,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: LoadBalancerRule
     Properties:
-      ServiceName: !Sub django-ecs-service-${Environment}${TimestampSuffix}
+      ServiceName: !Sub django-ecs-service-${Environment}
       Cluster:
         Fn::ImportValue:
           !Sub 'django-ecs-cluster-${Environment}-ECSCluster'
@@ -196,7 +191,7 @@ Resources:
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-High-${Environment}${TimestampSuffix}'
+      AlarmName: !Sub 'CPU-Utilization-High-${Environment}'
       AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -218,7 +213,7 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}${TimestampSuffix}'
+      AlarmName: !Sub 'CPU-Utilization-Low-${Environment}'
       AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS

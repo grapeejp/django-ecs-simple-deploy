@@ -165,6 +165,18 @@ Resources:
           ToPort: 8000
           SourceSecurityGroupId: !Ref ALBSecurityGroup
 
+  # パブリックアクセス用セキュリティグループ
+  ECSPublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ECS tasks with public access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+
   # ECS Cluster
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -209,10 +221,8 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
-                Resource: !If
-                  - HasChatworkConfig
-                  - !Ref ChatworkSecret
-                  - !Ref "AWS::NoValue"
+                Resource: 
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:django-ecs-secrets*"
 
   # Application Load Balancer
   ApplicationLoadBalancer:
@@ -312,6 +322,12 @@ Outputs:
     Value: !Ref ECSSecurityGroup
     Export:
       Name: !Sub "${AWS::StackName}-ECSSecurityGroup"
+
+  ECSPublicSecurityGroup:
+    Description: ECS Public Security Group ID
+    Value: !Ref ECSPublicSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSPublicSecurityGroup"
 
   TargetGroup:
     Description: Target Group ARN

@@ -1,5 +1,0 @@
-{
-    "taskArns": [
-        "arn:aws:ecs:ap-northeast-1:026090540679:task/django-ecs-cluster-production/72fe9d3024e748db88384aa68433ab1e"
-    ]
-}

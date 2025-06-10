@@ -21,11 +21,6 @@ Parameters:
     Type: Number
     Description: How many instances of the task to run
     Default: 1
-    
-  TimestampSuffix:
-    Type: String
-    Description: Timestamp suffix for unique service names
-    Default: ''
 
 Resources:
   # ECS Task Definition
@@ -40,10 +35,10 @@ Resources:
         - FARGATE
       ExecutionRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-staging-v2-ECSTaskExecutionRole'
       TaskRoleArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-ECSTaskExecutionRole'
+          !Sub 'django-ecs-cluster-staging-v2-ECSTaskExecutionRole'
       ContainerDefinitions:
         - Name: django-app
           Image: !Ref ImageUrl
@@ -73,10 +68,10 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: StagingECSLoadBalancerRule
     Properties:
-      ServiceName: !Sub django-ecs-service-staging${TimestampSuffix}
+      ServiceName: django-ecs-service-staging
       Cluster:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-ECSCluster'
+          !Sub 'django-ecs-cluster-staging-v2-ECSCluster'
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: !Ref DesiredCount
       LaunchType: FARGATE
@@ -85,18 +80,18 @@ Resources:
           AssignPublicIp: ENABLED
           SecurityGroups:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-staging-ECSSecurityGroup'
+                !Sub 'django-ecs-cluster-staging-v2-ECSSecurityGroup'
           Subnets:
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-staging-PublicSubnet1'
+                !Sub 'django-ecs-cluster-staging-v2-PublicSubnet1'
             - Fn::ImportValue:
-                !Sub 'django-ecs-cluster-staging-PublicSubnet2'
+                !Sub 'django-ecs-cluster-staging-v2-PublicSubnet2'
       LoadBalancers:
         - ContainerName: django-app
           ContainerPort: 8000
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-staging-TargetGroup'
+              !Sub 'django-ecs-cluster-staging-v2-TargetGroup'
       DeploymentConfiguration:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
@@ -108,17 +103,17 @@ Resources:
     Properties:
       ListenerArn:
         Fn::ImportValue:
-          !Sub 'django-ecs-cluster-staging-ALBListener'
-      Priority: 190
+          !Sub 'django-ecs-cluster-staging-v2-ALBListener'
+      Priority: 120
       Conditions:
         - Field: path-pattern
           Values:
-            - /*
+            - /staging/*
       Actions:
         - Type: forward
           TargetGroupArn:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-staging-TargetGroup'
+              !Sub 'django-ecs-cluster-staging-v2-TargetGroup'
 
   # Auto Scaling
   ScalableTarget:
@@ -130,7 +125,7 @@ Resources:
         - /
         - - service
           - Fn::ImportValue:
-              !Sub 'django-ecs-cluster-staging-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-v2-ECSCluster'
           - !GetAtt Service.Name
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
@@ -168,7 +163,7 @@ Resources:
   CPUUtilizationHighAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-High-Staging${TimestampSuffix}'
+      AlarmName: !Sub 'CPU-Utilization-High-Staging'
       AlarmDescription: Scale up when CPU exceeds 70% for 2 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -182,7 +177,7 @@ Resources:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-staging-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-v2-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: GreaterThanThreshold
@@ -190,7 +185,7 @@ Resources:
   CPUUtilizationLowAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'CPU-Utilization-Low-Staging${TimestampSuffix}'
+      AlarmName: !Sub 'CPU-Utilization-Low-Staging'
       AlarmDescription: Scale down when CPU is less than 30% for 5 minutes
       MetricName: CPUUtilization
       Namespace: AWS/ECS
@@ -204,7 +199,7 @@ Resources:
         - Name: ClusterName
           Value:
             Fn::ImportValue:
-              !Sub 'django-ecs-cluster-staging-ECSCluster'
+              !Sub 'django-ecs-cluster-staging-v2-ECSCluster'
         - Name: ServiceName
           Value: !GetAtt Service.Name
       ComparisonOperator: LessThanThreshold
@@ -234,7 +229,7 @@ Outputs:
       Fn::Join: 
         - ''
         - - 'http://'
-          - Fn::ImportValue: 'django-ecs-cluster-staging-ALBDNS'
+          - Fn::ImportValue: 'django-ecs-cluster-staging-v2-ALBDNS'
           - '/'
     Export:
       Name: !Sub ${AWS::StackName}-ServiceUrl 
