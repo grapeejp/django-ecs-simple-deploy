@@ -166,8 +166,8 @@ def format_corrections(original_text: str, corrections: List[Dict]) -> str:
             'typo': {'name': '誤字修正', 'icon': '🔤', 'color': '#dc2626'},
             'tone': {'name': '言い回し改善', 'icon': '✨', 'color': '#7c3aed'},
             'dict': {'name': '辞書ルール', 'icon': '📚', 'color': '#d97706'},
-            'inconsistency': {'name': '矛盾チェック', 'icon': '⚠️', 'color': '#e11d48'},
-            'contradiction': {'name': '矛盾チェック', 'icon': '⚠️', 'color': '#e11d48'}
+            'inconsistency': {'name': '矛盾チェック', 'icon': '⚠️', 'color': '#2563eb'},
+            'contradiction': {'name': '矛盾チェック', 'icon': '⚠️', 'color': '#2563eb'}
         }
         
         cat_info = category_info.get(category, {'name': '修正', 'icon': '📝', 'color': '#6b7280'})

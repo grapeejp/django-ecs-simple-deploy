@@ -697,10 +697,10 @@
     }
     
     .correction-item-contradiction {
-        --category-color: #e11d48; /* ピンク色 */
-        --category-color-light: #f9a8d4;
-        --category-bg: #fdf2f8;
-        --category-text: #e11d48;
+        --category-color: #2563eb; /* 青色に変更 */
+        --category-color-light: #93c5fd;
+        --category-bg: #eff6ff;
+        --category-text: #2563eb;
     }
     
     /* カテゴリー吹き出し */
@@ -780,10 +780,10 @@
     }
     
     .correction-item-contradiction {
-        --category-color: #e11d48; /* ピンク色 */
-        --category-color-light: #f9a8d4;
-        --category-bg: #fdf2f8;
-        --category-text: #e11d48;
+        --category-color: #2563eb; /* 青色に変更 */
+        --category-color-light: #93c5fd;
+        --category-bg: #eff6ff;
+        --category-text: #2563eb;
     }
     
     /* 修正内容の表示 */
@@ -1149,8 +1149,8 @@
     }
     
     .correction-inconsistency {
-        background-color: #fdf2f8 !important; /* 薄いピンク背景 */
-        color: #e11d48 !important; /* ピンク文字 */
+        background-color: #eff6ff !important; /* 薄い青背景 */
+        color: #2563eb !important; /* 青文字 */
         padding: 1px 3px !important;
         border-radius: 3px !important;
         position: relative !important;
@@ -1182,7 +1182,7 @@
     }
     
     .correction-inconsistency:hover {
-        background-color: #fce7f3 !important;
+        background-color: #dbeafe !important;
         transform: none !important; /* スケール変更を無効化 */
     }
     
@@ -1238,7 +1238,7 @@
     }
     
     .category-header-contradiction {
-        background: linear-gradient(135deg, #e11d48 0%, #be185d 100%);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     }
     
     .category-icon {
@@ -1642,26 +1642,26 @@
                 </div>
             </div>
             
-            <!-- 矛盾チェックカード（ピンク色系） -->
-            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-pink-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                 style="background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-rose-600"></div>
+            <!-- 矛盾チェックカード（青色系） -->
+            <div class="relative overflow-hidden rounded-xl p-5 border-2 border-blue-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                 style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
                 <div class="flex items-center space-x-3 mb-3">
-                    <div class="flex items-center justify-center w-10 h-10 bg-pink-600 rounded-full shadow-md">
+                    <div class="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full shadow-md">
                         <span class="text-white text-lg">⚠️</span>
                     </div>
                     <div>
-                        <span class="text-pink-900 text-xl font-bold">矛盾チェック</span>
-                        <span class="block text-pink-700 text-xs font-medium">(論理・事実矛盾)</span>
+                        <span class="text-blue-900 text-xl font-bold">矛盾チェック</span>
+                        <span class="block text-blue-700 text-xs font-medium">(論理・事実矛盾)</span>
                     </div>
                 </div>
-                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-pink-200">
-                    <p class="text-pink-900 text-sm leading-relaxed">
-                        <strong class="text-pink-800">対象：</strong>論理的矛盾、数値の不整合、地域名の矛盾、事実関係<br>
-                        <strong class="text-pink-800">例：</strong>「小学8年生」→「小学6年生」、「東京都大阪市」→「大阪府大阪市」<br>
-                        <strong class="text-pink-800">新機能v2：</strong>番組放送局の組み合わせ、地理的矛盾、連続語尾、固有名詞校正<br>
-                        <strong class="text-pink-800">高度機能：</strong>「サザエさん（日本テレビ）」→「サザエさん（フジテレビ）」、「アマゾン」→「Amazon」<br>
-                        <strong class="text-pink-800">説明：</strong>文章内の矛盾や地理的・数値的不整合を指摘・修正します
+                <div class="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-blue-200">
+                    <p class="text-blue-900 text-sm leading-relaxed">
+                        <strong class="text-blue-800">対象：</strong>論理的矛盾、数値の不整合、地域名の矛盾、事実関係<br>
+                        <strong class="text-blue-800">例：</strong>「小学8年生」→「小学6年生」、「東京都大阪市」→「大阪府大阪市」<br>
+                        <strong class="text-blue-800">新機能v2：</strong>番組放送局の組み合わせ、地理的矛盾、連続語尾、固有名詞校正<br>
+                        <strong class="text-blue-800">高度機能：</strong>「サザエさん（日本テレビ）」→「サザエさん（フジテレビ）」、「アマゾン」→「Amazon」<br>
+                        <strong class="text-blue-800">説明：</strong>文章内の矛盾や地理的・数値的不整合を指摘・修正します
                     </p>
                 </div>
             </div>
@@ -2437,8 +2437,8 @@
                 name: '矛盾チェック', 
                 icon: '⚠️', 
                 description: '論理的矛盾や不整合の指摘',
-                color: '#e11d48', /* ピンク色 */
-                bgColor: '#fdf2f8',
+                color: '#2563eb', /* 青色に変更 */
+                bgColor: '#eff6ff',
                 items: [] 
             }
         };
