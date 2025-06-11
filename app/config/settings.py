@@ -154,7 +154,7 @@ AUTHENTICATION_BACKENDS = [
 
 # ログイン・ログアウト後のリダイレクト先
 LOGIN_URL = '/accounts/login/'  # 未ログインユーザーのリダイレクト先
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/proofreading_ai/'  # ログイン後は校正AIページへ
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # allauth設定
@@ -163,8 +163,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # 社内利用のため
 ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
-ACCOUNT_SIGNUP_REDIRECT_URL = '/'
-ACCOUNT_LOGIN_REDIRECT_URL = '/'
+ACCOUNT_SIGNUP_REDIRECT_URL = '/proofreading_ai/'  # 新規登録後も校正AIページへ
+ACCOUNT_LOGIN_REDIRECT_URL = '/proofreading_ai/'   # ログイン後は校正AIページへ
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # 新規登録を有効化（社内メンバー用テストアカウント作成可能）
@@ -201,3 +201,42 @@ SOCIALACCOUNT_STORE_TOKENS = True
 
 # @grapee.co.jpドメインのみ許可
 SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
+
+# セッション設定（ログインループ問題解決）
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'grapee_sessionid'
+SESSION_COOKIE_AGE = 86400  # 24時間
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# HTTP環境でのセッション設定（本番対応）
+SESSION_COOKIE_SECURE = False  # HTTPでも動作するように
+SESSION_COOKIE_HTTPONLY = True  # XSS対策
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF対策とブラウザ互換性
+
+# CSRF設定（HTTP環境対応）
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'http://staging.grape-app.jp',
+    'https://staging.grape-app.jp',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# ドメイン設定（セッション共有用）
+SESSION_COOKIE_DOMAIN = None  # 自動検出
+CSRF_COOKIE_DOMAIN = None  # 自動検出
+
+# データベースクエリタイムアウト
+DATABASES['default']['OPTIONS'] = {
+    'timeout': 60,
+}
+
+# キャッシュタイムアウト
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'TIMEOUT': 300,  # 5分
+    }
+}

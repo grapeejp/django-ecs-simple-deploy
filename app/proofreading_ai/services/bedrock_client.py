@@ -115,7 +115,7 @@ class BedrockClient:
             logger.info(f"📊 プロファイル情報: {self.profile_info['name']}")
             
             # API タイムアウト設定
-            self.api_timeout = int(os.environ.get("BEDROCK_API_TIMEOUT", 300))  # デフォルト5分
+            self.api_timeout = int(os.environ.get("BEDROCK_API_TIMEOUT", 500))  # デフォルト8分20秒（ALB600秒以内）
             logger.info(f"⏰ APIタイムアウト: {self.api_timeout}秒")
             
             # プロンプトファイルのパスを設定
