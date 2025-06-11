@@ -2046,7 +2046,7 @@
     </div>
     
     <!-- 辞書表示ボタン -->
-    <button id="dictionaryButton" class="dictionary-button" title="校正辞書" onclick="window.open('{% url 'proofreading_ai:dictionary_viewer' %}', '_blank')">
+    <button id="dictionaryButton" class="dictionary-button" title="校正辞書" data-url="{% url 'proofreading_ai:dictionary_viewer' %}">
         <i class="fas fa-book"></i>
     </button>
 </div>
@@ -2113,6 +2113,12 @@
         
         // リセットボタンのイベント
         document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
+        
+        // 辞書ボタンのイベント
+        document.getElementById('dictionaryButton').addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            window.open(url, '_blank');
+        });
         
         // 校正ボタンのイベント
         document.getElementById('startCorrectionBtn').addEventListener('click', function() {
