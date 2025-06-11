@@ -204,7 +204,7 @@ class BedrockClient:
 
     def _get_default_prompt(self) -> str:
         """
-        Claude Sonnet 4の拡張思考機能を活用したデフォルトプロンプト（HTMLタグ内誤字検出対応）
+        Claude Sonnet 4の拡張思考機能を活用したデフォルトプロンプト（HTMLタグ内誤字検出強化版）
         """
         return """あなたは日本語校正の専門家です。以下の文章を4つのカテゴリーで詳細に校正してください。
 
@@ -215,20 +215,40 @@ class BedrockClient:
 3. 🟡 社内辞書ルール：統一表記ルールの適用
 4. 🟠 矛盾チェック：論理的・事実的矛盾の検出
 
+**HTMLタグの誤字検出強化**：
+- <dv> → <div>（タグ名誤字）
+- <dib> → <div>（タグ名誤字）
+- hrf → href（属性名誤字）
+- scr → src（属性名誤字）
+- clas → class（属性名誤字）
+- clase → class（属性名誤字）
+- traget → target（属性値誤字）
+- commnet → comment（属性値誤字）
+- hightlight → highlight（ID/クラス名誤字）
+
 HTMLタグについては、基本構造は保持しつつ、以下の修正を行います：
 - タグ名の誤字修正（例：<dv> → <div>）
+- 属性名の誤字修正（例：hrf → href, clas → class）
 - 属性値内の誤字修正（例：class="commnet" → class="comment"）
-- 属性名の誤字修正（例：clas → class）
 - HTMLの構造自体は保持
 
 各修正について、なぜその修正が必要なのか理由を明確にします。
 </thinking>
 
 校正ルール：
-- HTMLタグの基本構造を保持しつつ、タグ名・属性名・属性値内の誤字は修正する
+- **HTMLタグの誤字を確実に検出・修正する**：タグ名、属性名、属性値内すべて
 - 文章全体を出力し、途中で切らない
 - 各修正にカテゴリーを明確に分類
 - 修正理由を具体的に説明
+
+**重要：HTMLタグ誤字の検出例**
+- <dv class="comment"> → <div class="comment">
+- <a hrf="..."> → <a href="...">
+- <img scr="..."> → <img src="...">
+- clas="..." → class="..."
+- traget="_blank" → target="_blank"
+- class="commnet" → class="comment"
+- id="hightlight" → id="highlight"
 
 校正カテゴリー：
 1. 🟣 言い回しアドバイス（tone）：より自然で温かみのある表現への改善
@@ -484,11 +504,10 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                     if content_block.get("type") == "text":
                         corrected_text += content_block.get("text", "")
             
-            # HTMLタグ復元
-            final_text = restore_html_tags_advanced(corrected_text, placeholders)
-            
-            # 修正箇所解析
+            # HTMLタグ復元（4つの引数を正しく渡す）
+            # まず修正箇所解析
             corrections = self._parse_corrections_from_response(corrected_text)
+            final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
             
             return {
                 "corrected_text": final_text,
