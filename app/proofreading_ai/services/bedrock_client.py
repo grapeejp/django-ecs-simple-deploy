@@ -1,4 +1,5 @@
 import boto3
+from botocore.config import Config
 import json
 import os
 import time
@@ -46,15 +47,25 @@ class BedrockClient:
             except Exception as cred_error:
                 logger.warning(f"⚠️ AWS認証情報確認エラー: {str(cred_error)}")
             
+            # Claude 4対応のタイムアウト設定
+            # 長時間処理に対応するため大幅に延長
+            timeout_config = Config(
+                read_timeout=600,     # 10分
+                connect_timeout=60,   # 1分
+                retries={'max_attempts': 3}
+            )
+            
             # Bedrockクライアントの作成
             self.bedrock_runtime = boto3.client(
                 service_name="bedrock-runtime",
                 region_name=aws_region,
+                config=timeout_config
             )
             # コントロールプレーン用のBedrockクライアントも作成
             self.bedrock = boto3.client(
                 service_name="bedrock",
                 region_name=aws_region,
+                config=timeout_config
             )
             logger.info(f"✅ Bedrockランタイムクライアント作成完了")
             
@@ -102,6 +113,10 @@ class BedrockClient:
             }
             
             logger.info(f"📊 プロファイル情報: {self.profile_info['name']}")
+            
+            # API タイムアウト設定
+            self.api_timeout = int(os.environ.get("BEDROCK_API_TIMEOUT", 300))  # デフォルト5分
+            logger.info(f"⏰ APIタイムアウト: {self.api_timeout}秒")
             
             # プロンプトファイルのパスを設定
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -189,37 +204,43 @@ class BedrockClient:
 
     def _get_default_prompt(self) -> str:
         """
-        Claude Sonnet 4の拡張思考機能を活用したデフォルトプロンプト（HTMLタグ内誤字検出対応）
+        Claude Sonnet 4の矛盾チェック機能を強化したプロンプト（簡潔版）
         """
-        return """あなたは日本語校正の専門家です。以下の文章を4つのカテゴリーで詳細に校正してください。
+        return """あなたは日本語校正の専門家です。以下のカテゴリーで文章を校正してください。
 
-<thinking>
-まず文章全体を読み、以下の観点で分析します：
-1. 🟣 言い回しアドバイス：より自然で温かみのある表現への改善
-2. 🔴 誤字修正：明確な誤字脱字の修正（HTMLタグ名や属性値内の誤字も含む）
-3. 🟡 社内辞書ルール：統一表記ルールの適用
-4. 🟠 矛盾チェック：論理的・事実的矛盾の検出
+**🟠 矛盾チェック（inconsistency）を必ず実行してください：**
+- 地理的矛盾：「富士山は東京都大阪市にある」→「富士山は静岡県・山梨県境にある」
+- 行政区分：「神奈川県横浜県」→「神奈川県横浜市」
+- 番組放送局：「サザエさん（日本テレビ）」→「サザエさん（フジテレビ）」
+- 学校年次：「小学8年生」→「小学6年生」
+- 年齢矛盾：「今年25歳、去年27歳」→年齢逆転の指摘
 
-HTMLタグについては、基本構造は保持しつつ、以下の修正を行います：
-- タグ名の誤字修正（例：<dv> → <div>）
-- 属性値内の誤字修正（例：class="commnet" → class="comment"）
-- 属性名の誤字修正（例：clas → class）
-- HTMLの構造自体は保持
+**校正カテゴリー：**
+1. 🟠 矛盾チェック（inconsistency）：論理的・事実的矛盾
+2. 🔴 誤字修正（typo）：明確な誤字脱字（HTMLタグ内含む）
+3. 🟡 社内辞書ルール（dict）：アマゾン→Amazon、大谷→大谷翔平など
+4. 🟣 言い回しアドバイス（tone）：より自然な表現への改善
 
-各修正について、なぜその修正が必要なのか理由を明確にします。
-</thinking>
+**重要：矛盾を発見した場合は必ず「inconsistency」カテゴリーで報告してください。**"""
 
-校正ルール：
-- HTMLタグの基本構造を保持しつつ、タグ名・属性名・属性値内の誤字は修正する
-- 文章全体を出力し、途中で切らない
-- 各修正にカテゴリーを明確に分類
-- 修正理由を具体的に説明
+    def _get_simple_prompt(self) -> str:
+        """
+        高速処理用のシンプルプロンプト（思考プロセス除去版）
+        """
+        return """あなたは日本語校正の専門家です。以下の文章を素早く校正してください。
 
 校正カテゴリー：
-1. 🟣 言い回しアドバイス（tone）：より自然で温かみのある表現への改善
+1. 🟣 言い回しアドバイス（expression）：より自然で温かみのある表現への改善
 2. 🔴 誤字修正（typo）：明確な誤字脱字の修正（HTMLタグ内も含む）
-3. 🟡 社内辞書ルール（dict）：統一表記ルールの適用
-4. 🟠 矛盾チェック（inconsistency）：論理的・事実的矛盾の検出"""
+3. 🟡 社内辞書ルール（dictionary）：統一表記ルールの適用
+4. 🟠 矛盾チェック（contradiction）：論理的・事実的矛盾の検出
+
+校正対象：{原文}
+
+修正後の文章をそのまま出力し、その後に修正箇所一覧を以下の形式で記載してください：
+
+✅修正箇所：
+- 行番号: (修正前) -> (修正後): 理由 [カテゴリー: tone|typo|dict|contradiction]"""
 
     def count_tokens(self, text: str) -> int:
         """
@@ -250,214 +271,229 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
         output_cost = (output_tokens / 1000) * self.output_price_per_1k_tokens
         return (input_cost + output_cost) * self.yen_per_dollar
     
-    def proofread_text(self, text: str, replacement_dict: Dict[str, str] = None, temperature: float = 0.1, top_p: float = 0.7) -> Tuple[str, list, float, Dict]:
+    def proofread_text(self, text: str, use_json_mode: bool = True, use_simple_prompt: bool = False) -> Dict:
         """
-        Claude Sonnet 4を使用してテキストを校正する（アプリケーション推論プロファイル対応）
+        テキストの校正を実行
         
         Args:
-            text: 校正する原文
-            replacement_dict: 置換辞書
-            temperature: 生成の創造性（0.0-1.0）
-            top_p: 核サンプリング（0.0-1.0）
+            text: 校正対象のテキスト
+            use_json_mode: JSONモード（Tool Use）を使用するか
+            use_simple_prompt: シンプルプロンプト（高速処理）を使用するか
             
         Returns:
-            校正されたテキスト、修正箇所リスト（JSON）、処理時間、コスト情報のタプル
+            校正結果の辞書
         """
-        start_time = time.time()
+        logger.info(f"校正開始 - 文字数: {len(text)}文字, JSONモード: {use_json_mode}, シンプルプロンプト: {use_simple_prompt}")
         
-        # ステップ1: HTMLタグを保護（advanced版）
-        logger.info(f"🛡️ HTMLタグ保護処理開始")
-        protected_text, placeholders, html_tag_info = protect_html_tags_advanced(text)
-        logger.info(f"📋 保護されたHTMLタグ数: {len(placeholders)}")
-        logger.info(f"🏷️ HTMLタグ詳細情報数: {len(html_tag_info)}")
-        
-        # 置換指示の準備
-        replacement_instructions = ""
-        if replacement_dict:
-            replacement_instructions = f"""
-            以下の置換ルールを参考にしてください。ただし、文脈に応じて適切な場合のみ置換を行ってください：
-            {json.dumps(replacement_dict, ensure_ascii=False, indent=2)}
-            """
-        
-        # Claude Sonnet 4の拡張思考機能を活用したプロンプト（保護されたテキストを使用）
-        full_prompt = f"""{self.default_prompt}
-
-        {replacement_instructions}
-
-        原文:
-        {protected_text}
-
-        <thinking>
-        この文章を4つのカテゴリーで分析します：
-
-        1. 🟣 言い回しアドバイス（tone）：
-           - より自然で読みやすい表現への改善
-           - 温かみのある表現への修正
-           - 文体の統一
-
-        2. 🔴 誤字修正（typo）：
-           - 明確な誤字脱字
-           - 変換ミス
-           - 送り仮名の間違い
-           - HTMLタグ名の誤字（例：dv → div, sepn → span）
-           - HTML属性名の誤字（例：clss → class）
-
-        3. 🟡 社内辞書ルール（dict）：
-           - 統一表記ルールの適用
-           - 専門用語の統一
-           - 表記ゆれの修正
-
-        4. 🟠 矛盾チェック（inconsistency）：
-           - 論理的矛盾
-           - 事実的矛盾
-           - 数値の不整合
-           - 時系列の矛盾
-
-        各修正について、カテゴリーと理由を明確にします。
-        HTMLタグ名や属性名の修正も必ず「✅修正箇所：」セクションに含めてください。
-        </thinking>
-
-        校正後のテキストをHTML形式で出力してください。HTMLタグの基本構造を保持しつつ、タグ名・属性名・属性値内の誤字は修正してください。
-        必ず文章全体を出力し、途中で切らないこと。
-
-        重要：HTMLタグ名や属性名の修正も含めて、すべての修正を「✅修正箇所：」セクションに記載してください。
-
-        出力形式：
-        [校正後のテキスト全文]
-
-        ✅修正箇所：
-        - カテゴリー: tone | (変更前) -> (変更後): 理由
-        - カテゴリー: typo | (変更前) -> (変更後): 理由  ← HTMLタグの修正もここに含める
-        - カテゴリー: dict | (変更前) -> (変更後): 理由
-        - カテゴリー: inconsistency | (変更前) -> (変更後): 理由
+        if use_json_mode:
+            return self._proofread_with_json_mode(text, use_simple_prompt)
+        else:
+            return self._proofread_with_text_mode(text, use_simple_prompt)
+    
+    def _proofread_with_json_mode(self, text: str, use_simple_prompt: bool = False) -> Dict:
         """
-        
-        input_tokens = self.count_tokens(full_prompt)
-        
-        # Claude Sonnet 4での実行（フォールバック付き）
+        JSONモード（Tool Use）で校正を実行
+        """
         try:
-            logger.info(f"🎯 Claude Sonnet 4で実行: {self.model_id}")
-            corrected_text, corrections, processing_time, cost_info = self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
+            # HTMLタグ保護
+            protected_text, placeholders, html_tag_info = protect_html_tags_advanced(text)
             
-            # ステップ2: HTMLタグを復元（修正適用）
-            logger.info(f"🔄 HTMLタグ復元処理開始")
-            final_corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
-            logger.info(f"✅ HTMLタグ復元完了")
+            # プロンプト選択
+            if use_simple_prompt:
+                prompt = self._get_simple_prompt().replace("{原文}", protected_text)
+                logger.info("🚀 高速処理モード: シンプルプロンプト使用")
+            else:
+                prompt = self.default_prompt.replace("{原文}", protected_text)
+                logger.info("🎯 標準処理モード: デフォルトプロンプト使用")
             
-            # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
-            logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
+            # Tool Use設定
+            tools = [{
+                "name": "proofreading_result",
+                "description": "校正結果をJSON形式で出力するツール",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "corrected_text": {
+                            "type": "string",
+                            "description": "校正後のHTML込みテキスト全文"
+                        },
+                        "corrections": {
+                            "type": "array",
+                            "description": "修正箇所のリスト",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "line_number": {
+                                        "type": "integer",
+                                        "description": "修正箇所の行番号"
+                                    },
+                                    "original": {
+                                        "type": "string",
+                                        "description": "修正前のテキスト"
+                                    },
+                                    "corrected": {
+                                        "type": "string",
+                                        "description": "修正後のテキスト"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "修正理由の説明"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "enum": ["tone", "typo", "dict", "inconsistency"],
+                                        "description": "修正カテゴリー: tone=言い回し, typo=誤字修正, dict=辞書ルール, inconsistency=矛盾チェック"
+                                    }
+                                },
+                                "required": ["line_number", "original", "corrected", "reason", "category"]
+                            }
+                        }
+                    },
+                    "required": ["corrected_text", "corrections"]
+                }
+            }]
             
-            return final_corrected_text, corrections, processing_time, cost_info
+            # APIリクエストボディ
+            body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 15000,  # JSON出力では少し多めに
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "tools": tools,
+                "tool_choice": {"type": "tool", "name": "proofreading_result"}
+            }
+            
+            # API呼び出し
+            logger.info("AWS Bedrock API呼び出し開始（JSON Mode）")
+            start_time = time.time()
+            
+            response = self.bedrock_runtime.invoke_model(
+                modelId=self.model_id,
+                body=json.dumps(body),
+                contentType="application/json"
+            )
+            
+            end_time = time.time()
+            processing_time = end_time - start_time
+            logger.info(f"AWS Bedrock API呼び出し完了 - 処理時間: {processing_time:.2f}秒")
+            
+            # レスポンス解析
+            response_body = json.loads(response["body"].read())
+            logger.info(f"APIレスポンス: {json.dumps(response_body, ensure_ascii=False, indent=2)}")
+            
+            # Tool Use結果の抽出
+            if "content" not in response_body or not response_body["content"]:
+                raise ValueError("APIレスポンスにcontentが含まれていません")
+            
+            tool_use_content = None
+            for content_block in response_body["content"]:
+                if content_block.get("type") == "tool_use":
+                    tool_use_content = content_block.get("input", {})
+                    break
+            
+            if not tool_use_content:
+                raise ValueError("Tool Useの結果が見つかりません")
+            
+            # HTMLタグ復元
+            corrected_text = tool_use_content.get("corrected_text", "")
+            corrections = tool_use_content.get("corrections", [])
+            
+            # プレースホルダーからHTMLタグを復元（4つの引数を正しく渡す）
+            final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
+            
+            return {
+                "corrected_text": final_text,
+                "corrections": corrections,
+                "processing_time": processing_time,
+                "original_length": len(text),
+                "mode": "json"
+            }
             
         except Exception as e:
-            error_message = str(e)
-            error_type = type(e).__name__
-            stack_trace = traceback.format_exc()
+            error_msg = f"校正処理中にエラーが発生しました: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            return {
+                "error": error_msg,
+                "corrected_text": text,
+                "corrections": [],
+                "processing_time": 0,
+                "mode": "json"
+            }
+    
+    def _proofread_with_text_mode(self, text: str, use_simple_prompt: bool = False) -> Dict:
+        """
+        従来のテキストモードで校正を実行（後方互換性のため）
+        """
+        try:
+            # HTMLタグ保護
+            protected_text, placeholders, html_tag_info = protect_html_tags_advanced(text)
             
-            logger.error(f"❌ Claude Sonnet 4でエラー: {error_message}")
-            logger.error(f"📋 エラー詳細:\n{stack_trace}")
-            
-            # Chatwork通知を送信
-            if CHATWORK_AVAILABLE and ChatworkNotificationService:
-                try:
-                    chatwork_service = ChatworkNotificationService()
-                    if chatwork_service.is_configured():
-                        error_context = {
-                            'function': 'BedrockClient.proofread_text',
-                            'model_id': self.model_id,
-                            'error_type': error_type,
-                            'text_length': len(text),
-                            'temperature': temperature,
-                            'top_p': top_p,
-                            'input_tokens': input_tokens,
-                            'stack_trace': stack_trace
-                        }
-                        
-                        chatwork_service.send_error_notification(
-                            error_type="BEDROCK_PROOFREAD_ERROR",
-                            error_message=f"校正処理でエラーが発生: {error_message}",
-                            context=error_context
-                        )
-                        logger.info("✅ Chatworkエラー通知送信完了")
-                except Exception as notification_error:
-                    logger.error(f"❌ Chatworkエラー通知送信失敗: {str(notification_error)}")
-            
-            # フォールバックがある場合は試行
-            if self.fallback_model_id:
-                logger.info(f"🔄 フォールバックモデルで再試行: {self.fallback_model_id}")
-                try:
-                    # 一時的にモデルIDを変更
-                    original_model_id = self.model_id
-                    self.model_id = self.fallback_model_id
-                    
-                    # フォールバックモデルで実行
-                    corrected_text, corrections, processing_time, cost_info = self._invoke_model_with_profile(full_prompt, input_tokens, temperature, top_p, start_time)
-                    
-                    # HTMLタグを復元（修正適用）
-                    logger.info(f"🔄 フォールバック後HTMLタグ復元処理開始")
-                    final_corrected_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
-                    logger.info(f"✅ フォールバック後HTMLタグ復元完了")
-                    
-                    # モデルIDを元に戻す
-                    self.model_id = original_model_id
-                    
-                    # フォールバック成功をChatworkに通知
-                    if CHATWORK_AVAILABLE and ChatworkNotificationService:
-                        try:
-                            chatwork_service = ChatworkNotificationService()
-                            if chatwork_service.is_configured():
-                                chatwork_service.send_warning_notification(
-                                    f"🔄 フォールバックモデル使用",
-                                    f"プライマリモデル({original_model_id})でエラーが発生したため、フォールバックモデル({self.fallback_model_id})で校正を完了しました。"
-                                )
-                                logger.info("✅ Chatworkフォールバック通知送信完了")
-                        except Exception as notification_error:
-                            logger.error(f"❌ Chatworkフォールバック通知送信失敗: {str(notification_error)}")
-                    
-                    # デバッグ用：Claude 4の完全なレスポンステキストをログ出力
-                    logger.info(f"🔍 Claude 4の完全なレスポンス:\n{corrected_text}")
-                    
-                    return final_corrected_text, corrections, processing_time, cost_info
-                    
-                except Exception as fallback_error:
-                    fallback_error_message = str(fallback_error)
-                    fallback_error_type = type(fallback_error).__name__
-                    fallback_stack_trace = traceback.format_exc()
-                    
-                    logger.error(f"❌ フォールバックモデルでもエラー: {fallback_error_message}")
-                    logger.error(f"📋 フォールバックエラー詳細:\n{fallback_stack_trace}")
-                    
-                    # フォールバックエラーもChatworkに通知
-                    if CHATWORK_AVAILABLE and ChatworkNotificationService:
-                        try:
-                            chatwork_service = ChatworkNotificationService()
-                            if chatwork_service.is_configured():
-                                error_context = {
-                                    'function': 'BedrockClient.proofread_text_fallback',
-                                    'primary_model_id': original_model_id,
-                                    'fallback_model_id': self.fallback_model_id,
-                                    'primary_error': error_message,
-                                    'fallback_error': fallback_error_message,
-                                    'text_length': len(text),
-                                    'temperature': temperature,
-                                    'top_p': top_p,
-                                    'stack_trace': fallback_stack_trace
-                                }
-                                
-                                chatwork_service.send_error_notification(
-                                    error_type="BEDROCK_FALLBACK_ERROR",
-                                    error_message=f"プライマリとフォールバック両方でエラー: {fallback_error_message}",
-                                    context=error_context
-                                )
-                                logger.info("✅ Chatworkフォールバックエラー通知送信完了")
-                        except Exception as notification_error:
-                            logger.error(f"❌ Chatworkフォールバックエラー通知送信失敗: {str(notification_error)}")
-                    
-                    # モデルIDを元に戻す
-                    self.model_id = original_model_id
-                    raise fallback_error
+            # プロンプト選択
+            if use_simple_prompt:
+                prompt = self._get_simple_prompt().replace("{原文}", protected_text)
+                logger.info("🚀 高速処理モード: シンプルプロンプト使用")
             else:
-                raise e
+                prompt = self.default_prompt.replace("{原文}", protected_text)
+                logger.info("🎯 標準処理モード: デフォルトプロンプト使用")
+            
+            # 通常のAPI呼び出し
+            logger.info("AWS Bedrock API呼び出し開始（Text Mode）")
+            start_time = time.time()
+            
+            response = self.bedrock_runtime.invoke_model(
+                modelId=self.model_id,  # Claude 4のプライマリモデル使用
+                body=json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "max_tokens": 30000,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ]
+                }),
+                contentType="application/json"
+            )
+            
+            end_time = time.time()
+            processing_time = end_time - start_time
+            
+            # レスポンス解析
+            response_body = json.loads(response["body"].read())
+            corrected_text = ""
+            
+            if "content" in response_body:
+                for content_block in response_body["content"]:
+                    if content_block.get("type") == "text":
+                        corrected_text += content_block.get("text", "")
+            
+            # HTMLタグ復元（4つの引数を正しく渡す）
+            # まず修正箇所解析
+            corrections = self._parse_corrections_from_response(corrected_text)
+            final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
+            
+            return {
+                "corrected_text": final_text,
+                "corrections": corrections,
+                "processing_time": processing_time,
+                "original_length": len(text),
+                "mode": "text"
+            }
+            
+        except Exception as e:
+            error_msg = f"校正処理中にエラーが発生しました: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            return {
+                "error": error_msg,
+                "corrected_text": text,
+                "corrections": [],
+                "processing_time": 0,
+                "mode": "text"
+            }
 
     def _invoke_model_with_profile(self, full_prompt: str, input_tokens: int, temperature: float, top_p: float, start_time: float) -> Tuple[str, list, float, Dict]:
         """
@@ -598,7 +634,7 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
 
     def _parse_corrections_from_response(self, response_text: str) -> List[Dict]:
         """
-        Claude 4のレスポンスから修正箇所を解析する（括弧なし形式対応）
+        Claude 4のレスポンスから修正箇所を解析する（行番号ベース形式対応）
         
         Args:
             response_text: Claude 4からのレスポンステキスト
@@ -617,10 +653,83 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                 lines = corrections_section.strip().split('\n')
                 for line in lines:
                     line = line.strip()
-                    if line.startswith('- カテゴリー:'):
-                        # パターン: - カテゴリー: tone | (変更前) -> (変更後): 理由
-                        # または: - カテゴリー: typo | <dv> -> <div> : 理由
-                        # または: - カテゴリー: typo | clss="commnet" -> class="comment" : 理由
+                    
+                    # 新しい形式対応: - 行番号: (変更前) -> (変更後): 理由 [カテゴリー: tone|typo|dict|inconsistency]
+                    if line.startswith('- ') and ': ' in line and '[カテゴリー:' in line:
+                        try:
+                            # 行番号部分を除去
+                            content_part = line[2:]  # "- " を除去
+                            
+                            # カテゴリー部分を抽出
+                            category_match = re.search(r'\[カテゴリー:\s*(tone|typo|dict|inconsistency)\]', content_part)
+                            category = 'general'
+                            if category_match:
+                                category_raw = category_match.group(1)
+                                # カテゴリー名をマッピング
+                                category_mapping = {
+                                    'tone': 'tone',
+                                    'typo': 'typo', 
+                                    'dict': 'dict',
+                                    'inconsistency': 'inconsistency'
+                                }
+                                category = category_mapping.get(category_raw, 'general')
+                                
+                                # カテゴリー部分を除去
+                                content_part = content_part[:category_match.start()].strip()
+                            
+                            # 変更前後と理由を抽出: "行番号: (変更前) -> (変更後): 理由"
+                            if ' -> ' in content_part and ': ' in content_part:
+                                # 最初の ": " で分割して行番号部分を除去
+                                colon_parts = content_part.split(': ', 1)
+                                if len(colon_parts) >= 2:
+                                    change_and_reason = colon_parts[1]
+                                    
+                                    # 最後の ": " で理由を分離
+                                    if ': ' in change_and_reason:
+                                        last_colon_pos = change_and_reason.rfind(': ')
+                                        before_after = change_and_reason[:last_colon_pos]
+                                        reason = change_and_reason[last_colon_pos + 2:]
+                                    else:
+                                        before_after = change_and_reason
+                                        reason = ""
+                                    
+                                    if ' -> ' in before_after:
+                                        original, corrected = before_after.split(' -> ', 1)
+                                        
+                                        # 括弧、HTMLタグの<>、プレースホルダーなどを適切に処理
+                                        original = original.strip('()').strip('<>').strip()
+                                        corrected = corrected.strip('()').strip('<>').strip()
+                                        
+                                        # HTMLタグやプレースホルダーから実際の修正対象を抽出
+                                        original_clean = self._extract_core_word(original)
+                                        corrected_clean = self._extract_core_word(corrected)
+                                        
+                                        # 空でない場合のみ追加
+                                        if original_clean and corrected_clean and original_clean != corrected_clean:
+                                            corrections.append({
+                                                'original': original_clean,
+                                                'corrected': corrected_clean,
+                                                'reason': reason.strip(),
+                                                'category': category
+                                            })
+                                            
+                                            logger.info(f"   解析成功 (新形式): {category} | {original_clean} -> {corrected_clean}")
+                                        
+                                        # 元の形式も保持（フォールバック用）
+                                        if original != original_clean or corrected != corrected_clean:
+                                            corrections.append({
+                                                'original': original,
+                                                'corrected': corrected,
+                                                'reason': reason.strip(),
+                                                'category': category
+                                            })
+                        
+                        except Exception as parse_error:
+                            logger.warning(f"⚠️ 新形式修正箇所解析エラー: {line} - {str(parse_error)}")
+                            continue
+                    
+                    # 旧形式も継続サポート: - カテゴリー: tone | (変更前) -> (変更後): 理由
+                    elif line.startswith('- カテゴリー:'):
                         try:
                             # カテゴリーを抽出
                             category_part = line.split('|')[0].replace('- カテゴリー:', '').strip()
@@ -643,7 +752,6 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                                     corrected = corrected.strip('()').strip('<>').strip()
                                     
                                     # HTMLタグやプレースホルダーから実際の修正対象を抽出
-                                    # 例: "<dv>" → "dv", "__HTML_TAG_0__ dv __TAG_END_0__" → "dv"
                                     original_clean = self._extract_core_word(original)
                                     corrected_clean = self._extract_core_word(corrected)
                                     
@@ -656,21 +764,10 @@ HTMLタグについては、基本構造は保持しつつ、以下の修正を�
                                             'category': category_part
                                         })
                                         
-                                        logger.info(f"   解析成功: {category_part} | {original_clean} -> {corrected_clean}")
-                                    
-                                    # HTMLタグ全体も保持（フォールバック用）
-                                    if original != original_clean or corrected != corrected_clean:
-                                        corrections.append({
-                                            'original': original,
-                                            'corrected': corrected,
-                                            'reason': reason.strip(),
-                                            'category': category_part
-                                        })
-                                        
-                                        logger.info(f"   タグ全体保持: {category_part} | {original} -> {corrected}")
+                                        logger.info(f"   解析成功 (旧形式): {category_part} | {original_clean} -> {corrected_clean}")
                                 
                         except Exception as parse_error:
-                            logger.warning(f"⚠️ 修正箇所解析エラー: {line} - {str(parse_error)}")
+                            logger.warning(f"⚠️ 旧形式修正箇所解析エラー: {line} - {str(parse_error)}")
                             continue
             
             logger.info(f"📊 修正箇所解析完了: {len(corrections)}件")

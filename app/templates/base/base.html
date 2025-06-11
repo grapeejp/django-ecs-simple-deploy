@@ -212,10 +212,10 @@
                                     {% else %}
                                         <!-- 通常ユーザーの場合 -->
                                         <span class="mr-2">{{ user.first_name|default:user.username }}</span>
-                                        <i class="fas fa-user-circle text-2xl"></i>
+                                <i class="fas fa-user-circle text-2xl"></i>
                                     {% endif %}
                                     <i class="fas fa-chevron-down ml-2"></i>
-                                </button>
+                            </button>
                                 <!-- ドロップダウンメニュー -->
                                 <div class="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg hidden" id="user-dropdown">
                                     <div class="py-2">
@@ -244,7 +244,7 @@
                                 <a href="{% url 'account_signup' %}" class="bg-grape-600 hover:bg-grape-700 text-white px-4 py-2 rounded-lg transition-all">
                                     <i class="fas fa-user-plus mr-2"></i>アカウント作成
                                 </a>
-                            </div>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
