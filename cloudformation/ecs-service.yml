@@ -26,7 +26,7 @@ Parameters:
     Type: String
     Description: Deployment environment (staging or production)
     Default: production
-
+    
 Resources:
   # ECS Task Definition
   TaskDefinition:

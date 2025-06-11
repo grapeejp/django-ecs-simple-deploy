@@ -21,7 +21,7 @@ Parameters:
     Type: Number
     Description: How many instances of the task to run
     Default: 1
-
+    
 Resources:
   # ECS Task Definition
   TaskDefinition:

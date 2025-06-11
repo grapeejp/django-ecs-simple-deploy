@@ -70,20 +70,21 @@ def index(request):
 @require_http_methods(["POST"])
 def proofread(request):
     """
-    テキストを校正してJSONレスポンスを返す（詳細デバッグ対応）
+    テキストを校正してJSONレスポンスを返す（JSONモード対応）
     """
     start_time = time.time()
-    logger.info("🚀 校正API呼び出し開始")
+    logger.info("🚀 校正API呼び出し開始（JSONモード）")
     
     try:
         # リクエストデータの解析
         data = json.loads(request.body)
         text = data.get('text', '')
-        temperature = data.get('temperature', 0.1)
-        top_p = data.get('top_p', 0.7)
+        use_json_mode = data.get('use_json_mode', True)  # デフォルトはJSONモード
+        use_simple_prompt = data.get('use_simple_prompt', False)  # デフォルトは標準プロンプト
         
         logger.info(f"📝 入力テキスト長: {len(text)}文字")
-        logger.info(f"⚙️ パラメータ: temperature={temperature}, top_p={top_p}")
+        logger.info(f"⚙️ JSONモード: {use_json_mode}")
+        logger.info(f"🚀 シンプルプロンプト: {use_simple_prompt}")
         
         if not text.strip():
             logger.warning("❌ 空のテキストが送信されました")
@@ -92,59 +93,50 @@ def proofread(request):
                 'error': '校正するテキストが入力されていません。'
             })
         
-        # 置換辞書の取得
-        replacement_dict = get_replacement_dict()
-        logger.info(f"📚 置換辞書エントリ数: {len(replacement_dict)}")
-        
-        # HTMLタグの高度な保護
-        logger.info("🛡️ HTMLタグ保護処理開始")
-        protected_text, placeholders, html_tag_info = protect_html_tags_advanced(text)
-        logger.info(f"🔒 保護されたタグ数: {len(html_tag_info)}")
-        logger.info(f"📋 プレースホルダー数: {len(placeholders)}")
-        
         # BedrockClient初期化と校正実行
         logger.info("🤖 BedrockClient初期化開始")
         bedrock_client = BedrockClient()
         logger.info("✅ BedrockClient初期化完了")
         
         logger.info("🔍 Claude 4で校正実行開始")
-        corrected_text, corrections, processing_time, cost_info = bedrock_client.proofread_text(
-            protected_text, 
-            replacement_dict, 
-            temperature, 
-            top_p
-        )
-        logger.info(f"✅ Claude 4校正完了: 処理時間 {processing_time:.2f}秒")
+        result = bedrock_client.proofread_text(text, use_json_mode=use_json_mode, use_simple_prompt=use_simple_prompt)
+        logger.info(f"✅ Claude 4校正完了: 処理時間 {result.get('processing_time', 0):.2f}秒")
         
-        # 修正箇所のハイライト処理（HTMLタグ復元前に実行）
+        # エラーがある場合の処理
+        if 'error' in result:
+            logger.error(f"❌ 校正エラー: {result['error']}")
+            return JsonResponse({
+                'success': False,
+                'error': result['error'],
+                'processing_time': result.get('processing_time', 0),
+                'mode': result.get('mode', 'unknown')
+            })
+        
+        # 成功時の処理
+        corrected_text = result.get('corrected_text', text)
+        corrections = result.get('corrections', [])
+        processing_time = result.get('processing_time', 0)
+        
+        # 修正箇所のハイライト処理
         logger.info("🎨 修正箇所ハイライト処理開始")
         
-        # correctionsデータの修正：protected_text基準のoriginalを元の生テキスト基準に変換
-        corrected_corrections = []
-        for corr in corrections:
-            original_word = corr.get("original", "")
-            corrected_word = corr.get("corrected", "")
-            
-            # 元の生テキストから該当箇所を検索
-            if original_word in text:
-                # 元テキストでの該当箇所を使用
-                corrected_corrections.append({
-                    "original": original_word,
-                    "corrected": corrected_word,
+        # JSONモードの場合、correctionsは既に適切な形式
+        if use_json_mode:
+            # JSON形式のcorrectionsをlegacy形式に変換
+            formatted_corrections = []
+            for corr in corrections:
+                formatted_corrections.append({
+                    "original": corr.get("original", ""),
+                    "corrected": corr.get("corrected", ""),
                     "reason": corr.get("reason", ""),
-                    "category": corr.get("category", "typo")
+                    "category": corr.get("category", "typo"),
+                    "line_number": corr.get("line_number", 0)
                 })
-            else:
-                # 見つからない場合はそのまま使用
-                corrected_corrections.append(corr)
+        else:
+            formatted_corrections = corrections
         
-        highlighted_text = format_corrections(text, corrected_corrections)
+        highlighted_text = format_corrections(text, formatted_corrections)
         logger.info("✅ ハイライト処理完了")
-        
-        # HTMLタグの復元と修正適用（ハイライト後に実行）
-        logger.info("🔄 HTMLタグ復元処理開始")
-        final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
-        logger.info("✅ HTMLタグ復元完了")
         
         total_time = time.time() - start_time
         logger.info(f"🏁 校正API処理完了: 総時間 {total_time:.2f}秒")
@@ -152,13 +144,11 @@ def proofread(request):
         return JsonResponse({
             'success': True,
             'corrected_text': highlighted_text,
-            'corrections': corrected_corrections,
+            'corrections': formatted_corrections,
             'processing_time': processing_time,
             'total_time': total_time,
-            'input_tokens': cost_info.get('input_tokens', 0),
-            'output_tokens': cost_info.get('output_tokens', 0),
-            'estimated_cost': cost_info.get('total_cost', 0),
-            'model_used': cost_info.get('model_id', 'Claude Sonnet 4'),
+            'mode': result.get('mode', 'unknown'),
+            'original_length': result.get('original_length', len(text)),
             'processed_at': time.strftime('%Y-%m-%d %H:%M:%S')
         })
         
@@ -198,38 +188,30 @@ def proofread(request):
                 'error_message': error_message,
                 'function': 'proofread',
                 'processing_time': total_time,
+                'text_length': len(text) if 'text' in locals() else 0,
                 'client_ip': client_ip,
                 'user_agent': user_agent,
-                'text_length': len(text) if 'text' in locals() else 0,
-                'temperature': temperature if 'temperature' in locals() else None,
-                'top_p': top_p if 'top_p' in locals() else None,
                 'stack_trace': stack_trace
             }
             
-            # Chatworkにエラー通知を送信
-            chatwork_service.send_error_notification(
-                error_type=error_type,
-                error_message=error_message,
-                context=error_context
-            )
-            
-            logger.info("✅ Chatworkエラー通知送信完了")
+            if chatwork_service.is_configured():
+                chatwork_service.send_error_notification(
+                    error_type="PROOFREADING_VIEW_ERROR",
+                    error_message=f"校正API処理中にエラーが発生: {error_message}",
+                    context=error_context
+                )
+                logger.info("✅ Chatworkエラー通知送信完了")
+            else:
+                logger.warning("⚠️ Chatwork設定が不完全のため通知をスキップ")
             
         except Exception as notification_error:
             logger.error(f"❌ Chatworkエラー通知送信失敗: {str(notification_error)}")
-            logger.error(f"📋 通知エラー詳細:\n{traceback.format_exc()}")
         
         return JsonResponse({
             'success': False,
-            'error': error_message,
+            'error': f'校正処理中にエラーが発生しました: {error_message}',
             'error_type': error_type,
-            'processing_time': total_time,
-            'debug_info': {
-                'text_length': len(text) if 'text' in locals() else 0,
-                'temperature': temperature if 'temperature' in locals() else None,
-                'top_p': top_p if 'top_p' in locals() else None,
-                'stack_trace': stack_trace
-            }
+            'processing_time': total_time
         })
 
 
