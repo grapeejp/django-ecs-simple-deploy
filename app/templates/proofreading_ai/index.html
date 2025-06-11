@@ -2268,6 +2268,17 @@
                     // コピーボタンの表示
                     document.getElementById('copyResultBtn').style.display = 'inline-block';
                     
+                    // 🎯 校正完了 - すぐにローディング非表示（クイズと独立）
+                    setTimeout(() => {
+                        console.log('✅ 校正完了 - 結果表示開始');
+                        hideLoadingOverlay();
+                        
+                        // クイズが実行中の場合は背景で継続
+                        if (currentQuizState.isActive) {
+                            console.log('🎮 クイズは背景で継続中（校正結果は既に表示済み）');
+                        }
+                    }, 1000); // 1秒後に結果表示（ユーザーに完了感を与える）
+                    
                     console.log('✅ UI更新完了');
                 } else {
                     console.error('❌ 校正エラー:', data.error);
@@ -2316,19 +2327,12 @@
                 });
             })
             .finally(() => {
-                console.log('🏁 処理完了 - ローディング非表示');
+                console.log('🏁 処理完了 - ボタンリセット');
                 
-                // 最終問題モードの場合は自動で閉じない
-                if (!currentQuizState.isFinalQuestion || !currentQuizState.processingCompleted) {
-                    // ローディングオーバーレイを非表示
-                    hideLoadingOverlay();
-                } else {
-                    console.log('🎮 最終問題モード - 自動非表示をスキップ');
-                }
-                
-                // ボタンの状態を元に戻す
-                this.disabled = false;
-                this.textContent = '校正する';
+                // ボタンの状態を元に戻す（常に実行）
+                const correctionBtn = document.getElementById('startCorrectionBtn');
+                correctionBtn.disabled = false;
+                correctionBtn.textContent = '校正する';
                 
                 console.log('🔄 ボタン状態リセット完了');
             });
@@ -2745,10 +2749,21 @@
         // 経過時間カウンター開始
         window.elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
         
-        console.log('✅ 改良版ローディングオーバーレイ表示完了');
+        // 🎮 クイズオプションボタンを表示（自動開始は削除）
+        const quizOptionBtn = document.getElementById('quizStartBtn');
+        if (quizOptionBtn) {
+            quizOptionBtn.style.display = 'block';
+            quizOptionBtn.onclick = () => {
+                console.log('🎮 ユーザーがクイズを選択');
+                startQuiz();
+                quizOptionBtn.style.display = 'none';
+            };
+        }
+        
+        console.log('✅ ローディングオーバーレイ表示完了（クイズはオプション）');
     }
     
-    // プログレス更新関数
+    // プログレス更新関数（最適化版）
     function startProgressUpdate() {
         window.progressUpdateInterval = setInterval(() => {
             const progress = window.loadingProgress;
@@ -2756,17 +2771,17 @@
             
             if (!currentStep) return;
             
-            // プログレスバーを段階的に更新
+            // プログレスバーを段階的に更新（レンダリング負荷軽減）
             const currentProgress = parseInt(document.getElementById('progressBar').style.width) || 0;
             const targetProgress = currentStep.progress;
             
             if (currentProgress < targetProgress) {
-                const newProgress = Math.min(currentProgress + 2, targetProgress);
+                const newProgress = Math.min(currentProgress + 3, targetProgress); // より大きなステップで更新
                 document.getElementById('progressBar').style.width = newProgress + '%';
                 document.getElementById('progressPercentage').textContent = newProgress + '%';
                 
                 // ステップメッセージを更新
-                if (newProgress >= targetProgress - 2) {
+                if (newProgress >= targetProgress - 3) {
                     updateLoadingStep(currentStep.message, currentStep.info);
                     progress.currentStep = Math.min(progress.currentStep + 1, progress.steps.length - 1);
                 }
@@ -2778,26 +2793,21 @@
                 window.progressUpdateInterval = null;
                 console.log('📊 進捗90%到達 - 実際のレスポンス待機中...');
             }
-        }, 500); // 500ms間隔で更新
+        }, 1000); // 1000ms間隔で更新（負荷軽減）
     }
     
-    // ローディングステップ更新関数
+    // ローディングステップ更新関数（最適化版）
     function updateLoadingStep(message, info) {
         const stepElement = document.getElementById('loadingStep');
         const infoElement = document.getElementById('processingInfo');
         
+        // シンプルな更新（アニメーション簡素化）
         if (stepElement) {
-            stepElement.classList.remove('active');
-            setTimeout(() => {
-                stepElement.textContent = message;
-                stepElement.classList.add('active');
-            }, 100);
+            stepElement.textContent = message;
         }
         
         if (infoElement && info) {
-            setTimeout(() => {
-                infoElement.textContent = info;
-            }, 200);
+            infoElement.textContent = info;
         }
     }
     
@@ -3885,15 +3895,18 @@
         // 経過時間カウンター開始
         window.elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
         
-        // 3秒後にクイズを開始
-        setTimeout(() => {
-            if (currentQuizState.isActive === false && document.getElementById('loadingOverlay').style.display !== 'none') {
-                console.log('🎮 3秒経過 - クイズ開始');
+        // 🎮 クイズオプションボタンを表示（自動開始は削除）
+        const quizOptionBtn = document.getElementById('quizStartBtn');
+        if (quizOptionBtn) {
+            quizOptionBtn.style.display = 'block';
+            quizOptionBtn.onclick = () => {
+                console.log('🎮 ユーザーがクイズを選択');
                 startQuiz();
-            }
-        }, 3000);
+                quizOptionBtn.style.display = 'none';
+            };
+        }
         
-        console.log('✅ 改良版ローディングオーバーレイ表示完了（クイズ機能付き）');
+        console.log('✅ ローディングオーバーレイ表示完了（クイズはオプション）');
     }
     
     // 最終問題完了時の処理（クイズ終了＋校正結果表示）
