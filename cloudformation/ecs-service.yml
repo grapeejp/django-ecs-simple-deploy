@@ -123,7 +123,7 @@ Resources:
       DeploymentConfiguration:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
-      HealthCheckGracePeriodSeconds: 60
+      HealthCheckGracePeriodSeconds: 600
 
   # ALB Rule
   LoadBalancerRule:

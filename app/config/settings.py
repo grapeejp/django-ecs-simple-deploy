@@ -228,9 +228,9 @@ CSRF_TRUSTED_ORIGINS = [
 SESSION_COOKIE_DOMAIN = None  # 自動検出
 CSRF_COOKIE_DOMAIN = None  # 自動検出
 
-# データベースクエリタイムアウト
+# データベースクエリタイムアウト（大容量テキスト校正対応）
 DATABASES['default']['OPTIONS'] = {
-    'timeout': 60,
+    'timeout': 600,  # 10分
 }
 
 # キャッシュタイムアウト

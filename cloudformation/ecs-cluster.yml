@@ -242,10 +242,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckPath: /proofreading_ai/
-      HealthCheckIntervalSeconds: 60
-      HealthCheckTimeoutSeconds: 15
+      HealthCheckIntervalSeconds: 120
+      HealthCheckTimeoutSeconds: 60
       HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 3
+      UnhealthyThresholdCount: 5
       Port: 80
       Protocol: HTTP
       TargetType: ip
