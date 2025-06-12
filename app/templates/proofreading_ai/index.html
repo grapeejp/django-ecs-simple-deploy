@@ -1566,6 +1566,21 @@
             font-size: 12px;
         }
     }
+    
+    /* フィードバックフォームの入力フィールドスタイル */
+    #feedbackForm input[type="text"],
+    #feedbackForm input[type="email"],
+    #feedbackForm select,
+    #feedbackForm textarea {
+        color: #333 !important; /* 文字色を黒に設定 */
+        background-color: #ffffff !important; /* 背景色を白に設定 */
+    }
+    
+    #feedbackForm input[type="text"]::placeholder,
+    #feedbackForm input[type="email"]::placeholder,
+    #feedbackForm textarea::placeholder {
+        color: #9ca3af !important; /* プレースホルダーの色をグレーに設定 */
+    }
 </style>
 {% endblock %}
 
@@ -1839,6 +1854,90 @@
         <div class="p-4">
             <div id="correctionsContainer" class="corrections-list">
                 <p class="text-gray-500 italic">校正結果がここに表示されます。</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- フィードバック・要望投稿フォーム -->
+    <div class="glass-card mt-6" id="feedbackSection">
+        <div class="bg-gradient-to-r from-blue-600/60 to-purple-600/60 backdrop-blur-md p-4 text-white">
+            <h2 class="font-bold text-lg flex items-center">
+                <i class="fas fa-comment-dots mr-2"></i>
+                ご要望・改善提案
+            </h2>
+            <p class="text-sm opacity-90 mt-1">校正AIの改善にご協力ください</p>
+        </div>
+        <div class="p-6">
+            <form id="feedbackForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="feedbackName" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-1"></i>お名前 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="feedbackName" name="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="例: 田中太郎">
+                    </div>
+                    <div>
+                        <label for="feedbackEmail" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-envelope mr-1"></i>メールアドレス（任意）
+                        </label>
+                        <input type="email" id="feedbackEmail" name="email"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="例: tanaka@example.com">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="feedbackType" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-tag mr-1"></i>カテゴリー
+                    </label>
+                    <select id="feedbackType" name="feedback_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <option value="bug">🐛 バグ報告</option>
+                        <option value="improvement">💡 機能改善提案</option>
+                        <option value="feature">✨ 新機能要望</option>
+                        <option value="ui">🎨 UI/UX改善</option>
+                        <option value="performance">⚡ パフォーマンス</option>
+                        <option value="general" selected>💬 その他・一般的な意見</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="feedbackMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-comment mr-1"></i>メッセージ <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="feedbackMessage" name="message" required rows="4"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-vertical"
+                              placeholder="校正AIについてのご意見、改善提案、バグ報告などをお聞かせください。具体的な例があると助かります。"></textarea>
+                    <div class="text-xs text-gray-500 mt-1">
+                        <span id="messageCharCount">0</span>/500文字（最低10文字以上）
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between pt-4">
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        送信された内容は開発チームが確認し、改善に活用させていただきます
+                    </div>
+                    <button type="submit" id="feedbackSubmitBtn"
+                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2 px-6 rounded-md transition-all duration-200 flex items-center">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        送信する
+                    </button>
+                </div>
+            </form>
+            
+            <!-- 送信結果メッセージ -->
+            <div id="feedbackResult" class="mt-4" style="display: none;">
+                <div id="feedbackSuccess" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md" style="display: none;">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span id="feedbackSuccessMessage">フィードバックを送信しました。ありがとうございます！</span>
+                </div>
+                <div id="feedbackError" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md" style="display: none;">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span id="feedbackErrorMessage">送信に失敗しました。</span>
+                </div>
             </div>
         </div>
     </div>
@@ -3923,6 +4022,227 @@
     
     // マウスオーバーイベントでツールチップ位置を調整
     document.addEventListener('DOMContentLoaded', function() {
+        // correction-spanにマウスオーバーイベントを追加
+        function setupTooltipPositioning() {
+            const correctionSpans = document.querySelectorAll('.correction-span');
+            
+            correctionSpans.forEach(span => {
+                span.addEventListener('mouseenter', function() {
+                    const tooltip = this.querySelector('.correction-tooltip');
+                    if (tooltip) {
+                        // 少し遅延してから位置調整（CSSのdisplay: blockが適用されてから）
+                        setTimeout(() => {
+                            adjustTooltipPosition(tooltip, this);
+                        }, 10);
+                    }
+                });
+            });
+            
+            console.log(`✅ ${correctionSpans.length}個の修正箇所にツールチップ位置調整機能を追加しました`);
+        }
+        
+        // ページ読み込み時に設定
+        setupTooltipPositioning();
+        
+        // 校正結果が表示された時も再設定（動的コンテンツ対応）
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    // 新しい.correction-spanが追加された場合
+                    const addedNodes = Array.from(mutation.addedNodes);
+                    const hasNewSpans = addedNodes.some(node => 
+                        node.nodeType === 1 && 
+                        (node.classList?.contains('correction-span') || 
+                         node.querySelector?.('.correction-span'))
+                    );
+                    
+                    if (hasNewSpans) {
+                        console.log('🔄 新しい修正箇所が追加されました - ツールチップ位置調整機能を再設定');
+                        setTimeout(setupTooltipPositioning, 100);
+                    }
+                }
+            });
+        });
+        
+        // 校正結果エリアを監視
+        const resultElement = document.getElementById('result');
+        if (resultElement) {
+            observer.observe(resultElement, {
+                childList: true,
+                subtree: true
+            });
+        }
+    });
+
+    // ツールチップ位置調整機能
+    function adjustTooltipPosition(tooltip, span) {
+        // ツールチップのクラスをリセット
+        tooltip.classList.remove('tooltip-left', 'tooltip-center');
+        
+        // 要素の位置を取得
+        const spanRect = span.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const tooltipWidth = 400; // max-width
+        
+        // 右端からの距離を計算
+        const distanceFromRight = viewportWidth - spanRect.right;
+        
+        // 左端からの距離を計算  
+        const distanceFromLeft = spanRect.left;
+        
+        // 位置調整の判定
+        if (distanceFromRight < tooltipWidth / 2) {
+            // 右端に近い場合は左側に表示
+            tooltip.classList.add('tooltip-left');
+            console.log('🔧 右端検出 - ツールチップを左側に表示');
+        } else if (distanceFromLeft < tooltipWidth / 2) {
+            // 左端に近い場合はそのまま（デフォルト）
+            console.log('🔧 左端検出 - ツールチップを右側に表示');
+        } else {
+            // 中央の場合は中央寄せ
+            tooltip.classList.add('tooltip-center');
+            console.log('🔧 中央検出 - ツールチップを中央に表示');
+        }
+    }
+
+    // フィードバックフォーム機能
+    function initializeFeedbackForm() {
+        const form = document.getElementById('feedbackForm');
+        const messageTextarea = document.getElementById('feedbackMessage');
+        const charCountSpan = document.getElementById('messageCharCount');
+        const submitBtn = document.getElementById('feedbackSubmitBtn');
+        
+        // 文字数カウント機能
+        if (messageTextarea && charCountSpan) {
+            messageTextarea.addEventListener('input', function() {
+                const length = this.value.length;
+                charCountSpan.textContent = length;
+                
+                // 文字数に応じてスタイル変更
+                if (length < 10) {
+                    charCountSpan.className = 'text-red-500';
+                } else if (length > 450) {
+                    charCountSpan.className = 'text-orange-500';
+                } else {
+                    charCountSpan.className = 'text-green-600';
+                }
+                
+                // 最大文字数制限
+                if (length > 500) {
+                    this.value = this.value.substring(0, 500);
+                    charCountSpan.textContent = '500';
+                    charCountSpan.className = 'text-red-500';
+                }
+            });
+        }
+        
+        // フォーム送信処理
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const name = formData.get('name').trim();
+                const message = formData.get('message').trim();
+                
+                // バリデーション
+                if (!name || !message) {
+                    showFeedbackMessage('error', '名前とメッセージは必須です');
+                    return;
+                }
+                
+                if (message.length < 10) {
+                    showFeedbackMessage('error', 'メッセージは10文字以上で入力してください');
+                    return;
+                }
+                
+                // 送信ボタンを無効化
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>送信中...';
+                
+                try {
+                    const response = await fetch('{% url "proofreading_ai:submit_feedback" %}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showFeedbackMessage('success', data.message || 'フィードバックを送信しました。ありがとうございます！');
+                        form.reset();
+                        charCountSpan.textContent = '0';
+                        charCountSpan.className = 'text-red-500';
+                    } else {
+                        showFeedbackMessage('error', data.error || '送信に失敗しました');
+                    }
+                } catch (error) {
+                    console.error('フィードバック送信エラー:', error);
+                    showFeedbackMessage('error', 'ネットワークエラーが発生しました');
+                } finally {
+                    // 送信ボタンを有効化
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>送信する';
+                }
+            });
+        }
+    }
+    
+    // フィードバックメッセージ表示
+    function showFeedbackMessage(type, message) {
+        const resultDiv = document.getElementById('feedbackResult');
+        const successDiv = document.getElementById('feedbackSuccess');
+        const errorDiv = document.getElementById('feedbackError');
+        const successMessage = document.getElementById('feedbackSuccessMessage');
+        const errorMessage = document.getElementById('feedbackErrorMessage');
+        
+        // 全て非表示にする
+        successDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+        
+        if (type === 'success') {
+            successMessage.textContent = message;
+            successDiv.style.display = 'block';
+        } else {
+            errorMessage.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        resultDiv.style.display = 'block';
+        
+        // 3秒後に自動で非表示
+        setTimeout(() => {
+            resultDiv.style.display = 'none';
+        }, 5000);
+        
+        // メッセージエリアまでスクロール
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // CSRFトークン取得
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // マウスオーバーイベントでツールチップ位置を調整
+    document.addEventListener('DOMContentLoaded', function() {
+        // フィードバックフォーム初期化
+        initializeFeedbackForm();
+        
         // correction-spanにマウスオーバーイベントを追加
         function setupTooltipPositioning() {
             const correctionSpans = document.querySelectorAll('.correction-span');

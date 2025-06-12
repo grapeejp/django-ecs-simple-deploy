@@ -654,92 +654,103 @@ def dictionary_viewer(request):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
 def submit_feedback(request):
     """
-    修正要望の送信（参考コードを元にした改良版）
+    テスター向けフィードバック送信エンドポイント
     """
+    logger.info(f"🔍 フィードバック送信開始 - Method: {request.method}")
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST method required'})
+    
     try:
-        # POST データの取得
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-            name = data.get('name', '')
-            post_id = data.get('post_id', '')
-            feedback = data.get('feedback', '')
-        else:
-            name = request.POST.get('name', '')
-            post_id = request.POST.get('post_id', '')
-            feedback = request.POST.get('feedback', '')
+        # フォームデータの取得
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        feedback_type = request.POST.get('feedback_type', 'general')
+        message = request.POST.get('message', '').strip()
+        
+        logger.info(f"📝 フォームデータ取得: name={name}, email={email}, type={feedback_type}, message_len={len(message)}")
         
         # バリデーション
-        if not all([name, feedback]):
+        if not name or not message:
+            logger.warning(f"❌ バリデーションエラー: name={bool(name)}, message={bool(message)}")
+            return JsonResponse({
+                'success': False, 
+                'error': '名前とメッセージは必須です'
+            })
+        
+        if len(message) < 10:
+            logger.warning(f"❌ メッセージ長エラー: {len(message)}文字")
             return JsonResponse({
                 'success': False,
-                'error': '名前とフィードバック内容は必須です。'
-            }, status=400)
+                'error': 'メッセージは10文字以上で入力してください'
+            })
         
-        logger.info(f"📝 修正要望が送信されました: {feedback[:50]}... (名前: {name}, 投稿ID: {post_id})")
-        
-        # IPアドレス取得
-        def get_client_ip(request):
-            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-            if x_forwarded_for:
-                ip = x_forwarded_for.split(',')[0]
-            else:
-                ip = request.META.get('REMOTE_ADDR')
-            return ip
-        
-        # チャットワークに通知するためのコンテキスト
-        context = {
-            "post_id": post_id,
-            "user_id": getattr(request.user, 'id', 'anonymous'),
-            "page_url": request.build_absolute_uri(),
-            "ip_address": get_client_ip(request),
-            "user_agent": request.META.get('HTTP_USER_AGENT', ''),
-        }
-        
-        # チャットワークに通知送信
+        # チャットワーク通知送信
         try:
-            success = chatwork_service.send_feedback_notification(
-                name=name,
-                feedback=feedback,
-                context=context
-            )
+            logger.info("🤖 チャットワーク通知サービス初期化開始")
+            chatwork_service = ChatworkNotificationService()
             
-            if success:
-                logger.info(f"✅ チャットワークへのフィードバック通知に成功しました: {name}")
-            else:
-                logger.error(f"❌ チャットワークへのフィードバック通知に失敗しました: {name}")
+            is_configured = chatwork_service.is_configured()
+            logger.info(f"⚙️ チャットワーク設定状況: {is_configured}")
+            
+            if is_configured:
+                context = {
+                    'name': name,
+                    'email': email,
+                    'feedback_type': feedback_type,
+                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                    'ip_address': request.META.get('REMOTE_ADDR', '')
+                }
                 
-        except Exception as e:
-            logger.error(f"❌ チャットワークへの通知でエラー: {str(e)}")
-            # 通知の失敗はユーザーには表示しない（内部エラー）
-        
-        # 成功レスポンス
-        return JsonResponse({
-            'success': True,
-            'message': 'フィードバックが正常に送信されました。ありがとうございます！'
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'JSONデータの形式が正しくありません。'
-        }, status=400)
-        
+                logger.info(f"📤 フィードバック通知送信開始: {name}")
+                success = chatwork_service.send_feedback_notification(
+                    name=name,
+                    feedback=message,
+                    context=context
+                )
+                logger.info(f"📊 フィードバック通知送信結果: {success}")
+                
+                if success:
+                    logger.info(f"✅ フィードバック通知送信成功: {name}")
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'フィードバックを送信しました。ありがとうございます！'
+                    })
+                else:
+                    logger.error(f"❌ フィードバック通知送信失敗: {name}")
+                    return JsonResponse({
+                        'success': False,
+                        'error': '送信に失敗しました。しばらく時間をおいて再度お試しください。'
+                    })
+            else:
+                logger.warning("⚠️ チャットワーク設定が不完全なため、フィードバック送信をスキップ")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'フィードバック機能が一時的に利用できません。'
+                })
+                
+        except Exception as notification_error:
+            logger.error(f"❌ フィードバック通知エラー: {str(notification_error)}")
+            logger.error(f"📋 スタックトレース: {traceback.format_exc()}")
+            return JsonResponse({
+                'success': False,
+                'error': '送信処理でエラーが発生しました。'
+            })
+            
     except Exception as e:
-        logger.error(f"❌ フィードバック送信でエラー: {str(e)}")
-        import traceback
-        logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
-        
+        logger.error(f"❌ フィードバック処理エラー: {str(e)}")
+        logger.error(f"📋 スタックトレース: {traceback.format_exc()}")
         return JsonResponse({
             'success': False,
-            'error': 'サーバーエラーが発生しました。しばらく時間をおいて再度お試しください。'
-        }, status=500)
+            'error': 'システムエラーが発生しました。'
+        })
 
 
 def feedback_form(request):
     """
-    フィードバックフォーム表示
+    フィードバックフォーム表示ページ
     """
     return render(request, 'proofreading_ai/feedback_form.html') 

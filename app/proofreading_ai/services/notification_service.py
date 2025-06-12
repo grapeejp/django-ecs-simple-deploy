@@ -248,23 +248,60 @@ class ChatworkNotificationService:
         japan_time = self._get_japan_time()
         mention_prefix = self._get_mention_prefix()
         
+        # カテゴリーのアイコンマッピング
+        category_icons = {
+            'bug': '🐛 バグ報告',
+            'improvement': '💡 機能改善提案',
+            'feature': '✨ 新機能要望',
+            'ui': '🎨 UI/UX改善',
+            'performance': '⚡ パフォーマンス',
+            'general': '💬 その他・一般的な意見'
+        }
+        
+        feedback_type = context.get('feedback_type', 'general') if context else 'general'
+        category_display = category_icons.get(feedback_type, '💬 その他')
+        
         message_parts = [
-            mention_prefix + "💬 【修正要望】校正AIシステム",
+            mention_prefix + "📝 【ユーザーフィードバック】校正AIシステム",
             "",
-            f"⏰ 時刻: {japan_time}",
-            f"👤 名前: {name}",
-            f"📝 要望内容: {feedback}",
+            f"⏰ 受信時刻: {japan_time}",
+            f"👤 送信者: {name}",
+            f"📂 カテゴリー: {category_display}",
         ]
+        
+        # メールアドレスがある場合は追加
+        if context and context.get('email'):
+            message_parts.append(f"📧 メール: {context['email']}")
+        
+        message_parts.extend([
+            "",
+            f"💬 フィードバック内容:",
+            f"「{feedback}」",
+        ])
         
         if context:
             message_parts.append("")
-            message_parts.append("📊 詳細情報:")
+            message_parts.append("📊 技術情報:")
             for key, value in context.items():
-                if key in ['post_id', 'user_id', 'page_url', 'ip_address']:
-                    message_parts.append(f"   - {key}: {value}")
+                if key in ['timestamp', 'user_agent', 'ip_address']:
+                    if key == 'user_agent':
+                        # User Agentは短縮表示
+                        short_ua = str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+                        message_parts.append(f"   - ブラウザ: {short_ua}")
+                    elif key == 'ip_address':
+                        message_parts.append(f"   - IPアドレス: {value}")
+                    elif key == 'timestamp':
+                        message_parts.append(f"   - タイムスタンプ: {value}")
         
-        message_parts.append("")
-        message_parts.append("🔗 対応状況は校正AIの管理画面で確認できます。")
+        message_parts.extend([
+            "",
+            "🔧 対応方針:",
+            "- 内容を確認して改善検討を行います",
+            "- 必要に応じて開発チームで議論します",
+            "- 重要な要望は次回アップデートで対応予定",
+            "",
+            "🙏 貴重なフィードバックをありがとうございます！"
+        ])
         
         return "\n".join(message_parts)
     
