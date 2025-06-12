@@ -99,4 +99,46 @@
 - [ ] セキュリティグループは適切に設定されているか
 - [ ] ヘルスチェックは動作するか
 - [ ] ログ設定は適切か
-- [ ] スケーリング設定は必要に応じて行われているか 
+- [ ] スケーリング設定は必要に応じて行われているか
+
+## ⚠️ 重要：デプロイ時の頻出ミス
+
+### スタック名の勘違い（毎回発生する問題）
+**問題**: デプロイスクリプトが想定するスタック名と実際のスタック名が異なる
+
+**実際のスタック名**:
+- クラスター: `django-ecs-cluster-staging-v2`
+- サービス: `django-ecs-service-staging-simple`
+
+**デプロイスクリプトが想定するスタック名**:
+- クラスター: `django-ecs-cluster-staging`
+- サービス: `django-ecs-service-staging`
+
+**解決方法**:
+1. 現在のスタック名を確認:
+   ```bash
+   aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE --output json | jq '.StackSummaries[] | select(.StackName | contains("staging")) | {StackName: .StackName, StackStatus: .StackStatus}'
+   ```
+
+2. 正しいスタック名で手動更新:
+   ```bash
+   export AWS_ACCOUNT_ID=026090540679
+   export AWS_REGION=ap-northeast-1
+   IMAGE_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/django-ecs-app:latest"
+   
+   # 正しいスタック名で更新
+   aws cloudformation update-stack \
+     --stack-name django-ecs-service-staging-simple \
+     --template-body file://cloudformation/ecs-service-staging-simple.yml \
+     --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URL
+   ```
+
+3. 更新完了を待機:
+   ```bash
+   aws cloudformation wait stack-update-complete --stack-name django-ecs-service-staging-simple
+   ```
+
+**デプロイ前の必須確認事項**:
+- [ ] 現在のスタック名を確認する
+- [ ] デプロイスクリプトが正しいスタック名を使用しているか確認
+- [ ] 新しいDockerイメージがECRにプッシュされているか確認 

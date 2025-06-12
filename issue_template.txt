@@ -400,3 +400,238 @@ High - 次世代校正機能の核となる重要な機能追加
 
 ## 期限
 2025/01/15 
+
+# [機能改善] インスタグラムエンベッドコードを校正対象から除外
+
+## 目的
+- 記事内のInstagramエンベッドコードが校正対象となり、不要な修正提案が発生している問題を解決
+- エンベッドコード内のテキストは編集不可のため、校正する意味がない
+- 校正結果の精度向上とユーザビリティの改善
+
+## 実装内容
+1. **HTMLタグ保護機能の拡張**
+   - `protect_html_tags_advanced()`関数にInstagram除外ロジックを追加
+   - `<blockquote class="instagram-media">...</blockquote>`全体を保護対象に
+   - `<script async src="//www.instagram.com/embed.js"></script>`も除外
+
+2. **除外パターンの追加**
+   ```python
+   INSTAGRAM_PATTERNS = [
+       r'<blockquote[^>]*class="instagram-media"[^>]*>.*?</blockquote>',
+       r'<script[^>]*src="[^"]*instagram\.com/embed\.js"[^>]*></script>',
+       r'<iframe[^>]*src="[^"]*instagram\.com[^"]*"[^>]*></iframe>'
+   ]
+   ```
+
+3. **設定オプション追加**
+   - 管理画面で除外機能のON/OFF切り替え可能
+   - デフォルトは除外ON
+
+## 技術的メモ
+- `app/proofreading_ai/utils.py`の修正が必要
+- 正規表現パターンのテストケース作成
+- 既存のHTMLタグ保護機能との整合性確認
+
+## テスト項目
+- [ ] Instagramエンベッドコードが校正対象から除外される
+- [ ] 通常のHTMLタグ保護機能に影響しない
+- [ ] 除外設定のON/OFF切り替えが正常動作
+- [ ] 複数のInstagramエンベッドが含まれる記事での動作確認
+
+## 期限
+2025/06/20 
+
+# [仕様変更] 全角数字を半角に変換しない設定の追加
+
+## 目的
+- 現在の校正AIは全角数字（１２３）を半角数字（123）に変換提案している
+- メディア記事では意図的に全角数字を使用する場合がある
+- 特に見出しやタイトルで全角数字が好まれる傾向への対応
+
+## 実装内容
+1. **校正ルール設定の追加**
+   ```python
+   PROOFREADING_RULES = {
+       'convert_fullwidth_numbers': False,  # 全角数字変換を無効化
+       'preserve_intentional_fullwidth': True,  # 意図的な全角を保持
+   }
+   ```
+
+2. **プロンプト修正**
+   - Claude 4への指示に「全角数字はそのまま保持する」を明記
+   - 例外ケース（明らかな誤入力）のみ提案するよう調整
+
+3. **UI設定追加**
+   - 校正画面に「全角数字を保持」チェックボックス追加
+   - デフォルトはON（保持する）
+
+4. **辞書ルール更新**
+   - 社内辞書から全角→半角数字変換ルールを除外
+   - 文脈に応じた判断ロジックの実装
+
+## 技術的メモ
+- `app/proofreading_ai/services/bedrock_client.py`のプロンプト修正
+- `app/templates/proofreading_ai/index.html`にUI要素追加
+- 設定値の保存・復元機能の実装
+
+## テスト項目
+- [ ] 全角数字が半角に変換されない
+- [ ] 設定のON/OFF切り替えが正常動作
+- [ ] 明らかな誤入力の場合は提案される
+- [ ] 設定値がブラウザに保存される
+
+## 期限
+2025/06/25
+
+# [UI改善] Top-p設定の分かりやすさ向上とプリセット機能追加
+
+## 目的
+- 現在の「Top-p」表記が技術的すぎて一般ユーザーには理解困難
+- 0.1〜1.0の数値だけでは効果が分からない
+- テスターから「どう設定すれば良いか分からない」との声への対応
+
+## 実装内容
+1. **表示名の変更**
+   ```
+   変更前: Top-p (0.7)
+   変更後: 校正の厳密さ - バランス型 (0.7)
+   ```
+
+2. **プリセット機能の追加**
+   ```javascript
+   const PRESETS = {
+       strict: { value: 0.3, name: '厳密モード', description: 'より多くの修正を提案' },
+       balanced: { value: 0.7, name: 'バランス型', description: '適度な修正提案（推奨）' },
+       creative: { value: 0.9, name: '寛容モード', description: '必要最小限の修正のみ' }
+   };
+   ```
+
+3. **視覚的改善**
+   - スライダーに色分け表示（青→緑→オレンジ）
+   - リアルタイムプレビュー機能
+   - 設定変更時の効果説明ポップアップ
+
+4. **ヘルプ機能強化**
+   - 「？」アイコンクリックで詳細説明表示
+   - 使用例とサンプル結果の表示
+
+## 技術的メモ
+- `app/templates/proofreading_ai/index.html`のUI大幅修正
+- JavaScript関数の追加（プリセット切り替え、ヘルプ表示）
+- CSS追加（色分け、アニメーション効果）
+
+## テスト項目
+- [ ] プリセットボタンで値が正しく設定される
+- [ ] スライダーの色分けが正常表示される
+- [ ] ヘルプポップアップが正常動作する
+- [ ] 設定値の保存・復元が正常動作する
+- [ ] モバイル環境での表示確認
+
+## 期限
+2025/06/30
+
+# [新機能] テスター向けエラー報告・フィードバック機能の実装
+
+## 目的
+- 現在エラー発生時の報告手段が不明確
+- テスターからのフィードバック収集が困難
+- 問題の再現や調査に時間がかかる状況の改善
+
+## 実装内容
+1. **エラー報告ボタンの追加**
+   ```html
+   <button id="reportErrorBtn" class="btn btn-warning">
+       🐛 問題を報告
+   </button>
+   ```
+
+2. **報告フォーム機能**
+   - エラー内容の自動収集（ログ、設定、入力テキスト長など）
+   - ユーザーコメント入力欄
+   - スクリーンショット添付機能（オプション）
+
+3. **ChatWork自動通知**
+   ```python
+   def send_user_feedback(error_type, user_comment, technical_data):
+       message = f"""
+       🐛 ユーザーエラー報告
+       
+       【報告者】{user.username}
+       【エラー種別】{error_type}
+       【ユーザーコメント】{user_comment}
+       【技術情報】{technical_data}
+       【発生時刻】{datetime.now()}
+       """
+       chatwork_service.send_notification(message)
+   ```
+
+4. **フィードバック管理画面**
+   - 管理者向けエラー一覧表示
+   - 対応状況管理（未対応/調査中/完了）
+   - 統計情報表示
+
+## 技術的メモ
+- `app/proofreading_ai/views.py`に新しいエンドポイント追加
+- `app/templates/proofreading_ai/index.html`にUI要素追加
+- ChatWork通知機能の拡張
+- 管理画面の新規作成
+
+## テスト項目
+- [ ] エラー報告ボタンが正常表示される
+- [ ] 報告フォームが正常動作する
+- [ ] ChatWork通知が正常送信される
+- [ ] 管理画面でエラー一覧が表示される
+- [ ] 対応状況の更新が正常動作する
+
+## 期限
+2025/07/05
+
+# [UI簡素化] 高速モードボタンの廃止と自動最適化
+
+## 目的
+- 「高速モード」と「通常モード」の違いがユーザーに分かりにくい
+- 選択肢が多すぎてユーザーが迷う状況の改善
+- 実際の使用データでは高速モードの利用率が低い
+
+## 実装内容
+1. **UI要素の削除**
+   ```javascript
+   // 削除対象
+   document.getElementById('fastModeToggle').remove();
+   document.getElementById('fastModeLabel').remove();
+   ```
+
+2. **自動最適化ロジック**
+   ```python
+   def auto_select_processing_mode(text_length):
+       if text_length > 20000:  # 2万文字以上
+           return 'simple_prompt'  # 高速処理
+       elif text_length > 10000:  # 1万文字以上
+           return 'balanced_prompt'  # バランス処理
+       else:
+           return 'full_prompt'  # 完全処理
+   ```
+
+3. **処理モード表示**
+   - ユーザーには処理モードを意識させない
+   - ローディング画面で「最適な処理方法を選択中...」表示
+   - 完了後に使用した処理方法を軽く表示
+
+4. **設定統合**
+   - Temperature、Top-pのみに設定を集約
+   - シンプルで分かりやすいUI
+
+## 技術的メモ
+- `app/templates/proofreading_ai/index.html`からUI要素削除
+- `app/proofreading_ai/views.py`に自動選択ロジック追加
+- JavaScript関数の簡素化
+
+## テスト項目
+- [ ] 高速モードボタンが表示されない
+- [ ] 文字数に応じて自動で処理モードが選択される
+- [ ] ローディング画面で適切なメッセージが表示される
+- [ ] 処理完了後に使用モードが表示される
+- [ ] 既存の設定（Temperature、Top-p）が正常動作する
+
+## 期限
+2025/06/18

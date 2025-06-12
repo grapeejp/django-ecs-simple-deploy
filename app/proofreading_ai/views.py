@@ -149,6 +149,9 @@ def proofread(request):
             'total_time': total_time,
             'mode': result.get('mode', 'unknown'),
             'original_length': result.get('original_length', len(text)),
+            'input_tokens': result.get('input_tokens', 0),
+            'output_tokens': result.get('output_tokens', 0),
+            'estimated_cost': result.get('estimated_cost', 0),
             'processed_at': time.strftime('%Y-%m-%d %H:%M:%S')
         })
         

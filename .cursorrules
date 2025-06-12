@@ -47,11 +47,20 @@ AWS ECS（Elastic Container Service）を使用してDjangoアプリケーショ
 
 ## デプロイフロー
 
+### ⚠️ デプロイ作業前の必須確認
+**AWS ECSデプロイ作業を行う前に、必ず以下のドキュメントを読み込むこと:**
+- `docs/django_ecs_deployment_notes.md` - デプロイ時の頻出ミスと解決方法
+- 特にスタック名の勘違い問題は毎回発生するため要注意
+
 ### 手動デプロイ
-1. 環境変数設定 (`AWS_ACCOUNT_ID`, `AWS_REGION`)
-2. ECRへのイメージプッシュ
-3. CloudFormationスタックのデプロイ
-4. デプロイ結果の確認
+1. **事前確認（必須）**:
+   - 現在のスタック名を確認: `aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE`
+   - 実際のスタック名: `django-ecs-service-staging-simple`, `django-ecs-cluster-staging-v2`
+   - デプロイスクリプトが想定するスタック名と実際のスタック名の違いを確認
+2. 環境変数設定 (`AWS_ACCOUNT_ID`, `AWS_REGION`)
+3. ECRへのイメージプッシュ
+4. CloudFormationスタックのデプロイ（正しいスタック名で）
+5. デプロイ結果の確認
 
 ### CI/CD（GitHub Actions）
 - mainブランチへのプッシュ: 自動デプロイ

@@ -208,12 +208,17 @@ class BedrockClient:
         """
         return """あなたは日本語校正の専門家です。以下のカテゴリーで文章を校正してください。
 
+**🚫 校正対象外（絶対に変更しないでください）：**
+- 全角数字（１２３４５６７８９０）：半角数字に変換しない
+- 全角英字（ＡＢＣ）：半角英字に変換しない
+- 意図的な全角文字は保持する
+
 **🟠 矛盾チェック（inconsistency）を必ず実行してください：**
 - 地理的矛盾：「富士山は東京都大阪市にある」→「富士山は静岡県・山梨県境にある」
 - 行政区分：「神奈川県横浜県」→「神奈川県横浜市」
 - 番組放送局：「サザエさん（日本テレビ）」→「サザエさん（フジテレビ）」
 - 学校年次：「小学8年生」→「小学6年生」
-- 年齢矛盾：「今年25歳、去年27歳」→年齢逆転の指摘
+- 年齢矛盾：「今年25歳、去年27歳」→年齢逆転の指摘などあなたが矛盾だと思ったら理由も付けて指摘してください。
 
 **校正カテゴリー：**
 1. 🟠 矛盾チェック（inconsistency）：論理的・事実的矛盾
@@ -221,26 +226,7 @@ class BedrockClient:
 3. 🟡 社内辞書ルール（dict）：アマゾン→Amazon、大谷→大谷翔平など
 4. 🟣 言い回しアドバイス（tone）：より自然な表現への改善
 
-**重要：矛盾を発見した場合は必ず「inconsistency」カテゴリーで報告してください。**"""
-
-    def _get_simple_prompt(self) -> str:
-        """
-        高速処理用のシンプルプロンプト（思考プロセス除去版）
-        """
-        return """あなたは日本語校正の専門家です。以下の文章を素早く校正してください。
-
-校正カテゴリー：
-1. 🟣 言い回しアドバイス（expression）：より自然で温かみのある表現への改善
-2. 🔴 誤字修正（typo）：明確な誤字脱字の修正（HTMLタグ内も含む）
-3. 🟡 社内辞書ルール（dictionary）：統一表記ルールの適用
-4. 🟠 矛盾チェック（contradiction）：論理的・事実的矛盾の検出
-
-校正対象：{原文}
-
-修正後の文章をそのまま出力し、その後に修正箇所一覧を以下の形式で記載してください：
-
-✅修正箇所：
-- 行番号: (修正前) -> (修正後): 理由 [カテゴリー: tone|typo|dict|contradiction]"""
+**重要：全角数字・全角英字は絶対に変換せず、矛盾を発見した場合は必ず「inconsistency」カテゴリーで報告してください。**"""
 
     def count_tokens(self, text: str) -> int:
         """
@@ -300,11 +286,15 @@ class BedrockClient:
             
             # プロンプト選択
             if use_simple_prompt:
-                prompt = self._get_simple_prompt().replace("{原文}", protected_text)
-                logger.info("🚀 高速処理モード: シンプルプロンプト使用")
+                prompt = self.default_prompt.replace("{原文}", protected_text)
+                logger.info("🚀 高速処理モード: デフォルトプロンプト使用")
             else:
                 prompt = self.default_prompt.replace("{原文}", protected_text)
                 logger.info("🎯 標準処理モード: デフォルトプロンプト使用")
+            
+            # 入力トークン数を計算
+            input_tokens = self.count_tokens(prompt)
+            logger.info(f"📏 入力トークン数: {input_tokens}")
             
             # Tool Use設定
             tools = [{
@@ -402,6 +392,14 @@ class BedrockClient:
             corrected_text = tool_use_content.get("corrected_text", "")
             corrections = tool_use_content.get("corrections", [])
             
+            # 出力トークン数を計算
+            output_tokens = self.count_tokens(corrected_text)
+            logger.info(f"📏 出力トークン数: {output_tokens}")
+            
+            # コスト計算
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+            logger.info(f"💰 推定コスト: {total_cost:.2f}円")
+            
             # プレースホルダーからHTMLタグを復元（4つの引数を正しく渡す）
             final_text = restore_html_tags_advanced(corrected_text, placeholders, html_tag_info, corrections)
             
@@ -410,6 +408,9 @@ class BedrockClient:
                 "corrections": corrections,
                 "processing_time": processing_time,
                 "original_length": len(text),
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "estimated_cost": total_cost,
                 "mode": "json"
             }
             
@@ -421,6 +422,9 @@ class BedrockClient:
                 "corrected_text": text,
                 "corrections": [],
                 "processing_time": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "estimated_cost": 0,
                 "mode": "json"
             }
     
@@ -434,11 +438,15 @@ class BedrockClient:
             
             # プロンプト選択
             if use_simple_prompt:
-                prompt = self._get_simple_prompt().replace("{原文}", protected_text)
-                logger.info("🚀 高速処理モード: シンプルプロンプト使用")
+                prompt = self.default_prompt.replace("{原文}", protected_text)
+                logger.info("🚀 高速処理モード: デフォルトプロンプト使用")
             else:
                 prompt = self.default_prompt.replace("{原文}", protected_text)
                 logger.info("🎯 標準処理モード: デフォルトプロンプト使用")
+            
+            # 入力トークン数を計算
+            input_tokens = self.count_tokens(prompt)
+            logger.info(f"📏 入力トークン数: {input_tokens}")
             
             # 通常のAPI呼び出し
             logger.info("AWS Bedrock API呼び出し開始（Text Mode）")
@@ -471,6 +479,14 @@ class BedrockClient:
                     if content_block.get("type") == "text":
                         corrected_text += content_block.get("text", "")
             
+            # 出力トークン数を計算
+            output_tokens = self.count_tokens(corrected_text)
+            logger.info(f"📏 出力トークン数: {output_tokens}")
+            
+            # コスト計算
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+            logger.info(f"💰 推定コスト: {total_cost:.2f}円")
+            
             # HTMLタグ復元（4つの引数を正しく渡す）
             # まず修正箇所解析
             corrections = self._parse_corrections_from_response(corrected_text)
@@ -481,6 +497,9 @@ class BedrockClient:
                 "corrections": corrections,
                 "processing_time": processing_time,
                 "original_length": len(text),
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "estimated_cost": total_cost,
                 "mode": "text"
             }
             
@@ -492,6 +511,9 @@ class BedrockClient:
                 "corrected_text": text,
                 "corrections": [],
                 "processing_time": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "estimated_cost": 0,
                 "mode": "text"
             }
 
