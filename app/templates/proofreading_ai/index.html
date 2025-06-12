@@ -1721,10 +1721,6 @@
             </div>
             <div class="w-full md:w-auto">
                 <div class="flex items-center space-x-3">
-                    <label class="flex items-center space-x-2 text-white">
-                        <input type="checkbox" id="useSimplePrompt" class="form-checkbox h-4 w-4 text-grape-600 transition duration-150 ease-in-out">
-                        <span class="text-sm">🚀 高速処理モード</span>
-                    </label>
                 <button id="startCorrectionBtn" class="bg-grape-700 hover:bg-grape-800 text-white font-bold py-2 px-6 rounded-md transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-grape-500 focus:ring-opacity-50">
                     校正する
                 </button>
@@ -2175,7 +2171,7 @@
                 hideLoadingOverlay();
                 this.disabled = false;
                 this.textContent = '校正する';
-                document.getElementById('correctionResult').innerHTML = '<div class="text-red-500">⏰ タイムアウトエラー：10分以内に処理が完了しませんでした。<br>非常に大きなテキストか、サーバーに問題が発生している可能性があります。<br><br>🚀 <strong>高速処理モード</strong>を試すか、テキストを短くしてください。</div>';
+                document.getElementById('correctionResult').innerHTML = '<div class="text-red-500">⏰ タイムアウトエラー：10分以内に処理が完了しませんでした。<br>非常に大きなテキストか、サーバーに問題が発生している可能性があります。<br><br>テキストを短くして再度お試しください。</div>';
                 showDebugInfo({
                     error: 'Timeout after 600 seconds (10 minutes)',
                     startTime: requestStartTime,
@@ -2184,11 +2180,11 @@
             }, 600000); // 10分 = 600,000ms
             
             console.log('📡 APIリクエスト開始');
-            const useSimplePrompt = document.getElementById('useSimplePrompt').checked;
+            
             const requestData = {
                 text: inputText,
                 use_json_mode: true,  // デフォルトでJSONモード使用
-                use_simple_prompt: useSimplePrompt  // ユーザー選択に基づく
+                use_simple_prompt: false  // 常に標準モード
             };
             console.log('📤 送信データ:', requestData);
             
@@ -2274,7 +2270,7 @@
                     
                     console.log('✅ UI更新完了');
                 } else {
-                    console.error('❌ 校正エラー:', data.error);
+                    console.error('❌ 校正失敗:', data.error);
                     document.getElementById('correctionResult').innerHTML = `<div class="text-red-500">エラー: ${data.error}</div>`;
                     
                     // エラー詳細をデバッグ情報として表示
