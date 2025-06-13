@@ -704,7 +704,7 @@ def submit_feedback(request):
                     'user_agent': request.META.get('HTTP_USER_AGENT', ''),
                     'ip_address': request.META.get('REMOTE_ADDR', '')
                 }
-                
+
                 logger.info(f"📤 フィードバック通知送信開始: {name}")
                 success = chatwork_service.send_feedback_notification(
                     name=name,
@@ -712,7 +712,7 @@ def submit_feedback(request):
                     context=context
                 )
                 logger.info(f"📊 フィードバック通知送信結果: {success}")
-                
+
                 if success:
                     logger.info(f"✅ フィードバック通知送信成功: {name}")
                     return JsonResponse({
@@ -731,7 +731,7 @@ def submit_feedback(request):
                     'success': False,
                     'error': 'フィードバック機能が一時的に利用できません。'
                 })
-                
+
         except Exception as notification_error:
             logger.error(f"❌ フィードバック通知エラー: {str(notification_error)}")
             logger.error(f"📋 スタックトレース: {traceback.format_exc()}")
@@ -739,7 +739,7 @@ def submit_feedback(request):
                 'success': False,
                 'error': '送信処理でエラーが発生しました。'
             })
-            
+
     except Exception as e:
         logger.error(f"❌ フィードバック処理エラー: {str(e)}")
         logger.error(f"📋 スタックトレース: {traceback.format_exc()}")
