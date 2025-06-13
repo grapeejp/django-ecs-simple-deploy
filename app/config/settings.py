@@ -240,3 +240,6 @@ CACHES = {
         'TIMEOUT': 300,  # 5分
     }
 }
+
+# Chatwork通知用ルームID（.envまたは環境変数から取得、なければデフォルト値）
+CHATWORK_ROOM_ID = os.environ.get("CHATWORK_ROOM_ID", "372584775")

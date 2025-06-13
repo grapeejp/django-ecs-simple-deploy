@@ -26,7 +26,7 @@ services:
       - DJANGO_SETTINGS_MODULE=config.settings
       - AWS_REGION=ap-northeast-1
       - CHATWORK_API_TOKEN=a73b98001202df49108874fb4bbc89ea
-      - CHATWORK_ROOM_ID=21235770
+      - CHATWORK_ROOM_ID=372584775
     env_file:
       - .env
     networks:

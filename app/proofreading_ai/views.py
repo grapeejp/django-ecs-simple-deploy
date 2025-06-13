@@ -61,9 +61,11 @@ def index(request):
     校正AIのメインページを表示
     """
     replacement_dict = get_replacement_dict()
-    return render(request, 'proofreading_ai/index.html', {
-        'replacement_dict': json.dumps(replacement_dict, ensure_ascii=False)
-    })
+    context = {
+        'replacement_dict': json.dumps(replacement_dict, ensure_ascii=False),
+        'room_id': getattr(settings, 'CHATWORK_ROOM_ID', ''),
+    }
+    return render(request, 'proofreading_ai/index.html', context)
 
 
 @csrf_exempt
@@ -715,10 +717,12 @@ def submit_feedback(request):
 
                 if success:
                     logger.info(f"✅ フィードバック通知送信成功: {name}")
-                    return JsonResponse({
+                    response_data = {
                         'success': True,
-                        'message': 'フィードバックを送信しました。ありがとうございます！'
-                    })
+                        'message': 'フィードバックを送信しました。ありがとうございます！',
+                        'room_id': settings.CHATWORK_ROOM_ID
+                    }
+                    return JsonResponse(response_data)
                 else:
                     logger.error(f"❌ フィードバック通知送信失敗: {name}")
                     return JsonResponse({

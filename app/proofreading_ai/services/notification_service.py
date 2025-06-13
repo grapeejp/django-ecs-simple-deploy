@@ -307,51 +307,46 @@ class ChatworkNotificationService:
     
     def _send_message(self, message: str, priority: str = "info") -> bool:
         """
-        チャットワークAPIにメッセージを送信（詳細ログ付き）
-        
-        Args:
-            message: 送信するメッセージ
-            priority: 優先度 (error, warning, info, feedback)
-            
-        Returns:
-            bool: 送信成功した場合True
+        チャットワークAPIにメッセージを送信（ローカルでもAPIトークン・ルームIDが空でなければ必ず送信）
         """
+        # APIトークン・ルームIDが空の場合のみローカルモード
+        if not self.api_token or not self.room_id:
+            print("【ローカルモード】Chatwork通知内容（APIトークンまたはルームIDが未設定のため送信スキップ）")
+            print(f"API_TOKEN={self.api_token}, ROOM_ID={self.room_id}")
+            print("-----")
+            print(message)
+            print("-----")
+            logger.warning("⚠️ Chatwork設定が未設定のため、通知をスキップ（ローカルデバッグ用print出力）")
+            return False  # 送信失敗
+
         try:
             url = f"{self.api_url}/rooms/{self.room_id}/messages"
             headers = {
                 "X-ChatWorkToken": self.api_token,
                 "Content-Type": "application/x-www-form-urlencoded"
             }
-            
-            data = {
-                "body": message
-            }
-            
-            logger.info(f"📤 チャットワーク通知送信開始 (優先度: {priority})")
-            logger.info(f"📋 送信先ルームID: {self.room_id}")
-            logger.info(f"📏 メッセージ長: {len(message)}文字")
-            
+            data = {"body": message}
+
+            print(f"【Chatwork送信リクエスト】url={url}")
+            print(f"headers={headers}")
+            print(f"data={data}")
+
+            import requests
             response = requests.post(url, headers=headers, data=data, timeout=10)
-            
+            print(f"【Chatworkレスポンス】status={response.status_code}")
+            print(f"body={response.text}")
+            logger.info(f"Chatwork送信レスポンス: {response.status_code} {response.text}")
+
             if response.status_code == 200:
-                logger.info(f"✅ チャットワーク通知送信成功 (priority: {priority})")
-                logger.info(f"📊 レスポンス: {response.text}")
                 return True
             else:
-                logger.error(f"❌ チャットワーク通知送信失敗: {response.status_code}")
-                logger.error(f"📋 レスポンス詳細: {response.text}")
+                logger.error(f"❌ Chatwork通知送信失敗: {response.status_code} {response.text}")
                 return False
-                
-        except requests.exceptions.Timeout:
-            logger.error("❌ チャットワーク通知送信タイムアウト（10秒）")
-            return False
-        except requests.exceptions.RequestException as e:
-            logger.error(f"❌ チャットワーク通知送信リクエストエラー: {str(e)}")
-            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
-            return False
         except Exception as e:
-            logger.error(f"❌ チャットワーク通知送信予期しないエラー: {str(e)}")
-            logger.error(f"📋 詳細トレース: {traceback.format_exc()}")
+            print(f"❌ Chatwork通知送信例外: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            logger.error(f"❌ Chatwork通知送信例外: {str(e)}\n{traceback.format_exc()}")
             return False
     
     def test_connection(self) -> bool:

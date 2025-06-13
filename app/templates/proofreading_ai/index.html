@@ -71,9 +71,9 @@
     /* ツールチップを非表示に（モーダルに置き換え） */
     .correction-tooltip {
         position: absolute;
-        left: 50%;
+        left: 50% !important;
         top: 100%;
-        transform: translateX(-50%);
+        transform: translateX(-50%) !important;
         z-index: 2147483647 !important;
         display: none;
         background: #fff !important;
@@ -963,6 +963,8 @@
         padding: 1rem;
         margin-top: 1.5rem;
         color: rgba(255, 255, 255, 0.9);
+        z-index: 1 !important; /* 追加: ツールチップより下に */
+        position: relative !important;
     }
     
     .performance-grid {
@@ -3998,26 +4000,24 @@
     function adjustTooltipPosition(tooltip, span) {
         // ツールチップのクラスをリセット
         tooltip.classList.remove('tooltip-left', 'tooltip-center');
-        
+        // 初期状態で中央寄せを必ず付与
+        tooltip.classList.add('tooltip-center');
         // 要素の位置を取得
         const spanRect = span.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
         const tooltipWidth = 400; // max-width
-        
         // 右端からの距離を計算
         const distanceFromRight = viewportWidth - spanRect.right;
-        
         // 左端からの距離を計算  
         const distanceFromLeft = spanRect.left;
-        
         // 位置調整の判定
         if (distanceFromRight < tooltipWidth / 2) {
-            // 右端に近い場合は左側に表示
+            tooltip.classList.remove('tooltip-center');
             tooltip.classList.add('tooltip-left');
             console.log('🔧 右端検出 - ツールチップを左側に表示');
         } else if (distanceFromLeft < tooltipWidth / 2) {
-            // 左端に近い場合はそのまま（デフォルト）
-            console.log('🔧 左端検出 - ツールチップを右側に表示');
+            // デフォルト（中央寄せ）
+            console.log('🔧 左端検出 - ツールチップを中央に表示');
         } else {
             // 中央の場合は中央寄せ
             tooltip.classList.add('tooltip-center');
@@ -4035,10 +4035,10 @@
                 span.addEventListener('mouseenter', function() {
                     const tooltip = this.querySelector('.correction-tooltip');
                     if (tooltip) {
-                        // 少し遅延してから位置調整（CSSのdisplay: blockが適用されてから）
+                        // 遅延を0msに
                         setTimeout(() => {
                             adjustTooltipPosition(tooltip, this);
-                        }, 10);
+                        }, 0);
                     }
                 });
             });
@@ -4149,6 +4149,8 @@
                 const formData = new FormData(this);
                 const name = formData.get('name').trim();
                 const message = formData.get('message').trim();
+                const email = formData.get('email')?.trim() || '';
+                const feedback_type = formData.get('feedback_type') || 'general';
                 
                 // バリデーション
                 if (!name || !message) {
@@ -4157,41 +4159,43 @@
                 }
                 
                 if (message.length < 10) {
-                    showFeedbackMessage('error', 'メッセージは10文字以上で入力してください');
+                    showFeedbackMessage('error', 'メッセージは10文字以上入力してください');
                     return;
                 }
                 
-                // 送信ボタンを無効化
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>送信中...';
+                // 送信リクエスト内容を出力
+                console.log('フィードバック送信リクエスト:', { name, email, feedback_type, message });
                 
-                try {
-                    const response = await fetch('{% url "proofreading_ai:submit_feedback" %}', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': getCookie('csrftoken')
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        showFeedbackMessage('success', data.message || 'フィードバックを送信しました。ありがとうございます！');
-                        form.reset();
-                        charCountSpan.textContent = '0';
-                        charCountSpan.className = 'text-red-500';
-                    } else {
-                        showFeedbackMessage('error', data.error || '送信に失敗しました');
-                    }
-                } catch (error) {
-                    console.error('フィードバック送信エラー:', error);
-                    showFeedbackMessage('error', 'ネットワークエラーが発生しました');
-                } finally {
-                    // 送信ボタンを有効化
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>送信する';
+                // CSRFトークンを取得
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                if (!csrfToken) {
+                    alert('CSRFトークンが取得できません。ページをリロードしてください。');
+                    return;
                 }
+                
+                // ChatworkルームIDも出力（サーバーから返却される場合）
+                fetch('/proofreading_ai/feedback/submit/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📥 フィードバック送信レスポンス:', data);
+                    if (data.room_id) {
+                        console.log('📢 Chatwork送信先ルームID:', data.room_id);
+                    }
+                    if (data.success) {
+                        alert('送信成功: ' + data.message);
+                    } else {
+                        console.error('送信失敗:', data);
+                        alert('送信失敗: ' + (data.message || '不明なエラー'));
+                    }
+                })
+                .catch(error => {
+                    console.error('送信エラー:', error);
+                    alert('送信エラー: ' + error);
+                });
             });
         }
     }
@@ -4298,6 +4302,12 @@
                 subtree: true
             });
         }
+    });
+
+    // サーバー側からルームIDを埋め込む
+    const CHATWORK_ROOM_ID = "{{ room_id|default:'' }}";
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('Chatwork送信先ルームID(ページロード時):', CHATWORK_ROOM_ID);
     });
 </script>
 {% endblock %}
