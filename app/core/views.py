@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
+import os
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """ダッシュボード表示ビュー（ログイン必須）"""
@@ -91,4 +92,24 @@ def create_users_debug(request):
         'results': results,
         'all_users': all_users,
         'host': request.headers.get('Host', 'unknown')
-    }) 
+    })
+
+def health_check(request):
+    """
+    ヘルスチェック用エンドポイント（Basic認証なし）
+    ALBのヘルスチェックで使用
+    """
+    return HttpResponse("OK", status=200, content_type="text/plain")
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def debug_env(request):
+    """
+    環境変数デバッグ用エンドポイント（Basic認証なし）
+    """
+    env_vars = {
+        'BASIC_AUTH_ENABLED': os.environ.get('BASIC_AUTH_ENABLED', 'Not Set'),
+        'DEBUG': os.environ.get('DEBUG', 'Not Set'),
+        'DJANGO_SETTINGS_MODULE': os.environ.get('DJANGO_SETTINGS_MODULE', 'Not Set'),
+    }
+    return JsonResponse(env_vars) 

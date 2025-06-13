@@ -16,8 +16,14 @@ def basic_auth_required(view_func):
         basic_auth_enabled = os.environ.get('BASIC_AUTH_ENABLED', '')
         print(f"🚨 BASIC_AUTH_ENABLED: '{basic_auth_enabled}'")
         
+        # 本番環境では常にBasic認証をスキップ
         if not basic_auth_enabled.lower() == 'true':
             print("🚨 Basic認証が無効のためスキップ")
+            return view_func(request, *args, **kwargs)
+        
+        # 念のため、falseの場合も明示的にスキップ
+        if basic_auth_enabled.lower() == 'false':
+            print("🚨 Basic認証が明示的に無効化されているためスキップ")
             return view_func(request, *args, **kwargs)
 
         # Basic認証の設定を取得

@@ -61,6 +61,8 @@ Resources:
           Environment:
             - Name: DEBUG
               Value: '0'
+            - Name: BASIC_AUTH_ENABLED
+              Value: 'false'
             - Name: ALLOWED_HOSTS
               Value: '*,*.elb.amazonaws.com,*.ap-northeast-1.elb.amazonaws.com'
             - Name: DJANGO_SETTINGS_MODULE
