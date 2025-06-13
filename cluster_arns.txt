@@ -1,0 +1,9 @@
+{
+    "clusterArns": [
+        "arn:aws:ecs:ap-northeast-1:026090540679:cluster/django-ecs-cluster-staging",
+        "arn:aws:ecs:ap-northeast-1:026090540679:cluster/grape-checker-cluster",
+        "arn:aws:ecs:ap-northeast-1:026090540679:cluster/ecs-cluster",
+        "arn:aws:ecs:ap-northeast-1:026090540679:cluster/grape-checker-staging-cluster",
+        "arn:aws:ecs:ap-northeast-1:026090540679:cluster/django-ecs-cluster-production"
+    ]
+}

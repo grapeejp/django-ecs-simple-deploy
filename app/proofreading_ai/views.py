@@ -661,6 +661,12 @@ def submit_feedback(request):
     テスター向けフィードバック送信エンドポイント
     """
     logger.info(f"🔍 フィードバック送信開始 - Method: {request.method}")
+    print(f"[DEBUG] content_type: {request.content_type}")
+    print(f"[DEBUG] body: {request.body}")
+    print(f"[DEBUG] POST: {request.POST}")
+    logger.info(f"[DEBUG] content_type: {request.content_type}")
+    logger.info(f"[DEBUG] body: {request.body}")
+    logger.info(f"[DEBUG] POST: {request.POST}")
     
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST method required'})

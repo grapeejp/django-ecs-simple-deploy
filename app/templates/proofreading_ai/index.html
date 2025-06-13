@@ -4177,7 +4177,7 @@
                 fetch('/proofreading_ai/feedback/submit/', {
                     method: 'POST',
                     body: formData,
-                    headers: { 'X-CSRFToken': csrfToken }
+                    headers: { 'X-CSRFToken': csrfToken } // Content-Typeは自動
                 })
                 .then(response => response.json())
                 .then(data => {
