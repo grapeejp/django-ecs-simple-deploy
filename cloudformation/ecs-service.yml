@@ -66,7 +66,7 @@ Resources:
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'config.settings'
             - Name: SECRET_KEY
-              Value: '{{resolve:secretsmanager:django-ecs-secrets:SecretString:SECRET_KEY}}'
+              Value: 'django-insecure-3owj_$o^l5e4dg9oc6ihx1db@w7fm$=+(3ii_%h8y2-ww#d@%q'
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_DEFAULT_REGION
@@ -79,17 +79,10 @@ Resources:
               Value: '150'
             - Name: BEDROCK_PROMPT_PATH
               Value: '/app/proofreading_ai/prompt.md'
-          Secrets:
             - Name: CHATWORK_API_TOKEN
-              ValueFrom: !Sub 
-                - "${SecretArn}:CHATWORK_API_TOKEN::"
-                - SecretArn: 
-                    Fn::ImportValue: !Sub 'django-ecs-cluster-${Environment}-ChatworkSecretArn'
+              Value: 'a73b98001202df49108874fb4bbc89ea'
             - Name: CHATWORK_ROOM_ID
-              ValueFrom: !Sub 
-                - "${SecretArn}:CHATWORK_ROOM_ID::"
-                - SecretArn: 
-                    Fn::ImportValue: !Sub 'django-ecs-cluster-${Environment}-ChatworkSecretArn'
+              Value: '372584775'
 
   # ECS Service
   Service:
