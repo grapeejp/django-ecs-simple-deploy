@@ -1,125 +1,301 @@
-# 📋 明日の作業TODO (2025/05/31)
+# 明日の作業（6月17日）
 
-## 🔥 最優先作業
+## 🚨 優先度：高 - ステージング環境Google OAuth設定問題の解決
 
-### 1. 新機能の本番デプロイ ⚡
-**状況**: 辞書表示機能＆HTMLタグ修正機能がmainブランチにマージ済みだが、本番環境にデプロイ未完了
+### 📋 問題の概要
+- **現象**: ステージング環境でGoogle OAuth認証が失敗
+- **エラー**: `SocialApp for provider 'google' not found`
+- **原因**: ステージング環境のデータベースにGoogle SocialApp設定が存在しない
+- **コールバックURI**: `http://staging.grape-app.jp/accounts/google/login/callback/` （正しい）
 
-**必要な作業**:
+### 🔧 解決手順
+
+#### 1. Google Cloud Console設定確認
+- [ ] Google Cloud Consoleにアクセス
+- [ ] OAuth 2.0 クライアントIDの設定確認
+- [ ] 承認済みリダイレクトURIに以下が含まれているか確認：
+  ```
+  http://localhost:8000/accounts/google/login/callback/
+  http://staging.grape-app.jp/accounts/google/login/callback/
+  ```
+- [ ] OAuth同意画面が「内部（Internal）」に設定されているか確認
+- [ ] ドメイン制限（`@grapee.co.jp`）が有効か確認
+
+#### 2. 認証情報の取得
+- [ ] Google OAuth Client ID をコピー
+- [ ] Google OAuth Client Secret をコピー
+
+#### 3. ステージング環境への設定適用
+
+**方法A: ECSタスク定義の環境変数更新（推奨）**
 ```bash
-# 1. Dockerイメージのビルド・プッシュ
-docker build --platform=linux/amd64 -t django-ecs-app:latest .
-aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin 026090540679.dkr.ecr.ap-northeast-1.amazonaws.com
-docker tag django-ecs-app:latest 026090540679.dkr.ecr.ap-northeast-1.amazonaws.com/django-ecs-app:latest
-docker push 026090540679.dkr.ecr.ap-northeast-1.amazonaws.com/django-ecs-app:latest
+# 現在のタスク定義を取得
+aws ecs describe-task-definition --task-definition django-app-staging-simple --output json > current_task_def.json
 
-# 2. ECSサービスの更新（新しいタスク定義で再デプロイ）
-aws ecs update-service --cluster django-ecs-cluster-production --service django-ecs-service-production --force-new-deployment
+# 環境変数にGoogle OAuth設定を追加
+# GOOGLE_OAUTH_CLIENT_ID=<取得したClient ID>
+# GOOGLE_OAUTH_CLIENT_SECRET=<取得したClient Secret>
+
+# 新しいタスク定義を登録
+aws ecs register-task-definition --cli-input-json file://updated_task_def.json
+
+# ECSサービスを更新
+aws ecs update-service --cluster django-ecs-cluster-staging --service django-ecs-service-staging-simple --task-definition django-app-staging-simple:<新しいリビジョン>
 ```
 
-**期待される結果**:
-- 辞書表示機能が本番で利用可能
-- HTMLタグ修正機能が本番で動作
-- ユーザーが「📖 辞書ルールを確認」ボタンでCSVデータを閲覧可能
-
----
-
-## 📝 新規機能開発
-
-### 2. チャットワークエラー報告機能の実装
-**Issue**: #44
-**概要**: 校正処理でエラーが発生した際に自動でチャットワークに通知
-
-**作業ステップ**:
-1. 新しいfeatureブランチ作成: `feature/chatwork-error-notification`
-2. チャットワークAPI設定
-3. エラー通知サービスクラス作成
-4. 既存のエラーハンドリングに通知機能統合
-5. 環境変数設定（本番・ステージング）
-
-**技術要件**:
-- チャットワークAPI v2使用
-- 環境変数: `CHATWORK_API_TOKEN`, `CHATWORK_ROOM_ID`
-- エラーレベル: ERROR, WARNING, INFO
-
----
-
-## 🏗️ インフラ作業
-
-### 3. ECSドメイン差し替え作業
-**Issue**: #45
-**概要**: 現在のECSアプリケーションのドメインを新しいドメインに変更
-
-**事前準備**:
-- 新ドメインの確認
-- SSL証明書の準備状況確認
-- ダウンタイム許容時間の確認
-
-**作業ステップ**:
-1. CloudFormationテンプレート更新
-2. ステージング環境での事前テスト
-3. 本番環境でのドメイン切り替え
-4. 動作確認・監視
-
----
-
-## 🧹 メンテナンス作業
-
-### 4. 設定ファイルの整理
+**方法B: ECS Execを使用した直接設定**
 ```bash
-# コミットされていない変更をコミット
-git add issue_template.txt
-git commit -m "docs: issue テンプレートを更新"
-git push origin main
+# 実行中のタスクIDを取得
+aws ecs list-tasks --cluster django-ecs-cluster-staging --service-name django-ecs-service-staging-simple
+
+# ECS Execでコンテナに接続
+aws ecs execute-command --cluster django-ecs-cluster-staging --task <TASK_ID> --container django-app --interactive --command "/bin/bash"
+
+# コンテナ内で管理コマンドを実行
+export GOOGLE_OAUTH_CLIENT_ID="<取得したClient ID>"
+export GOOGLE_OAUTH_CLIENT_SECRET="<取得したClient Secret>"
+python manage.py setup_google_oauth --site-domain staging.grape-app.jp
 ```
 
-### 5. 本番環境の動作確認
-- 502エラーが解消されているか確認
-- 新機能デプロイ後の動作テスト
-- CloudWatchログの確認
+#### 4. 動作確認
+- [ ] ステージング環境にアクセス: `http://staging.grape-app.jp/`
+- [ ] 「Google Workspaceでログイン」ボタンをクリック
+- [ ] Google認証画面が正常に表示されるか確認
+- [ ] `@grapee.co.jp`アカウントでログイン試行
+- [ ] ダッシュボードにリダイレクトされるか確認
 
----
+#### 5. トラブルシューティング
 
-## 📊 進捗状況
-
-### ✅ 完了済み
-- [x] ブランチ整理（18個のブランチ削除）
-- [x] 開発サーバー整理（重複プロセス停止）
-- [x] 辞書表示機能の実装・マージ
-- [x] HTMLタグ修正機能の実装・マージ
-- [x] 502エラー修正（インフラ側）
-
-### 🔄 作業中
-- [ ] 新機能の本番デプロイ ← **明日最優先**
-
-### 📋 作業待ち
-- [ ] チャットワークエラー報告機能
-- [ ] ECSドメイン差し替え作業
-
----
-
-## 📞 緊急時の連絡先・参考情報
-
-**AWS環境**:
-- 本番クラスター: `django-ecs-cluster-production`
-- 本番サービス: `django-ecs-service-production`
-- 現在のタスク定義: `django-app:7`
-
-**GitHubリポジトリ**: `grapeejp/django-ecs-simple-deploy`
-
-**重要なファイル**:
-- `docker/Dockerfile` - Dockerイメージ設定
-- `cloudformation/ecs-cluster.yml` - インフラ設定
-- `app/proofreading_ai/views.py` - 辞書表示機能
-- `app/proofreading_ai/services/bedrock_client.py` - HTMLタグ修正機能
-
----
-
-**作業開始時の最初のコマンド**:
+**ログ確認コマンド:**
 ```bash
-cd /Users/yanagimotoyasutoshi/Desktop/django-ecs-simple-deploy
-git status
-git pull origin main
+# ステージング環境のログ確認
+aws logs filter-log-events --log-group-name "/ecs/django-app-staging-simple" --start-time $(($(date +%s) - 600))000 --filter-pattern "google"
+
+# エラーログ確認
+aws logs filter-log-events --log-group-name "/ecs/django-app-staging-simple" --start-time $(($(date +%s) - 600))000 --filter-pattern "ERROR"
 ```
 
-お疲れ様でした！🎉 
+**よくある問題と解決策:**
+- **redirect_uri_mismatch**: Google Cloud ConsoleのリダイレクトURI設定を確認
+- **ドメイン制限エラー**: OAuth同意画面の設定とアダプターの`hd`パラメータを確認
+- **SocialApp not found**: データベースの設定が正しく保存されているか確認
+
+### 📝 参考情報
+
+**関連ファイル:**
+- `app/core/management/commands/setup_google_oauth.py` - OAuth設定管理コマンド
+- `app/core/adapters.py` - ドメイン制限アダプター
+- `app/config/settings.py` - OAuth設定
+- `docs/google_oauth_setup.md` - 詳細な設定手順
+
+**現在の設定状況:**
+- ローカル環境: Google OAuth正常動作
+- ステージング環境: SocialApp未設定（要対応）
+- コールバックURI: 正しく設定済み
+
+### ⏰ 予想作業時間
+- Google Cloud Console確認: 15分
+- ステージング環境設定: 30分
+- 動作確認・テスト: 15分
+- **合計: 約1時間**
+
+### ✅ 完了条件
+- [ ] ステージング環境でGoogle OAuth認証が正常に動作する
+- [ ] `@grapee.co.jp`アカウントでログイン・ダッシュボードアクセスが可能
+- [ ] エラーログにOAuth関連のエラーが出力されない
+
+# 6月17日（月）の作業予定
+
+## 🚨 現状の問題点
+
+### 1. Google OAuth認証エラー（最優先）
+- **症状**: ステージング環境で「外部アカウントによるログインに失敗しました」エラー
+- **根本原因**: ステージング環境のデータベースにGoogle SocialAppの設定が存在しない
+- **エラーログ**: `SocialApp for provider 'google' not found`
+- **影響**: ユーザーがGoogle認証でログインできない状態
+
+### 2. セキュリティ問題
+- **HTTP通信**: 現在ステージング環境はHTTPのみ（http://staging.grape-app.jp）
+- **認証情報の平文送信**: OAuth認証時の機密情報が暗号化されていない
+- **本番運用不可**: HTTPSなしでは本番環境として使用できない
+
+### 3. 設定の不整合
+- **ローカル環境**: Google OAuth正常動作（localhost:8000とstaging.grape-app.jpの両方に対応）
+- **ステージング環境**: データベース設定が不完全
+- **環境間の差異**: 本番デプロイ時に同様の問題が発生する可能性
+
+## 📋 作業計画
+
+### Phase 1: Google OAuth認証修正（優先度：高）
+**予想作業時間**: 1時間
+
+#### 1.1 Google Cloud Console設定確認
+- [ ] OAuth 2.0クライアントIDの設定確認
+- [ ] 承認済みリダイレクトURIの確認
+  - `http://staging.grape-app.jp/accounts/google/login/callback/`
+  - `https://staging.grape-app.jp/accounts/google/login/callback/` （HTTPS化後用）
+- [ ] クライアントIDとシークレットの取得
+
+#### 1.2 ステージング環境への設定適用
+**方法A: ECSタスク定義での環境変数設定（推奨）**
+```bash
+# 新しいタスク定義リビジョンを作成
+aws ecs register-task-definition \
+  --family django-app-staging-simple \
+  --task-definition-arn <現在のタスク定義ARN> \
+  --container-definitions '[
+    {
+      "name": "django-app",
+      "environment": [
+        {"name": "GOOGLE_OAUTH_CLIENT_ID", "value": "<CLIENT_ID>"},
+        {"name": "GOOGLE_OAUTH_CLIENT_SECRET", "value": "<CLIENT_SECRET>"}
+      ]
+    }
+  ]'
+```
+
+**方法B: ECS Execでの直接設定**
+```bash
+# ECSタスクに接続してDjangoシェルで設定
+aws ecs execute-command \
+  --cluster django-ecs-cluster-staging \
+  --task <TASK_ID> \
+  --container django-app \
+  --interactive \
+  --command "/bin/bash"
+
+# コンテナ内でDjangoシェル実行
+python manage.py shell
+```
+
+#### 1.3 動作確認
+- [ ] ステージング環境でGoogle OAuth認証テスト
+- [ ] ログイン・ログアウトの動作確認
+- [ ] CloudWatchログでエラーがないことを確認
+
+### Phase 2: HTTPS化対応（優先度：高）
+**予想作業時間**: 2-3時間
+
+#### 2.1 SSL証明書の取得
+```bash
+# AWS Certificate Manager (ACM) で証明書リクエスト
+aws acm request-certificate \
+  --domain-name staging.grape-app.jp \
+  --validation-method DNS \
+  --region ap-northeast-1
+```
+
+#### 2.2 ALB設定の更新
+- [ ] HTTPS リスナー（ポート443）の追加
+- [ ] SSL証明書のALBへの関連付け
+- [ ] HTTP→HTTPSリダイレクトの設定
+- [ ] セキュリティポリシーの設定
+
+#### 2.3 CloudFormationテンプレート更新
+```yaml
+# ALBにHTTPSリスナー追加
+HTTPSListener:
+  Type: AWS::ElasticLoadBalancingV2::Listener
+  Properties:
+    LoadBalancerArn: !Ref ApplicationLoadBalancer
+    Port: 443
+    Protocol: HTTPS
+    Certificates:
+      - CertificateArn: !Ref SSLCertificate
+    DefaultActions:
+      - Type: forward
+        TargetGroupArn: !Ref TargetGroup
+
+# HTTP→HTTPSリダイレクト
+HTTPRedirectListener:
+  Type: AWS::ElasticLoadBalancingV2::Listener
+  Properties:
+    LoadBalancerArn: !Ref ApplicationLoadBalancer
+    Port: 80
+    Protocol: HTTP
+    DefaultActions:
+      - Type: redirect
+        RedirectConfig:
+          Protocol: HTTPS
+          Port: 443
+          StatusCode: HTTP_301
+```
+
+#### 2.4 Django設定の更新
+```python
+# settings.py
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+```
+
+#### 2.5 Google OAuth設定の更新
+- [ ] Google Cloud ConsoleでHTTPS URLを追加
+- [ ] リダイレクトURIを`https://staging.grape-app.jp/accounts/google/login/callback/`に更新
+
+### Phase 3: 本番環境準備（優先度：中）
+**予想作業時間**: 1時間
+
+#### 3.1 本番用ドメイン設定
+- [ ] `grape-app.jp`と`www.grape-app.jp`の証明書取得
+- [ ] 本番用CloudFormationテンプレート作成
+- [ ] 本番用Google OAuth設定
+
+#### 3.2 環境分離の強化
+- [ ] 本番とステージングの完全分離
+- [ ] 環境変数による設定の切り替え
+- [ ] データベースの分離確認
+
+## 🔧 トラブルシューティング準備
+
+### よくある問題と対処法
+1. **証明書検証エラー**: DNS検証レコードの設定確認
+2. **HTTPS接続エラー**: セキュリティグループのポート443開放確認
+3. **OAuth認証エラー**: リダイレクトURIの完全一致確認
+4. **Mixed Content警告**: 静的ファイルのHTTPS配信確認
+
+### 緊急時のロールバック手順
+```bash
+# 問題発生時は前のタスク定義リビジョンに戻す
+aws ecs update-service \
+  --cluster django-ecs-cluster-staging \
+  --service django-ecs-service-staging-simple \
+  --task-definition django-app-staging-simple:<前のリビジョン番号>
+```
+
+## 📊 成功指標
+
+### Phase 1完了時
+- [ ] ステージング環境でGoogle OAuth認証が正常動作
+- [ ] エラーログにSocialApp関連エラーが出ない
+- [ ] ユーザーがGoogle認証でログイン・ログアウト可能
+
+### Phase 2完了時
+- [ ] `https://staging.grape-app.jp`でアクセス可能
+- [ ] HTTP→HTTPSの自動リダイレクト動作
+- [ ] SSL証明書が有効（ブラウザで警告なし）
+- [ ] Google OAuth認証がHTTPS環境で正常動作
+
+### Phase 3完了時
+- [ ] 本番環境のHTTPS設定完了
+- [ ] 本番・ステージング環境の完全分離
+- [ ] 本番デプロイの準備完了
+
+## ⚠️ 注意事項
+
+1. **作業順序**: OAuth修正→HTTPS化の順番で実施（HTTPSでOAuth設定変更が必要なため）
+2. **ダウンタイム**: HTTPS化時に一時的なサービス停止の可能性
+3. **DNS伝播**: 証明書検証とDNS変更に最大48時間かかる場合がある
+4. **バックアップ**: 作業前に現在の設定をバックアップ
+5. **テスト**: 各フェーズ完了後に必ず動作確認を実施
+
+## 📞 エスカレーション
+
+問題発生時の連絡先と対応手順を事前に確認しておく。
+- AWS サポート（必要に応じて）
+- Google Cloud サポート（OAuth関連）
+- DNS設定の管理者
