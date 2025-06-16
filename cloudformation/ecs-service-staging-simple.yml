@@ -34,9 +34,9 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: "/ecs/django-app-staging"
+              awslogs-group: "/ecs/django-app-staging-simple"
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: django-app
+              awslogs-stream-prefix: ecs
           Environment:
             - Name: DEBUG
               Value: '1'
@@ -46,6 +46,10 @@ Resources:
               Value: 'config.settings'
             - Name: SECRET_KEY
               Value: 'django-insecure-temporary-key-for-staging'
+            - Name: CHATWORK_API_TOKEN
+              Value: 'a73b98001202df49108874fb4bbc89ea'
+            - Name: CHATWORK_ROOM_ID
+              Value: '372584775'
 
   # ECS Service (ALBなし、パブリックIP直接アクセス)
   Service:
