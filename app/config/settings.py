@@ -143,7 +143,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # django-allauth設定
-SITE_ID = 1
+# 環境に応じてSITE_IDを動的に設定
+if DEBUG:
+    # ローカル環境では localhost:8000 のサイトを使用（ID: 2）
+    SITE_ID = 2
+else:
+    # 本番・ステージング環境では staging.grape-app.jp のサイトを使用（ID: 1）
+    SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     # デフォルトのDjango認証バックエンド

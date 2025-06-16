@@ -134,8 +134,9 @@
     {% endif %}
 </head>
 <body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
-    <!-- サイドバーナビゲーション -->
+    <!-- サイドバーナビゲーション（認証済みユーザーのみ表示） -->
     <div class="flex h-screen overflow-hidden">
+        {% if user.is_authenticated %}
         <div class="glass-dark text-white w-64 flex-shrink-0 hidden md:block">
             <div class="p-4">
                 <div class="logo flex justify-center">
@@ -178,15 +179,24 @@
                 </ul>
             </nav>
         </div>
+        {% endif %}
 
         <!-- メインコンテンツ -->
         <div class="flex-1 overflow-auto">
             <!-- ヘッダー -->
             <header class="glass sticky top-0 z-10">
                 <div class="flex items-center justify-between p-4">
+                    {% if user.is_authenticated %}
                     <button class="md:hidden text-white" id="menu-toggle">
                         <i class="fas fa-bars"></i>
                     </button>
+                    {% else %}
+                    <!-- ログインしていない場合はロゴを表示 -->
+                    <div class="flex items-center">
+                        <img src="/static/images/grape_logo.png" alt="校正AI" class="h-8 w-auto mr-2">
+                        <span class="text-lg font-bold">グレイプ社内効率化ツール</span>
+                    </div>
+                    {% endif %}
                     <div class="flex items-center">
                         {% if user.is_authenticated %}
                             <div class="relative" id="user-menu">
@@ -247,7 +257,8 @@
         </div>
     </div>
 
-    <!-- モバイルメニュー -->
+    <!-- モバイルメニュー（認証済みユーザーのみ） -->
+    {% if user.is_authenticated %}
     <div class="fixed inset-0 z-20 bg-black bg-opacity-50 transition-opacity hidden" id="mobile-menu-overlay">
         <div class="glass-dark absolute inset-y-0 left-0 w-64 text-white transform -translate-x-full transition-transform duration-300" id="mobile-menu">
             <!-- モバイルメニューの内容 -->
@@ -281,21 +292,28 @@
             </nav>
         </div>
     </div>
+    {% endif %}
 
     <!-- JavaScript -->
     <script>
-        // モバイルメニュートグル
-        document.getElementById('menu-toggle').addEventListener('click', function() {
-            const overlay = document.getElementById('mobile-menu-overlay');
-            const menu = document.getElementById('mobile-menu');
-            overlay.classList.toggle('hidden');
-            menu.classList.toggle('-translate-x-full');
-        });
+        // モバイルメニュートグル（認証済みユーザーのみ）
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (menuToggle && mobileMenuOverlay && mobileMenu) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenuOverlay.classList.toggle('hidden');
+                    mobileMenu.classList.toggle('-translate-x-full');
+                });
 
-        document.getElementById('mobile-menu-overlay').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.add('hidden');
-                document.getElementById('mobile-menu').classList.add('-translate-x-full');
+                mobileMenuOverlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                        mobileMenu.classList.add('-translate-x-full');
+                    }
+                });
             }
         });
 
