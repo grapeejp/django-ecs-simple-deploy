@@ -199,8 +199,8 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = True
 
-# @grapee.co.jpドメインのみ許可
-SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
+# @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
+SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
 
 # セッション設定（ログインループ問題解決）
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'

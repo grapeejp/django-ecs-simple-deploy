@@ -635,3 +635,111 @@ High - 次世代校正機能の核となる重要な機能追加
 
 ## 期限
 2025/06/18
+
+# [機能拡張] Google Workspace OAuth認証機能のユーザー管理拡張
+
+## 目的
+- 既存のGoogle Workspace OAuth認証機能を拡張し、複数のユーザーIDを管理できるようにする
+- メールリストを活用した認証許可ユーザーの管理機能を実装
+- 管理者による認証許可ユーザーの追加・削除機能を提供
+
+## 実装内容
+
+### 1. ユーザー管理システムの拡張
+1. **認証許可ユーザーモデルの作成**
+   - AllowedUserモデルの実装
+   - メールアドレス、氏名、部署、権限レベルの管理
+   - 有効/無効フラグの実装
+   - 作成日時、更新日時の記録
+
+2. **メールリスト管理機能**
+   - CSVファイルからのユーザー一括登録
+   - 管理画面でのユーザー個別追加・編集・削除
+   - ユーザー検索・フィルター機能
+   - ユーザー一覧のエクスポート機能
+
+3. **認証フローの拡張**
+   - Google OAuth認証後の許可ユーザーチェック
+   - 未許可ユーザーへの適切なエラーメッセージ表示
+   - 許可ユーザーの自動ユーザー登録・更新
+   - ログイン履歴の記録
+
+### 2. 管理機能の実装
+1. **Django Admin拡張**
+   - AllowedUserの管理画面カスタマイズ
+   - 一括操作機能（有効化/無効化、削除）
+   - ユーザー権限レベルの管理
+   - ログイン履歴の表示
+
+2. **ユーザー権限管理**
+   - 一般ユーザー、管理者、スーパーユーザーの権限分離
+   - 機能別アクセス制御の実装
+   - 権限レベルに応じたUI表示制御
+
+3. **セキュリティ強化**
+   - 不正アクセス試行の記録
+   - アカウントロック機能
+   - セッション管理の強化
+
+### 3. UI/UX改善
+1. **ログイン画面の改善**
+   - 認証エラー時の分かりやすいメッセージ表示
+   - ユーザーガイダンスの追加
+   - レスポンシブデザインの最適化
+
+2. **ユーザー管理画面の実装**
+   - 管理者向けユーザー管理ダッシュボード
+   - ユーザー追加フォーム
+   - 一括操作インターフェース
+
+## 技術的メモ
+
+### 使用技術
+- Django 4.2+ (既存)
+- django-allauth (既存)
+- Google OAuth2.0 API (既存)
+- PostgreSQL (新テーブル追加)
+- Bootstrap 5 (UI改善)
+
+### 新規モデル設計
+```python
+class AllowedUser(models.Model):
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255)
+    department = models.CharField(max_length=100, blank=True)
+    permission_level = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+
+class LoginHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    login_time = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    success = models.BooleanField(default=True)
+```
+
+### 環境変数追加
+- `GOOGLE_OAUTH_DOMAIN_RESTRICTION`: @grapee.co.jp (既存)
+- `ALLOWED_USERS_CSV_PATH`: メールリストCSVファイルパス
+- `LOGIN_HISTORY_RETENTION_DAYS`: ログイン履歴保持期間
+
+## テスト項目
+- [ ] AllowedUserモデルの作成・更新・削除テスト
+- [ ] CSVファイルからのユーザー一括登録テスト
+- [ ] Google OAuth認証フローの許可ユーザーチェックテスト
+- [ ] 未許可ユーザーのアクセス拒否テスト
+- [ ] 管理画面でのユーザー管理機能テスト
+- [ ] 権限レベル別アクセス制御テスト
+- [ ] ログイン履歴記録テスト
+- [ ] セキュリティ機能（アカウントロック等）テスト
+- [ ] UI/UXの動作確認テスト
+- [ ] パフォーマンステスト
+
+## 期限
+2025/06/20
+
+## 優先度
+High - 既存のOAuth機能を活用したユーザー管理の重要な拡張機能
