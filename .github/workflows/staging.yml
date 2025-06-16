@@ -50,24 +50,42 @@ jobs:
     - name: Deploy ECS Cluster
       run: |
         aws cloudformation deploy \
-          --stack-name django-ecs-cluster-staging \
+          --stack-name django-ecs-cluster-staging-v2 \
           --template-file cloudformation/ecs-cluster.yml \
+          --parameters ParameterKey=Environment,ParameterValue=staging \
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset
           
     - name: Deploy ECS Service
       run: |
-        aws cloudformation deploy \
-          --stack-name django-ecs-service-staging-$(date +%Y%m%d%H%M%S) \
-          --template-file cloudformation/ecs-service-staging.yml \
-          --parameter-overrides \
-            ImageUrl=$IMAGE_URI \
-          --no-fail-on-empty-changeset
+        # 固定スタック名を使用（タイムスタンプなし）
+        STACK_NAME="django-ecs-service-staging-simple"
+        
+        # 既存スタックの確認
+        if aws cloudformation describe-stacks --stack-name $STACK_NAME &> /dev/null; then
+          echo "Updating existing stack: $STACK_NAME"
+          aws cloudformation update-stack \
+            --stack-name $STACK_NAME \
+            --template-body file://cloudformation/ecs-service-staging-simple.yml \
+            --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI
+        else
+          echo "Creating new stack: $STACK_NAME"
+          aws cloudformation create-stack \
+            --stack-name $STACK_NAME \
+            --template-body file://cloudformation/ecs-service-staging-simple.yml \
+            --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI
+        fi
           
     - name: Get Application URL
       run: |
-        ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
-        echo "::notice ::ステージング環境URL: http://$ALB_DNS"
+        ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-v2 --query "Stacks[0].Outputs[?OutputKey=='ApplicationLoadBalancer'].OutputValue" --output text 2>/dev/null || echo "ALB not found")
+        if [ "$ALB_DNS" != "ALB not found" ]; then
+          # ALB ARNからDNS名を取得
+          ALB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ALB_DNS --query "LoadBalancers[0].DNSName" --output text 2>/dev/null || echo "staging.grape-app.jp")
+          echo "::notice ::ステージング環境URL: http://$ALB_DNS_NAME"
+        else
+          echo "::notice ::ステージング環境URL: http://staging.grape-app.jp"
+        fi
         
     - name: Notify Slack
       if: always()
