@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 from health_check import health_check
+from core.views import custom_logout
 import sys
 import os
 
@@ -27,11 +28,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from welcome_view import welcome
 
 urlpatterns = [
-    # path("", welcome, name="welcome"),  # コメントアウト
+    path("", welcome, name="welcome"),  # ウェルカムページを復活
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
+    # カスタムログアウトを優先
+    path('accounts/logout/', custom_logout, name='account_logout'),
     path('accounts/', include('allauth.urls')),  # django-allauth
-    path('', include('core.urls')),  # ダッシュボード
+    path('dashboard/', include('core.urls')),  # ダッシュボードを/dashboard/に移動
     path('proofreading_ai/', include('proofreading_ai.urls')),  # 校正AIアプリ
     path('tags/', include('tags.urls')),  # タグ推薦アプリ
     path('grapecheck/', include('grapecheck.urls')),  # グレイプらしさチェッカー

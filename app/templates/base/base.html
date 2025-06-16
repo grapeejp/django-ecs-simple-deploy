@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}校正AIシステム{% endblock %}</title>
     {% load static %}
     <!-- Tailwind CSS -->
@@ -126,6 +127,11 @@
         }
     </style>
     {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+    <!-- 認証チェック用JavaScript（認証が必要なページでのみ読み込み） -->
+    {% if request.resolver_match.url_name != 'account_login' and request.resolver_match.url_name != 'account_signup' and request.resolver_match.url_name != 'welcome' %}
+    <script src="{% static 'js/auth-check.js' %}"></script>
+    {% endif %}
 </head>
 <body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
     <!-- サイドバーナビゲーション -->
@@ -214,7 +220,7 @@
                                             <i class="fas fa-cog mr-2"></i>設定
                                         </a>
                                         <hr class="my-1">
-                                        <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        <a href="#" onclick="performLogout()" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                                             <i class="fas fa-sign-out-alt mr-2"></i>ログアウト
                                         </a>
                                     </div>
@@ -309,6 +315,55 @@
                     userDropdown.classList.add('hidden');
                 }
             });
+        }
+
+        // ログアウト関数
+        function performLogout() {
+            if (confirm('ログアウトしますか？')) {
+                // CSRFトークンを取得
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                                 document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
+                                 getCookie('csrftoken');
+                
+                // POSTリクエストでログアウト
+                fetch('/accounts/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    credentials: 'same-origin',
+                    body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrfToken)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // ログアウト成功時はホームページにリダイレクト
+                        window.location.href = '/';
+                    } else {
+                        alert('ログアウトに失敗しました。');
+                    }
+                })
+                .catch(error => {
+                    console.error('ログアウトエラー:', error);
+                    alert('ログアウト中にエラーが発生しました。');
+                });
+            }
+        }
+
+        // CSRFトークンを取得するヘルパー関数
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
     </script>
     {% block extra_js %}{% endblock %}

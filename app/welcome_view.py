@@ -75,7 +75,17 @@ def welcome(request):
             </div>
             
             <div class="info">
-                <h3>次のステップ:</h3>
+                <h3>アプリケーション:</h3>
+                <ul>
+                    <li><a href="/dashboard/" style="color: #0c5460; text-decoration: none; font-weight: bold;">📊 ダッシュボード</a> - メインアプリケーション</li>
+                    <li><a href="/accounts/login/" style="color: #0c5460; text-decoration: none; font-weight: bold;">🔐 ログイン</a> - Google Workspace認証</li>
+                    <li><a href="/admin/" style="color: #0c5460; text-decoration: none; font-weight: bold;">⚙️ 管理画面</a> - システム管理</li>
+                    <li><a href="/health/" style="color: #0c5460; text-decoration: none; font-weight: bold;">💚 ヘルスチェック</a> - システム状態確認</li>
+                </ul>
+            </div>
+            
+            <div class="info">
+                <h3>デプロイ情報:</h3>
                 <ul>
                     <li>AWSアカウント情報を<code>.env</code>ファイルに設定</li>
                     <li>ECRにDockerイメージをプッシュ</li>

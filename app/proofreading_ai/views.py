@@ -19,6 +19,8 @@ import csv
 from datetime import datetime, timezone, timedelta
 from django.core.cache import cache
 from django.utils import timezone as django_timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.vary import vary_on_headers
 
 from .models import ProofreadingRequest, ProofreadingResult, ReplacementDictionary
 # 本番用とモック用両方をインポート
@@ -55,19 +57,32 @@ def get_replacement_dict():
         logger.error(f"❌ 置換辞書取得エラー: {str(e)}")
         return {}
 
-# @login_required  # 一時的にコメントアウト（テスト用）
+@never_cache  # キャッシュ完全無効化
+@vary_on_headers('Authorization', 'Cookie')  # 認証ヘッダーでキャッシュ分離
+@login_required
 def index(request):
     """
     校正AIのメインページを表示
     """
+    # 認証デバッグ情報をログに出力
+    logger.info(f"🔐 認証状況: user={request.user}, authenticated={request.user.is_authenticated}")
+    
     replacement_dict = get_replacement_dict()
     context = {
         'replacement_dict': json.dumps(replacement_dict, ensure_ascii=False),
         'room_id': getattr(settings, 'CHATWORK_ROOM_ID', ''),
     }
-    return render(request, 'proofreading_ai/index.html', context)
+    response = render(request, 'proofreading_ai/index.html', context)
+    
+    # 追加のキャッシュ無効化ヘッダー
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def proofread(request):
@@ -220,6 +235,7 @@ def proofread(request):
         })
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def proofread_async(request):
@@ -347,6 +363,7 @@ def process_proofread_async(process_id, original_text, temperature, top_p):
         )
 
 
+@login_required
 @csrf_exempt
 @require_POST
 def check_proofread_status(request):
@@ -450,6 +467,7 @@ def add_dictionary(request):
         })
 
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def debug_aws_auth(request):
@@ -525,6 +543,7 @@ def debug_aws_auth(request):
         })
 
 
+@login_required
 @require_http_methods(["GET"])
 def debug_server_status(request):
     """
@@ -592,6 +611,7 @@ def debug_server_status(request):
         })
 
 
+@login_required
 def dictionary_viewer(request):
     """
     校正AIページからアクセス可能な辞書表示機能
@@ -655,6 +675,7 @@ def dictionary_viewer(request):
         })
 
 
+@login_required
 @csrf_exempt
 def submit_feedback(request):
     """
@@ -759,8 +780,22 @@ def submit_feedback(request):
         })
 
 
+@login_required
 def feedback_form(request):
     """
     フィードバックフォーム表示ページ
     """
-    return render(request, 'proofreading_ai/feedback_form.html') 
+    return render(request, 'proofreading_ai/feedback_form.html')
+
+
+@login_required
+def auth_test(request):
+    """
+    認証テスト用ビュー
+    """
+    logger.info(f"🔐 認証テスト: user={request.user}, authenticated={request.user.is_authenticated}")
+    return JsonResponse({
+        'authenticated': request.user.is_authenticated,
+        'user': str(request.user),
+        'user_id': request.user.id if request.user.is_authenticated else None,
+    }) 

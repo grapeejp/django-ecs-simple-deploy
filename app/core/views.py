@@ -5,7 +5,14 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.cache import never_cache
 import json
+from django.utils import timezone
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """ダッシュボード表示ビュー（ログイン必須）"""
@@ -17,78 +24,91 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context 
 
 def dashboard_view(request):
-    """ダッシュボードのメインビュー"""
-    # ユーザーがログインしていない場合はログインページに
-    if not request.user.is_authenticated:
-        return render(request, 'registration/login.html')
-    
-    context = {
-        'user': request.user,
-        'apps': [
-            {
-                'name': '文章校正AI',
-                'description': 'AI技術で文章を自動校正',
-                'url': '/proofreading_ai/',
-                'icon': '📝'
-            },
-            {
-                'name': 'タグ推薦システム',
-                'description': 'コンテンツに最適なタグを提案',
-                'url': '/tags/',
-                'icon': '🏷️'
-            },
-            {
-                'name': 'グレイプらしさチェッカー',
-                'description': 'グレイプブランドの一貫性をチェック',
-                'url': '/grapecheck/',
-                'icon': '🍇'
-            }
-        ]
-    }
-    return render(request, 'dashboard/dashboard.html', context)
+    """ダッシュボード表示ビュー（ログイン必須）"""
+    return render(request, 'dashboard/index.html')
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def create_users_debug(request):
-    """デバッグ用: ユーザー作成エンドポイント"""
-    demo_users = [
-        ('admin', 'admin@grapee.co.jp', 'grape2025admin', True, True),
-        ('testuser', 'test@grapee.co.jp', 'grape2025test', True, False),
-        ('demo1', 'demo1@grapee.co.jp', 'grape2025demo', False, False),
-        ('demo2', 'demo2@grapee.co.jp', 'grape2025demo', False, False),
-        ('demo3', 'demo3@grapee.co.jp', 'grape2025demo', False, False),
-    ]
-    
-    results = []
-    for username, email, password, is_staff, is_superuser in demo_users:
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                'email': email,
-                'is_staff': is_staff,
-                'is_superuser': is_superuser
-            }
-        )
-        user.set_password(password)
-        user.save()
+    """デバッグ用ユーザー作成API"""
+    try:
+        data = json.loads(request.body)
+        users_data = data.get('users', [])
         
-        status = "作成" if created else "更新"
-        results.append(f'{status}: {username} ({email})')
-    
-    # ユーザー一覧も追加
-    all_users = []
-    for u in User.objects.all():
-        all_users.append({
-            'username': u.username,
-            'email': u.email,
-            'is_staff': u.is_staff,
-            'is_superuser': u.is_superuser,
-            'is_active': u.is_active
+        created_users = []
+        for user_data in users_data:
+            user, created = User.objects.get_or_create(
+                username=user_data['username'],
+                defaults={
+                    'email': user_data['email'],
+                    'first_name': user_data.get('first_name', ''),
+                    'last_name': user_data.get('last_name', ''),
+                }
+            )
+            if created:
+                user.set_password(user_data.get('password', 'defaultpassword'))
+                user.save()
+            created_users.append({
+                'username': user.username,
+                'email': user.email,
+                'created': created
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'users': created_users
         })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+@never_cache
+@csrf_protect
+def custom_logout(request):
+    """カスタムログアウトビュー - セッションとクッキーを強制的にクリア"""
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'ログアウトしました。')
+        return redirect('account_login')
     
-    return JsonResponse({
-        'success': True,
-        'message': 'デモユーザーの作成/更新が完了しました',
-        'results': results,
-        'all_users': all_users,
-        'host': request.headers.get('Host', 'unknown')
-    }) 
+    return render(request, 'account/logout.html')
+
+@never_cache  # キャッシュ完全無効化
+@csrf_exempt  # API用
+def check_auth_status(request):
+    """認証状態をチェックするAPI（キャッシュ無効化対応）"""
+    response_data = {
+        'authenticated': request.user.is_authenticated,
+        'user': None,
+        'timestamp': timezone.now().isoformat()  # タイムスタンプ追加
+    }
+    
+    if request.user.is_authenticated:
+        # 許可されたユーザーかチェック
+        allowed_emails = [
+            'test@grapee.co.jp',
+            'yanagimoto@grapee.co.jp',
+            'yasutoshi.yanagimoto@grapee.co.jp',
+        ]
+        
+        if request.user.email in allowed_emails:
+            response_data['user'] = {
+                'email': request.user.email,
+                'username': request.user.username,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+            }
+        else:
+            response_data['authenticated'] = False
+            response_data['error'] = 'Access denied: User not in allowed list'
+    
+    response = JsonResponse(response_data)
+    
+    # キャッシュ無効化ヘッダー
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response 

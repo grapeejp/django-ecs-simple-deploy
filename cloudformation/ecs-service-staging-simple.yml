@@ -38,18 +38,19 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
           Environment:
-            - Name: DEBUG
-              Value: '1'
             - Name: ALLOWED_HOSTS
               Value: '*'
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'config.settings'
             - Name: SECRET_KEY
               Value: 'django-insecure-temporary-key-for-staging'
-            - Name: CHATWORK_API_TOKEN
-              Value: 'a73b98001202df49108874fb4bbc89ea'
-            - Name: CHATWORK_ROOM_ID
-              Value: '372584775'
+            - Name: DEBUG
+              Value: "False"
+            # 機密情報は実際のデプロイ時に手動で設定
+            # - Name: CHATWORK_API_TOKEN
+            # - Name: CHATWORK_ROOM_ID  
+            # - Name: GOOGLE_OAUTH_CLIENT_ID
+            # - Name: GOOGLE_OAUTH_CLIENT_SECRET
 
   # ECS Service (ALBなし、パブリックIP直接アクセス)
   Service:

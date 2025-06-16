@@ -24,7 +24,7 @@ env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
 # Basic認証設定（本番環境では外部で制御）
 BASIC_AUTH_ENABLED = env.bool("BASIC_AUTH_ENABLED", default=False) and not DEBUG
@@ -154,8 +154,8 @@ AUTHENTICATION_BACKENDS = [
 
 # ログイン・ログアウト後のリダイレクト先
 LOGIN_URL = '/accounts/login/'  # 未ログインユーザーのリダイレクト先
-LOGIN_REDIRECT_URL = '/proofreading_ai/'  # ログイン後は校正AIページへ
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'  # ログイン後はダッシュボードへ
+LOGOUT_REDIRECT_URL = '/'  # ログアウト後はウェルカムページへ
 
 # allauth設定
 ACCOUNT_EMAIL_REQUIRED = True
@@ -163,9 +163,9 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # 社内利用のため
 ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
-ACCOUNT_SIGNUP_REDIRECT_URL = '/proofreading_ai/'  # 新規登録後も校正AIページへ
-ACCOUNT_LOGIN_REDIRECT_URL = '/proofreading_ai/'   # ログイン後は校正AIページへ
-ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
+ACCOUNT_SIGNUP_REDIRECT_URL = '/dashboard/'  # 新規登録後もダッシュボードへ
+ACCOUNT_LOGIN_REDIRECT_URL = '/dashboard/'   # ログイン後はダッシュボードへ
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # ログアウト後はウェルカムページへ
 
 # 新規登録を有効化（社内メンバー用テストアカウント作成可能）
 ACCOUNT_ALLOW_REGISTRATION = True
@@ -199,8 +199,25 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = True
 
-# @grapee.co.jpドメインのみ許可
-SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
+# セッション設定（認証問題の解決）
+SESSION_COOKIE_AGE = 3600  # 1時間でセッション期限切れ
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # ブラウザ閉じたらセッション削除
+SESSION_SAVE_EVERY_REQUEST = True  # リクエストごとにセッション更新
+SESSION_COOKIE_SECURE = not DEBUG  # HTTPS環境でのみSecureフラグ
+SESSION_COOKIE_HTTPONLY = True  # JavaScriptからアクセス不可
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF攻撃対策
+
+# キャッシュ無効化設定
+CACHE_MIDDLEWARE_SECONDS = 0  # キャッシュ無効
+USE_ETAGS = False  # ETagキャッシュ無効
+
+# セキュリティ設定
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
+SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
 
 # セッション設定（ログインループ問題解決）
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
