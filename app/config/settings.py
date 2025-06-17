@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import environ
+import ipaddress
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,8 +31,41 @@ DEBUG = env.bool("DEBUG", default=False)
 BASIC_AUTH_ENABLED = env.bool("BASIC_AUTH_ENABLED", default=False) and not DEBUG
 
 # 環境変数から取得、存在しない場合はワイルドカードを使用
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+# ECS環境での内部IPアドレスも明示的に許可
+ALLOWED_HOSTS_ENV = os.environ.get("ALLOWED_HOSTS", "*")
+if ALLOWED_HOSTS_ENV == "*":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ALLOWED_HOSTS_ENV.split(",")
 
+# ECS環境での内部アクセスを許可（プライベートサブネット対応）
+ALLOWED_HOSTS.extend([
+    "10.0.1.77",      # 現在のECSタスクIP
+    "10.0.1.95",      # 以前のエラーログで確認されたIP
+    "localhost",
+    "127.0.0.1",
+    "staging.grape-app.jp",
+    "grape-app.jp",
+])
+
+# プライベートサブネット全体を許可（10.0.x.x）
+def is_private_ip(ip):
+    try:
+        return ipaddress.ip_address(ip).is_private
+    except:
+        return False
+
+# リクエスト処理時にプライベートIPを動的に許可
+class AllowPrivateIPMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        host = request.get_host().split(':')[0]  # ポート番号を除去
+        if is_private_ip(host) and host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
+        response = self.get_response(request)
+        return response
 
 # Application definition
 
@@ -57,6 +91,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     # "core.middleware.BasicAuthMiddleware",  # nginx プロキシでBasic認証を行うため無効化
+    "config.settings.AllowPrivateIPMiddleware",  # プライベートIP動的許可
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -223,7 +258,13 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 # @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
-SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
+# ステージング環境テスト用：一時的にシンプルなアダプターを使用
+if DEBUG:
+    # ローカル環境では拡張アダプターを使用
+    SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
+else:
+    # ステージング環境では一時的にシンプルなアダプターを使用（テスト用）
+    SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
 
 # セッション設定（ログインループ問題解決）
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'

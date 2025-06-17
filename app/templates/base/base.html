@@ -136,19 +136,6 @@
 <body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
     <!-- サイドバーナビゲーション（認証済みユーザーのみ表示） -->
     <div class="flex h-screen overflow-hidden">
-        <!-- デバッグ情報（開発時のみ表示） -->
-        <!-- {% if settings.DEBUG %} -->
-        <div style="position: fixed; top: 0; right: 0; background: red; color: white; padding: 5px; z-index: 9999; font-size: 12px; max-width: 300px;">
-            DEBUG: user.is_authenticated = {{ user.is_authenticated }}<br>
-            user = {{ user }}<br>
-            user.id = {{ user.id }}<br>
-            user.username = {{ user.username }}<br>
-            user.email = {{ user.email }}<br>
-            user.is_anonymous = {{ user.is_anonymous }}<br>
-            request.user = {{ request.user }}<br>
-            request.user.is_authenticated = {{ request.user.is_authenticated }}
-        </div>
-        <!-- {% endif %} -->
         
         {% if user.is_authenticated %}
         <div class="glass-dark text-white w-64 flex-shrink-0 hidden md:block">
