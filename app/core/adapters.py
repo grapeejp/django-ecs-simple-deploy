@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -19,53 +20,47 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
         """
         ソーシャルログイン前にドメインチェックを実行
         """
-        # Googleプロバイダーのみチェック
-        if sociallogin.account.provider == 'google':
-            email = sociallogin.account.extra_data.get('email', '')
-            logger.info(f"Google OAuth認証試行: {email}")
-            print(f"DEBUG: Google OAuth認証試行: {email}")
-            print(f"DEBUG: extra_data = {sociallogin.account.extra_data}")
-            
-            # メールアドレスが取得できない場合のエラーハンドリング
-            if not email:
-                logger.error("メールアドレスが取得できませんでした")
-                print("DEBUG: メールアドレスが取得できませんでした")
-                messages.error(
-                    request,
-                    '認証エラー: Googleアカウントからメールアドレスを取得できませんでした。\n'
-                    'Google OAuth設定を確認してください。'
-                )
-                raise ImmediateHttpResponse(
-                    HttpResponseRedirect(reverse('account_login'))
-                )
-            
-            # @grapee.co.jpドメインかチェック
-            if not email.endswith('@grapee.co.jp'):
-                logger.warning(f"ドメイン制限により認証拒否: {email}")
-                print(f"DEBUG: ドメイン制限により認証拒否: {email}")
-                messages.error(
-                    request,
-                    f'❌ ドメイン制限エラー\n\n'
-                    f'グレイプ社内ツールには@grapee.co.jpのアカウントでのみログインできます。\n\n'
-                    f'🔍 使用されたアカウント: {email}\n'
-                    f'✅ 必要なドメイン: @grapee.co.jp\n\n'
-                    f'正しいアカウントでログインし直してください。'
-                )
-                # ログインページにリダイレクト
-                raise ImmediateHttpResponse(
-                    HttpResponseRedirect(reverse('account_login'))
-                )
-            else:
-                logger.info(f"ドメイン認証成功: {email}")
-                print(f"DEBUG: ドメイン認証成功: {email}")
+        try:
+            # Googleプロバイダーのみチェック
+            if sociallogin.account.provider == 'google':
+                # デバッグ情報をログに記録
+                logger.info(f"=== Google OAuth Debug Info ===")
+                logger.info(f"Provider: {sociallogin.account.provider}")
+                logger.info(f"Extra data keys: {list(sociallogin.account.extra_data.keys())}")
+                logger.info(f"Full extra data: {sociallogin.account.extra_data}")
                 
-                # 追加のデバッグ情報
-                print(f"DEBUG: 認証成功 - ユーザー情報:")
-                print(f"  - Email: {email}")
-                print(f"  - Name: {sociallogin.account.extra_data.get('name', 'N/A')}")
-                print(f"  - Provider: {sociallogin.account.provider}")
-                print(f"  - UID: {sociallogin.account.uid}")
-    
+                email = sociallogin.account.extra_data.get('email', '')
+                logger.info(f"Google OAuth認証試行: {email}")
+                print(f"DEBUG: Google OAuth認証試行: {email}")
+                
+                if not email:
+                    error_msg = "Googleアカウントからメールアドレスを取得できませんでした"
+                    logger.error(error_msg)
+                    print(f"ERROR: {error_msg}")
+                    messages.error(request, f"認証エラー: {error_msg}")
+                    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+                
+                if not email.endswith('@grapee.co.jp'):
+                    error_msg = f"@grapee.co.jpドメインのアカウントのみ利用可能です（試行されたアカウント: {email}）"
+                    logger.warning(error_msg)
+                    print(f"WARNING: {error_msg}")
+                    messages.error(request, f"認証エラー: {error_msg}")
+                    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+                
+                logger.info(f"ドメインチェック通過: {email}")
+                print(f"SUCCESS: ドメインチェック通過: {email}")
+                
+        except ImmediateHttpResponse:
+            # 既にエラーレスポンスが設定されている場合は再発生
+            raise
+        except Exception as e:
+            error_msg = f"認証処理中にエラーが発生しました: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            print(f"EXCEPTION: {error_msg}")
+            print(f"TRACEBACK: {traceback.format_exc()}")
+            messages.error(request, f"システムエラー: {error_msg}")
+            raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+
     def is_open_for_signup(self, request, sociallogin):
         """
         @grapee.co.jpドメインのみ新規登録を許可
@@ -112,56 +107,65 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
 
 class ExtendedGrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
     """
-    AllowedUserモデルを使用する拡張Google Workspaceアダプター
+    @grapee.co.jpドメイン + AllowedUserテーブルでの制限を行うアダプター
     """
     
     def pre_social_login(self, request, sociallogin):
         """
-        ソーシャルログイン前にAllowedUserチェックを実行
+        ソーシャルログイン前にドメインチェックとAllowedUserチェックを実行
         """
-        # Googleプロバイダーのみチェック
-        if sociallogin.account.provider == 'google':
-            email = sociallogin.account.extra_data.get('email', '')
-            logger.info(f"Google OAuth認証試行: {email}")
-            
-            # 基本的なドメインチェック
-            if not email.endswith('@grapee.co.jp'):
-                self._handle_auth_failure(
-                    request, 
-                    email, 
-                    f'グレイプ社内ツールには@grapee.co.jpのアカウントでのみログインできます。\n使用されたアカウント: {email}',
-                    'domain_restriction'
-                )
-                return
-            
-            # AllowedUserチェック
-            try:
-                from .models import AllowedUser
-                allowed_user = AllowedUser.objects.get(email=email, is_active=True)
-                logger.info(f"認証許可ユーザー確認成功: {email} (権限: {allowed_user.permission_level})")
+        try:
+            # Googleプロバイダーのみチェック
+            if sociallogin.account.provider == 'google':
+                email = sociallogin.account.extra_data.get('email', '')
+                logger.info(f"Extended Google OAuth認証試行: {email}")
+                print(f"DEBUG: Extended Google OAuth認証試行: {email}")
                 
-                # 既存のDjangoユーザーとの関連付けチェック
-                if not allowed_user.django_user:
-                    # 既存のDjangoユーザーを検索
-                    from django.contrib.auth.models import User
-                    existing_user = User.objects.filter(email=email).first()
-                    if existing_user:
-                        logger.info(f"既存Djangoユーザーと関連付け: {email}")
-                        allowed_user.django_user = existing_user
-                        allowed_user.save()
+                if not email:
+                    error_msg = "Googleアカウントからメールアドレスを取得できませんでした"
+                    logger.error(error_msg)
+                    print(f"ERROR: {error_msg}")
+                    messages.error(request, f"認証エラー: {error_msg}")
+                    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
                 
-                # リクエストにAllowedUserを保存（後で使用）
-                request.session['allowed_user_id'] = allowed_user.id
+                if not email.endswith('@grapee.co.jp'):
+                    error_msg = f"@grapee.co.jpドメインのアカウントのみ利用可能です（試行されたアカウント: {email}）"
+                    logger.warning(error_msg)
+                    print(f"WARNING: {error_msg}")
+                    messages.error(request, f"認証エラー: {error_msg}")
+                    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
                 
-            except AllowedUser.DoesNotExist:
-                self._handle_auth_failure(
-                    request,
-                    email,
-                    f'申し訳ございませんが、{email} はシステムへのアクセスが許可されていません。\n'
-                    f'アクセスが必要な場合は、システム管理者にお問い合わせください。',
-                    'user_not_allowed'
-                )
-                return
+                # AllowedUserテーブルでのチェック
+                from core.models import AllowedUser
+                try:
+                    allowed_user = AllowedUser.objects.get(email=email)
+                    if not allowed_user.is_active:
+                        error_msg = f"アカウント {email} は現在無効化されています"
+                        logger.warning(error_msg)
+                        print(f"WARNING: {error_msg}")
+                        messages.error(request, f"認証エラー: {error_msg}")
+                        raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+                    
+                    logger.info(f"AllowedUser確認完了: {email} (管理者権限: {allowed_user.is_admin})")
+                    print(f"SUCCESS: AllowedUser確認完了: {email}")
+                    
+                except AllowedUser.DoesNotExist:
+                    error_msg = f"アカウント {email} は登録されていません。管理者にお問い合わせください"
+                    logger.warning(error_msg)
+                    print(f"WARNING: {error_msg}")
+                    messages.error(request, f"認証エラー: {error_msg}")
+                    raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
+                
+        except ImmediateHttpResponse:
+            # 既にエラーレスポンスが設定されている場合は再発生
+            raise
+        except Exception as e:
+            error_msg = f"認証処理中にエラーが発生しました: {str(e)}"
+            logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            print(f"EXCEPTION: {error_msg}")
+            print(f"TRACEBACK: {traceback.format_exc()}")
+            messages.error(request, f"システムエラー: {error_msg}")
+            raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
     
     def save_user(self, request, sociallogin, form=None):
         """
