@@ -317,14 +317,22 @@
                     {% endif %}
 
                     <!-- Google OAuth ログイン -->
+                    {% if providers.google %}
                     <div class="d-grid gap-2">
-                        <a href="{% url 'google_oauth2_login' %}" class="btn btn-danger btn-lg">
+                        <a href="{% provider_login_url 'google' %}" class="btn btn-danger btn-lg">
                             <i class="fab fa-google me-2"></i>
                             Googleアカウントでログイン
                         </a>
                     </div>
 
                     <hr class="my-4">
+                    {% else %}
+                    <!-- Google OAuth設定が未完了の場合の注意書き -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Google認証は現在設定中です。下記のフォームからログインしてください。
+                    </div>
+                    {% endif %}
 
                     <!-- 従来のログインフォーム -->
                     <form method="post" action="{% url 'account_login' %}">
