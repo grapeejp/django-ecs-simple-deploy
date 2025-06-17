@@ -261,6 +261,43 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# HTTPS対応設定（環境変数で制御）
+HTTPS_ENABLED = os.environ.get("HTTPS_ENABLED", "False").lower() == "true"
+
+if HTTPS_ENABLED:
+    # HTTPS強制設定
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = 31536000  # 1年間
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # HTTPS環境でのセッション設定
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # HTTPSでのCSRF設定
+    CSRF_TRUSTED_ORIGINS = [
+        'https://staging.grape-app.jp',
+        'https://prod.grapee.co.jp',
+        'https://localhost:8000',
+    ]
+else:
+    # HTTP環境での設定（開発・デバッグ用）
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    
+    # HTTPでのCSRF設定
+    CSRF_TRUSTED_ORIGINS = [
+        'http://staging.grape-app.jp',
+        'https://staging.grape-app.jp',
+        'http://prod.grapee.co.jp',
+        'https://prod.grapee.co.jp',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+
 # @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
 # ステージング環境テスト用：一時的にデフォルトアダプターを使用
 if DEBUG:
@@ -282,15 +319,8 @@ SESSION_COOKIE_SECURE = False  # HTTPでも動作するように
 SESSION_COOKIE_HTTPONLY = True  # XSS対策
 SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF対策とブラウザ互換性
 
-# CSRF設定（HTTP環境対応）
-CSRF_COOKIE_SECURE = False
+# CSRF設定（HTTPS対応により上記で設定済み）
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = [
-    'http://staging.grape-app.jp',
-    'https://staging.grape-app.jp',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
 
 # ドメイン設定（セッション共有用）
 SESSION_COOKIE_DOMAIN = None  # 自動検出
