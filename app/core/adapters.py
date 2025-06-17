@@ -24,6 +24,20 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
             email = sociallogin.account.extra_data.get('email', '')
             logger.info(f"Google OAuth認証試行: {email}")
             print(f"DEBUG: Google OAuth認証試行: {email}")
+            print(f"DEBUG: extra_data = {sociallogin.account.extra_data}")
+            
+            # メールアドレスが取得できない場合のエラーハンドリング
+            if not email:
+                logger.error("メールアドレスが取得できませんでした")
+                print("DEBUG: メールアドレスが取得できませんでした")
+                messages.error(
+                    request,
+                    '認証エラー: Googleアカウントからメールアドレスを取得できませんでした。\n'
+                    'Google OAuth設定を確認してください。'
+                )
+                raise ImmediateHttpResponse(
+                    HttpResponseRedirect(reverse('account_login'))
+                )
             
             # @grapee.co.jpドメインかチェック
             if not email.endswith('@grapee.co.jp'):
@@ -31,8 +45,11 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
                 print(f"DEBUG: ドメイン制限により認証拒否: {email}")
                 messages.error(
                     request,
-                    f'グレイプ社内ツールには@grapee.co.jpのアカウントでのみログインできます。\n'
-                    f'使用されたアカウント: {email}'
+                    f'❌ ドメイン制限エラー\n\n'
+                    f'グレイプ社内ツールには@grapee.co.jpのアカウントでのみログインできます。\n\n'
+                    f'🔍 使用されたアカウント: {email}\n'
+                    f'✅ 必要なドメイン: @grapee.co.jp\n\n'
+                    f'正しいアカウントでログインし直してください。'
                 )
                 # ログインページにリダイレクト
                 raise ImmediateHttpResponse(
@@ -41,6 +58,13 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
             else:
                 logger.info(f"ドメイン認証成功: {email}")
                 print(f"DEBUG: ドメイン認証成功: {email}")
+                
+                # 追加のデバッグ情報
+                print(f"DEBUG: 認証成功 - ユーザー情報:")
+                print(f"  - Email: {email}")
+                print(f"  - Name: {sociallogin.account.extra_data.get('name', 'N/A')}")
+                print(f"  - Provider: {sociallogin.account.provider}")
+                print(f"  - UID: {sociallogin.account.uid}")
     
     def is_open_for_signup(self, request, sociallogin):
         """
@@ -53,6 +77,37 @@ class GrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
             print(f"DEBUG: 新規登録チェック - Email: {email}, 許可: {result}")
             return result
         return False
+    
+    def populate_user(self, request, sociallogin, data):
+        """
+        ユーザー情報の設定（デバッグ情報付き）
+        """
+        user = super().populate_user(request, sociallogin, data)
+        
+        # デバッグ情報を出力
+        print(f"DEBUG: populate_user called:")
+        print(f"  - User: {user}")
+        print(f"  - Email: {user.email}")
+        print(f"  - Username: {user.username}")
+        print(f"  - Data: {data}")
+        
+        return user
+    
+    def save_user(self, request, sociallogin, form=None):
+        """
+        ユーザー保存（デバッグ情報付き）
+        """
+        print(f"DEBUG: save_user called for {sociallogin.account.extra_data.get('email')}")
+        
+        user = super().save_user(request, sociallogin, form)
+        
+        print(f"DEBUG: User saved successfully:")
+        print(f"  - ID: {user.id}")
+        print(f"  - Email: {user.email}")
+        print(f"  - Username: {user.username}")
+        print(f"  - Is Active: {user.is_active}")
+        
+        return user
 
 
 class ExtendedGrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
