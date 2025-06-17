@@ -128,10 +128,12 @@
     </style>
     {% block extra_css %}{% endblock %}
     {% block extra_head %}{% endblock %}
-    <!-- 認証チェック用JavaScript（認証が必要なページでのみ読み込み） -->
-    {% if request.resolver_match.url_name != 'account_login' and request.resolver_match.url_name != 'account_signup' and request.resolver_match.url_name != 'welcome' %}
+    <!-- 認証チェック用JavaScript（一時的に無効化） -->
+    {% comment %}
+    {% if request.resolver_match.url_name == 'dashboard' and user.is_authenticated %}
     <script src="{% static 'js/auth-check.js' %}"></script>
     {% endif %}
+    {% endcomment %}
 </head>
 <body class="bg-gradient-to-br from-grape-700 to-grape-900 text-white min-h-screen">
     <!-- サイドバーナビゲーション（認証済みユーザーのみ表示） -->

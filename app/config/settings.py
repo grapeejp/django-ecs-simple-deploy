@@ -200,17 +200,15 @@ AUTHENTICATION_BACKENDS = [
 # ログイン・ログアウト後のリダイレクト先
 LOGIN_URL = '/accounts/login/'  # 未ログインユーザーのリダイレクト先
 LOGIN_REDIRECT_URL = '/dashboard/'  # ログイン後はダッシュボードへ
-LOGOUT_REDIRECT_URL = '/'  # ログアウト後はウェルカムページへ
+LOGOUT_REDIRECT_URL = '/'  # ログアウト後はウェルカムページへ（無限ループ防止）
 
 # allauth設定
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 社内利用のため
 ACCOUNT_USERNAME_REQUIRED = True  # usernameも使用可能にする
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+# 以下は新しい設定形式に統合（重複削除）
 ACCOUNT_SIGNUP_REDIRECT_URL = '/dashboard/'  # 新規登録後もダッシュボードへ
-ACCOUNT_LOGIN_REDIRECT_URL = '/dashboard/'   # ログイン後はダッシュボードへ
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'  # ログアウト後はウェルカムページへ
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'  # ログアウト後はログインページへ
 
 # 新規登録を有効化（社内メンバー用テストアカウント作成可能）
 ACCOUNT_ALLOW_REGISTRATION = True
@@ -245,12 +243,7 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_STORE_TOKENS = True
 
 # セッション設定（認証問題の解決）
-SESSION_COOKIE_AGE = 3600  # 1時間でセッション期限切れ
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # ブラウザ閉じたらセッション削除
-SESSION_SAVE_EVERY_REQUEST = True  # リクエストごとにセッション更新
-SESSION_COOKIE_SECURE = not DEBUG  # HTTPS環境でのみSecureフラグ
-SESSION_COOKIE_HTTPONLY = True  # JavaScriptからアクセス不可
-SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF攻撃対策
+# 下部にまとめて統合するため、この重複設定は削除
 
 # キャッシュ無効化設定
 CACHE_MIDDLEWARE_SECONDS = 0  # キャッシュ無効
@@ -270,12 +263,17 @@ else:
     # ステージング環境では一時的にデフォルトアダプターを使用（デバッグ用）
     SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
 
-# セッション設定（ログインループ問題解決）
+# セッション設定（ログインループ問題解決 & 安定化）
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_NAME = 'grapee_sessionid'
 SESSION_COOKIE_AGE = 86400  # 24時間
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_SAVE_EVERY_REQUEST = False  # パフォーマンス改善（無限リロード防止）
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# 開発サーバー設定（リロード問題解決）
+USE_TZ = True
+LANGUAGE_CODE = 'ja'
+TIME_ZONE = 'Asia/Tokyo'
 
 # HTTP環境でのセッション設定（本番対応）
 SESSION_COOKIE_SECURE = False  # HTTPでも動作するように
