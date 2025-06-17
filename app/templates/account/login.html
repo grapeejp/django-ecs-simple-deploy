@@ -366,19 +366,11 @@
             @grapee.co.jp ドメインのアカウントでログインしてください
         </div>
 
-        <!-- Google OAuth ログイン -->
-        {% get_providers as socialaccount_providers %}
-        {% if socialaccount_providers.google %}
+        <!-- Google OAuth ログイン（ワークスペースアクセス） -->
         <a href="{% provider_login_url 'google' %}" class="google-btn">
             <i class="fab fa-google me-2" style="margin-right: 0.5rem;"></i>
-            Googleアカウントでログイン
+            ワークスペースにアクセス
         </a>
-        {% else %}
-        <div class="workspace-notice" style="background: rgba(255, 193, 7, 0.2); border-color: rgba(255, 193, 7, 0.3);">
-            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
-            Google認証は現在設定中です。下記のフォームからログインしてください。
-        </div>
-        {% endif %}
 
         <div class="divider">
             <span>または</span>
