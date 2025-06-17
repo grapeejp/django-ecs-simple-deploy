@@ -18,6 +18,9 @@ import ipaddress
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+
 # SECURITY WARNING: keep the secret key used in production secret!
 # .envファイルから環境変数を読み込む
 env = environ.Env()
@@ -25,7 +28,8 @@ env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=False)
+# ステージング環境でのデバッグを一時的に有効化（問題解決後に無効化）
+DEBUG = True  # 一時的にTrueに変更
 
 # Basic認証設定（本番環境では外部で制御）
 BASIC_AUTH_ENABLED = env.bool("BASIC_AUTH_ENABLED", default=False) and not DEBUG
@@ -40,12 +44,12 @@ else:
 
 # ECS環境での内部アクセスを許可（プライベートサブネット対応）
 ALLOWED_HOSTS.extend([
-    "10.0.1.77",      # 現在のECSタスクIP
-    "10.0.1.95",      # 以前のエラーログで確認されたIP
     "localhost",
     "127.0.0.1",
+    "0.0.0.0",
     "staging.grape-app.jp",
-    "grape-app.jp",
+    "10.0.1.77",      # 現在のECSタスクIP
+    "10.0.1.95",      # 以前のエラーログで確認されたIP
 ])
 
 # プライベートサブネット全体を許可（10.0.x.x）
@@ -258,13 +262,13 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 # @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
-# ステージング環境テスト用：一時的にシンプルなアダプターを使用
+# ステージング環境テスト用：一時的にデフォルトアダプターを使用
 if DEBUG:
     # ローカル環境では拡張アダプターを使用
     SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
 else:
-    # ステージング環境では一時的にシンプルなアダプターを使用（テスト用）
-    SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
+    # ステージング環境では一時的にデフォルトアダプターを使用（デバッグ用）
+    SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
 
 # セッション設定（ログインループ問題解決）
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
