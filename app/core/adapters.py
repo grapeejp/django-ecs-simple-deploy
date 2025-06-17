@@ -146,8 +146,8 @@ class ExtendedGrapeeWorkspaceAdapter(DefaultSocialAccountAdapter):
                         messages.error(request, f"認証エラー: {error_msg}")
                         raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login')))
                     
-                    logger.info(f"AllowedUser確認完了: {email} (管理者権限: {allowed_user.is_admin})")
-                    print(f"SUCCESS: AllowedUser確認完了: {email}")
+                    logger.info(f"AllowedUser確認完了: {email} (権限レベル: {allowed_user.permission_level})")
+                    print(f"SUCCESS: AllowedUser確認完了: {email} (権限: {allowed_user.permission_level})")
                     
                 except AllowedUser.DoesNotExist:
                     error_msg = f"アカウント {email} は登録されていません。管理者にお問い合わせください"
