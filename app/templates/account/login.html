@@ -317,7 +317,8 @@
                     {% endif %}
 
                     <!-- Google OAuth ログイン -->
-                    {% if providers.google %}
+                    {% get_providers as socialaccount_providers %}
+                    {% if socialaccount_providers.google %}
                     <div class="d-grid gap-2">
                         <a href="{% provider_login_url 'google' %}" class="btn btn-danger btn-lg">
                             <i class="fab fa-google me-2"></i>
