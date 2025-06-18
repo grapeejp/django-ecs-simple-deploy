@@ -499,6 +499,119 @@
         }
     }
     
+    /* 厳密さ設定ボタンのスタイル */
+    .strictness-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .strictness-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 120px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .strictness-btn:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .strictness-btn.active {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.2);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    
+    .strictness-btn .btn-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+    
+    .strictness-btn .btn-text {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        white-space: nowrap;
+    }
+    
+    .strictness-btn .btn-description {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.2;
+        text-align: center;
+    }
+    
+    .strictness-btn.active .btn-description {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    /* Instagram除外ボタンのスタイル */
+    .instagram-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .instagram-filter-btn .btn-icon {
+        font-size: 16px;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+    
+    .instagram-filter-btn .btn-text {
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .instagram-filter-btn .btn-status {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    /* 有効化状態のスタイル */
+    .instagram-filter-btn[data-enabled="true"] {
+        background: linear-gradient(135deg, #e91e63, #ad1457) !important;
+        border-color: #f8bbd9;
+        box-shadow: 0 0 15px rgba(233, 30, 99, 0.4);
+    }
+    
+    .instagram-filter-btn[data-enabled="true"]:hover {
+        background: linear-gradient(135deg, #ad1457, #880e4f) !important;
+        box-shadow: 0 0 20px rgba(233, 30, 99, 0.6);
+    }
+    
+    .instagram-filter-btn[data-enabled="true"] .btn-status {
+        background: rgba(255, 255, 255, 0.9);
+        color: #ad1457;
+    }
+    
+    /* 無効化状態のホバー効果 */
+    .instagram-filter-btn[data-enabled="false"]:hover {
+        background: #4b5563;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
     .progress-container {
         width: 100%;
         height: 8px;
@@ -1724,27 +1837,47 @@
     <div class="settings-panel mb-6">
         <div class="flex flex-wrap items-center justify-between">
             <div class="w-full md:w-auto mb-4 md:mb-0">
-                <h3 class="text-lg font-semibold text-white mb-2">校正設定</h3>
-                <div class="flex items-center space-x-4">
-                    <div>
-                        <label for="temperature" class="block text-sm font-medium text-gray-200">温度</label>
-                        <input type="range" min="0" max="1" step="0.1" value="0.1" class="w-32" id="temperature">
-                        <span id="temperatureValue" class="text-sm text-gray-300">0.1</span>
-                    </div>
-                    <div>
-                        <label for="topP" class="block text-sm font-medium text-gray-200">Top P</label>
-                        <input type="range" min="0" max="1" step="0.1" value="0.7" class="w-32" id="topP">
-                        <span id="topPValue" class="text-sm text-gray-300">0.7</span>
-                    </div>
-                    <div>
-                        <button id="resetSettingsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-md text-sm transition-all duration-300">
-                            リセット
-                        </button>
-                    </div>
+                <h3 class="text-lg font-semibold text-white mb-2">校正の厳密さ</h3>
+                <div class="strictness-buttons flex flex-wrap gap-2">
+                    <button class="strictness-btn" data-level="very-strict" data-temperature="0.1" data-top-p="0.3">
+                        <span class="btn-icon">🔴</span>
+                        <span class="btn-text">とても厳密</span>
+                        <span class="btn-description">明らかな誤字脱字のみ</span>
+                    </button>
+                    <button class="strictness-btn" data-level="strict" data-temperature="0.2" data-top-p="0.5">
+                        <span class="btn-icon">🟠</span>
+                        <span class="btn-text">厳密</span>
+                        <span class="btn-description">基本的な校正</span>
+                    </button>
+                    <button class="strictness-btn active" data-level="standard" data-temperature="0.3" data-top-p="0.7">
+                        <span class="btn-icon">🟡</span>
+                        <span class="btn-text">標準</span>
+                        <span class="btn-description">バランス重視</span>
+                    </button>
+                    <button class="strictness-btn" data-level="flexible" data-temperature="0.5" data-top-p="0.8">
+                        <span class="btn-icon">🟢</span>
+                        <span class="btn-text">やや柔軟</span>
+                        <span class="btn-description">自然な表現も提案</span>
+                    </button>
+                    <button class="strictness-btn" data-level="very-flexible" data-temperature="0.7" data-top-p="0.9">
+                        <span class="btn-icon">🔵</span>
+                        <span class="btn-text">柔軟</span>
+                        <span class="btn-description">創造的な改善提案</span>
+                    </button>
+                </div>
+                <div class="mt-3 text-sm text-gray-300">
+                    <span id="currentSettings">現在の設定: 標準 (Temperature: 0.3, Top-p: 0.7)</span>
                 </div>
             </div>
             <div class="w-full md:w-auto">
                 <div class="flex items-center space-x-3">
+                <!-- Instagram除外ボタン -->
+                <button id="instagramFilterBtn" class="instagram-filter-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-all duration-300 border-2 border-transparent" data-enabled="false" title="Instagram投稿を校正対象から除外します">
+                    <span class="btn-icon">📷</span>
+                    <span class="btn-text">Instagram除外</span>
+                    <span class="btn-status">OFF</span>
+                </button>
+                
                 <button id="startCorrectionBtn" class="bg-grape-700 hover:bg-grape-800 text-white font-bold py-2 px-6 rounded-md transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-grape-500 focus:ring-opacity-50">
                     校正する
                 </button>
@@ -2176,21 +2309,63 @@
         // 設定の復元
         loadSettings();
         
+        // Instagram除外設定の復元
+        loadInstagramFilterSetting();
+        
         // ヘルプ機能の初期化
         initializeHelp();
         
         // キーボードショートカットの初期化
         initializeKeyboardShortcuts();
         
-        // 設定変更時の保存
-        document.getElementById('temperature').addEventListener('input', function() {
-            document.getElementById('temperatureValue').textContent = this.value;
-            saveSettings();
+        // 厳密さボタンのイベント処理
+        document.querySelectorAll('.strictness-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 他のボタンのactiveクラスを削除
+                document.querySelectorAll('.strictness-btn').forEach(b => b.classList.remove('active'));
+                // 現在のボタンにactiveクラスを追加
+                this.classList.add('active');
+                
+                // 設定値を更新
+                const temperature = this.dataset.temperature;
+                const topP = this.dataset.topP;
+                const level = this.dataset.level;
+                const text = this.querySelector('.btn-text').textContent;
+                
+                // 現在の設定表示を更新
+                document.getElementById('currentSettings').textContent = 
+                    `現在の設定: ${text} (Temperature: ${temperature}, Top-p: ${topP})`;
+                
+                // 設定を保存
+                saveSettings();
+                
+                console.log(`⚙️ 厳密さ設定変更: ${text} (温度: ${temperature}, Top-p: ${topP})`);
+            });
         });
         
-        document.getElementById('topP').addEventListener('input', function() {
-            document.getElementById('topPValue').textContent = this.value;
-            saveSettings();
+        // Instagram除外ボタンのイベント処理
+        document.getElementById('instagramFilterBtn').addEventListener('click', function() {
+            const isEnabled = this.dataset.enabled === 'true';
+            const newState = !isEnabled;
+            
+            // 状態を切り替え
+            this.dataset.enabled = newState.toString();
+            
+            // 表示を更新
+            const statusElement = this.querySelector('.btn-status');
+            statusElement.textContent = newState ? 'ON' : 'OFF';
+            
+            // Instagram除外設定を保存
+            saveInstagramFilterSetting(newState);
+            
+            // プレビュー表示
+            if (newState) {
+                showInstagramPreview();
+            } else {
+                hideInstagramPreview();
+            }
+            
+            console.log(`📷 Instagram除外: ${newState ? 'ON' : 'OFF'}`);
         });
         
         // 文字数カウント機能
@@ -2216,7 +2391,7 @@
         autoResizeTextarea(inputTextarea);
         
         // リセットボタンのイベント
-        document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
+        // document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings); // リセットボタンが削除されたため無効化
         
         // 辞書ボタンのイベント
         document.getElementById('dictionaryButton').addEventListener('click', function() {
@@ -2228,20 +2403,38 @@
         document.getElementById('startCorrectionBtn').addEventListener('click', function() {
             console.log('🚀 校正ボタンがクリックされました');
             
-            const inputText = document.getElementById('inputText').value.trim();
+            let inputText = document.getElementById('inputText').value.trim();
             if (!inputText) {
                 console.log('❌ 入力テキストが空です');
                 alert('校正する文章を入力してください。');
                 return;
             }
             
+            // Instagram除外処理
+            const instagramFilterEnabled = document.getElementById('instagramFilterBtn').dataset.enabled === 'true';
+            let removedInstagramEmbeds = [];
+            
+            if (instagramFilterEnabled) {
+                const { cleanText, removedEmbeds } = removeInstagramEmbeds(inputText);
+                inputText = cleanText;
+                removedInstagramEmbeds = removedEmbeds;
+                console.log(`📷 Instagram除外: ${removedEmbeds.length}件のコンテンツを除外しました`);
+                
+                if (removedEmbeds.length > 0) {
+                    showTemporaryNotification(`📷 ${removedEmbeds.length}件のInstagramコンテンツを除外して校正を開始します`, 'info');
+                }
+            }
+            
             console.log('📝 入力テキスト長:', inputText.length);
             console.log('📝 入力テキスト（最初の100文字）:', inputText.substring(0, 100));
             
-            const temperature = document.getElementById('temperature').value;
-            const topP = document.getElementById('topP').value;
+            // アクティブな厳密さボタンから設定値を取得
+            const activeBtn = document.querySelector('.strictness-btn.active');
+            const temperature = activeBtn ? activeBtn.dataset.temperature : '0.3';
+            const topP = activeBtn ? activeBtn.dataset.topP : '0.7';
+            const level = activeBtn ? activeBtn.querySelector('.btn-text').textContent : '標準';
             
-            console.log('⚙️ 設定 - 温度:', temperature, 'Top P:', topP);
+            console.log('⚙️ 設定 - 厳密さ:', level, '温度:', temperature, 'Top P:', topP);
             
             // CSRFトークンの確認
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -2335,6 +2528,13 @@
                 console.log('✅ JSONパース成功');
                 console.log('⏱️ 総処理時間:', totalTime + 'ms');
                 console.log('📊 レスポンスデータ:', data);
+                
+                // Instagram除外されたコンテンツを復元
+                if (removedInstagramEmbeds.length > 0) {
+                    data.corrected_text = restoreInstagramEmbeds(data.corrected_text, removedInstagramEmbeds);
+                    console.log(`📷 Instagram復元: ${removedInstagramEmbeds.length}件のコンテンツを復元しました`);
+                    showTemporaryNotification(`📷 ${removedInstagramEmbeds.length}件のInstagramコンテンツを復元しました`, 'success');
+                }
                 
                 // 進捗を強制完了
                 completeProgress();
@@ -2653,12 +2853,16 @@
 
     // 設定の保存・復元機能
     function saveSettings() {
-        const settings = {
-            temperature: document.getElementById('temperature').value,
-            topP: document.getElementById('topP').value,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('proofreadingSettings', JSON.stringify(settings));
+        const activeBtn = document.querySelector('.strictness-btn.active');
+        if (activeBtn) {
+            const settings = {
+                level: activeBtn.dataset.level,
+                temperature: activeBtn.dataset.temperature,
+                topP: activeBtn.dataset.topP,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('proofreadingSettings', JSON.stringify(settings));
+        }
     }
     
     function loadSettings() {
@@ -2667,30 +2871,154 @@
             const settings = JSON.parse(saved);
             // 24時間以内の設定のみ復元
             if (Date.now() - settings.timestamp < 24 * 60 * 60 * 1000) {
-                document.getElementById('temperature').value = settings.temperature;
-                document.getElementById('topP').value = settings.topP;
-                document.getElementById('temperatureValue').textContent = settings.temperature;
-                document.getElementById('topPValue').textContent = settings.topP;
+                // 保存されたレベルのボタンをアクティブにする
+                const targetBtn = document.querySelector(`[data-level="${settings.level}"]`);
+                if (targetBtn) {
+                    document.querySelectorAll('.strictness-btn').forEach(b => b.classList.remove('active'));
+                    targetBtn.classList.add('active');
+                    
+                    const text = targetBtn.querySelector('.btn-text').textContent;
+                    document.getElementById('currentSettings').textContent = 
+                        `現在の設定: ${text} (Temperature: ${settings.temperature}, Top-p: ${settings.topP})`;
+                }
             }
         }
     }
     
     function resetSettings() {
-        document.getElementById('temperature').value = '0.1';
-        document.getElementById('topP').value = '0.7';
-        document.getElementById('temperatureValue').textContent = '0.1';
-        document.getElementById('topPValue').textContent = '0.7';
+        // 標準設定にリセット
+        document.querySelectorAll('.strictness-btn').forEach(b => b.classList.remove('active'));
+        const standardBtn = document.querySelector('[data-level="standard"]');
+        if (standardBtn) {
+            standardBtn.classList.add('active');
+            document.getElementById('currentSettings').textContent = 
+                '現在の設定: 標準 (Temperature: 0.3, Top-p: 0.7)';
+        }
         saveSettings();
         
-        // 視覚的フィードバック
-        const btn = document.getElementById('resetSettingsBtn');
-        const originalText = btn.textContent;
-        btn.textContent = '✓ リセット完了';
-        btn.style.backgroundColor = '#10B981';
+        console.log('⚙️ 設定をリセットしました');
+    }
+    
+    // Instagram除外機能
+    let instagramEmbeds = []; // 除外されたInstagramエンベッドを保存
+    
+    // Instagramエンベッドを検出する正規表現
+    const instagramPatterns = [
+        // Instagram blockquote形式
+        /<blockquote[^>]*class[^>]*instagram-media[^>]*>[\s\S]*?<\/blockquote>/gi,
+        // Instagram URL
+        /https?:\/\/(www\.)?instagram\.com\/p\/[A-Za-z0-9_-]+\/?[^\s]*/gi,
+        // Instagram iframe
+        /<iframe[^>]*src[^>]*instagram[^>]*>[\s\S]*?<\/iframe>/gi,
+        // Instagram script tag
+        /<script[^>]*src[^>]*instagram[^>]*>[\s\S]*?<\/script>/gi
+    ];
+    
+    function detectInstagramContent(text) {
+        const detected = [];
+        instagramPatterns.forEach((pattern, index) => {
+            const matches = text.match(pattern);
+            if (matches) {
+                matches.forEach(match => {
+                    detected.push({
+                        content: match,
+                        pattern: index,
+                        length: match.length
+                    });
+                });
+            }
+        });
+        return detected;
+    }
+    
+    function removeInstagramEmbeds(text) {
+        if (!text) return { cleanText: text, removedEmbeds: [] };
+        
+        let cleanText = text;
+        const removedEmbeds = [];
+        let placeholderIndex = 0;
+        
+        instagramPatterns.forEach((pattern, patternIndex) => {
+            cleanText = cleanText.replace(pattern, (match) => {
+                const placeholder = `[INSTAGRAM_PLACEHOLDER_${placeholderIndex}]`;
+                removedEmbeds.push({
+                    placeholder: placeholder,
+                    content: match,
+                    patternIndex: patternIndex
+                });
+                placeholderIndex++;
+                return placeholder;
+            });
+        });
+        
+        return { cleanText, removedEmbeds };
+    }
+    
+    function restoreInstagramEmbeds(text, removedEmbeds) {
+        if (!removedEmbeds || removedEmbeds.length === 0) return text;
+        
+        let restoredText = text;
+        removedEmbeds.forEach(embed => {
+            restoredText = restoredText.replace(embed.placeholder, embed.content);
+        });
+        
+        return restoredText;
+    }
+    
+    function showInstagramPreview() {
+        const inputText = document.getElementById('inputText').value;
+        const detected = detectInstagramContent(inputText);
+        
+        if (detected.length > 0) {
+            console.log(`📷 検出されたInstagramコンテンツ: ${detected.length}件`);
+            // ここで簡単な通知を表示
+            showTemporaryNotification(`📷 ${detected.length}件のInstagramコンテンツが除外対象として検出されました`, 'info');
+        } else {
+            showTemporaryNotification('📷 Instagramコンテンツは検出されませんでした', 'info');
+        }
+    }
+    
+    function hideInstagramPreview() {
+        // プレビューを非表示にする（必要に応じて実装）
+        console.log('📷 Instagramプレビューを非表示にしました');
+    }
+    
+    function saveInstagramFilterSetting(enabled) {
+        localStorage.setItem('instagramFilterEnabled', enabled.toString());
+    }
+    
+    function loadInstagramFilterSetting() {
+        const saved = localStorage.getItem('instagramFilterEnabled');
+        if (saved !== null) {
+            const enabled = saved === 'true';
+            const btn = document.getElementById('instagramFilterBtn');
+            btn.dataset.enabled = enabled.toString();
+            btn.querySelector('.btn-status').textContent = enabled ? 'ON' : 'OFF';
+        }
+    }
+    
+    function showTemporaryNotification(message, type = 'info') {
+        // 簡単な通知表示
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'info' ? '#3b82f6' : '#10b981'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 300px;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
         setTimeout(() => {
-            btn.textContent = originalText;
-            btn.style.backgroundColor = '';
-        }, 1500);
+            notification.remove();
+        }, 3000);
     }
     
     function getCorrectionCategory(reason) {
