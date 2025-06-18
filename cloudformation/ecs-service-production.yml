@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Django ECS Service for Production Environment'
+
+Parameters:
+  ImageUrl:
+    Type: String
+    Description: The URL of the Docker image to run
+    Default: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/django-ecs-app:latest
+
+Resources:
+  # ECS Task Definition
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: django-app-production
+      Cpu: 512
+      Memory: 1024
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-prod-ECSTaskExecutionRole'
+      TaskRoleArn:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-prod-ECSTaskRole'
+      ContainerDefinitions:
+        - Name: django-app
+          Image: !Ref ImageUrl
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: "/ecs/django-app-production"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: ALLOWED_HOSTS
+              Value: 'prod.grape-app.jp,grape-app.jp,www.grape-app.jp,localhost,127.0.0.1'
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'config.settings'
+            - Name: SECRET_KEY
+              Value: 'django-production-secret-key-change-in-production'
+            - Name: DEBUG
+              Value: "False"
+            - Name: HTTPS_ENABLED
+              Value: "True"
+            # AWS認証情報（環境変数で設定）
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            # 機密情報は実際のデプロイ時に手動で設定
+            # - Name: CHATWORK_API_TOKEN
+            # - Name: CHATWORK_ROOM_ID  
+            # - Name: GOOGLE_OAUTH_CLIENT_ID
+            # - Name: GOOGLE_OAUTH_CLIENT_SECRET
+
+  # ECS Service (ALB連携)
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: django-ecs-service-production
+      Cluster:
+        Fn::ImportValue:
+          !Sub 'django-ecs-cluster-prod-ECSCluster'
+      TaskDefinition: !Ref TaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-prod-ECSSecurityGroup'
+          Subnets:
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-prod-PrivateSubnet1'
+            - Fn::ImportValue:
+                !Sub 'django-ecs-cluster-prod-PrivateSubnet2'
+      LoadBalancers:
+        - TargetGroupArn:
+            Fn::ImportValue:
+              !Sub 'django-ecs-cluster-prod-TargetGroup'
+          ContainerName: django-app
+          ContainerPort: 8000
+
+Outputs:
+  Service:
+    Description: The ECS Service
+    Value: !Ref Service
+    Export:
+      Name: !Sub "${AWS::StackName}-Service"
+      
+  TaskDefinition:
+    Description: The Task Definition
+    Value: !Ref TaskDefinition
+    Export:
+      Name: !Sub "${AWS::StackName}-TaskDefinition" 
