@@ -267,110 +267,149 @@
         color: #fff;
         border-color: rgba(220, 53, 69, 0.3);
     }
+
+    /* チェックボックスのカスタムスタイル */
+    .checkbox-label {
+        display: block;
+        position: relative;
+        padding-left: 35px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .checkbox-label input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-label:hover input ~ .checkmark {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .checkbox-label input:checked ~ .checkmark {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .checkbox-label input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+    .checkbox-label .checkmark:after {
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <img src="{% static 'images/grape_logo.png' %}" alt="グレイプロゴ" style="max-width: 200px; height: auto;">
-                        <h2 class="mt-3">グレイプ社内ツール</h2>
-                        <p class="text-muted">ログインしてください</p>
-                    </div>
+<div class="login-container">
+    <div class="login-card">
+        <div class="logo-section">
+            <div class="logo-icon">🍇</div>
+            <h1 class="welcome-text">グレイプ社内ツール</h1>
+            <p class="welcome-subtitle">ログインしてください</p>
+        </div>
 
-                    <!-- エラーメッセージ表示の改善 -->
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                                <strong>
-                                    {% if message.tags == 'error' %}
-                                        🚨 認証エラー
-                                    {% elif message.tags == 'warning' %}
-                                        ⚠️ 警告
-                                    {% elif message.tags == 'success' %}
-                                        ✅ 成功
-                                    {% else %}
-                                        ℹ️ 情報
-                                    {% endif %}
-                                </strong>
-                                <br>
-                                <div style="white-space: pre-line; margin-top: 10px; font-family: monospace; font-size: 0.9em;">{{ message }}</div>
-                                
-                                <!-- デバッグ情報（開発環境のみ） -->
-                                {% if debug %}
-                                    <hr>
-                                    <small class="text-muted">
-                                        <strong>デバッグ情報:</strong><br>
-                                        環境: {% if debug %}ローカル{% else %}ステージング/本番{% endif %}<br>
-                                        時刻: {{ request.timestamp|default:"N/A" }}<br>
-                                        User-Agent: {{ request.META.HTTP_USER_AGENT|truncatechars:50 }}
-                                    </small>
-                                {% endif %}
-                                
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <!-- Google OAuth ログイン -->
-                    <div class="d-grid gap-2">
-                        <a href="{% provider_login_url 'google' %}" class="btn btn-danger btn-lg">
-                            <i class="fab fa-google me-2"></i>
-                            Googleアカウントでログイン
-                        </a>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <!-- 従来のログインフォーム -->
-                    <form method="post" action="{% url 'account_login' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="id_login" class="form-label">ユーザー名またはメールアドレス</label>
-                            <input type="text" class="form-control" id="id_login" name="login" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_password" class="form-label">パスワード</label>
-                            <input type="password" class="form-control" id="id_password" name="password" required>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="id_remember" name="remember">
-                            <label class="form-check-label" for="id_remember">
-                                ログイン状態を保持する
-                            </label>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">ログイン</button>
-                        </div>
-                    </form>
-
-                    <!-- 追加情報 -->
-                    <div class="mt-4 text-center">
-                        <small class="text-muted">
-                            <strong>利用可能アカウント:</strong> @grapee.co.jp ドメインのみ<br>
-                            <strong>サポート:</strong> システム管理者までお問い合わせください
-                        </small>
-                    </div>
-                    
-                    <!-- デバッグ情報（開発環境のみ） -->
-                    {% if debug %}
-                        <div class="mt-4 p-3 bg-light border rounded">
-                            <small class="text-muted">
-                                <strong>🔧 開発者情報:</strong><br>
-                                環境: {% if debug %}ローカル開発環境{% else %}ステージング/本番環境{% endif %}<br>
-                                SITE_ID: {{ settings.SITE_ID|default:"未設定" }}<br>
-                                認証アダプター: {{ settings.SOCIALACCOUNT_ADAPTER|default:"デフォルト" }}<br>
-                                現在時刻: {% now "Y-m-d H:i:s" %}<br>
-                                セッションID: {{ request.session.session_key|default:"未作成" }}
-                            </small>
-                        </div>
-                    {% endif %}
+        <!-- エラーメッセージ表示 -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-error" role="alert">
+                    <strong>
+                        {% if message.tags == 'error' %}
+                            🚨 認証エラー
+                        {% elif message.tags == 'warning' %}
+                            ⚠️ 警告
+                        {% elif message.tags == 'success' %}
+                            ✅ 成功
+                        {% else %}
+                            ℹ️ 情報
+                        {% endif %}
+                    </strong>
+                    <br>
+                    <div style="white-space: pre-line; margin-top: 10px; font-family: monospace; font-size: 0.9em;">{{ message }}</div>
                 </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- ワークスペース通知 -->
+        <div class="workspace-notice">
+            <strong>グレイプワークスペース</strong><br>
+            @grapee.co.jp ドメインのアカウントでログインしてください
+        </div>
+
+        <!-- Google OAuth ログイン（ワークスペースアクセス） -->
+        <a href="{% provider_login_url 'google' %}" class="google-btn">
+            <i class="fab fa-google me-2" style="margin-right: 0.5rem;"></i>
+            ワークスペースにアクセス
+        </a>
+
+        <div class="divider">
+            <span>または</span>
+        </div>
+
+        <!-- 従来のログインフォーム -->
+        <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_login" class="form-label">ユーザー名またはメールアドレス</label>
+                <input type="text" class="form-input" id="id_login" name="login" placeholder="例: user@grapee.co.jp" required>
             </div>
+            
+            <div class="form-group">
+                <label for="id_password" class="form-label">パスワード</label>
+                <input type="password" class="form-input" id="id_password" name="password" placeholder="パスワードを入力" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember">
+                    <span class="checkmark"></span>
+                    ログイン状態を保持する
+                </label>
+            </div>
+            
+            <button type="submit" class="login-btn">ログイン</button>
+        </form>
+
+        <!-- 追加情報 -->
+        <div class="privacy-note">
+            <strong>利用可能アカウント:</strong> @grapee.co.jp ドメインのみ<br>
+            <strong>サポート:</strong> システム管理者までお問い合わせください
+        </div>
+
+        <!-- フッターリンク -->
+        <div class="footer-links">
+            <a href="#" onclick="alert('システム管理者までお問い合わせください')">パスワードを忘れた方</a>
+            <a href="#" onclick="alert('新規アカウントはシステム管理者が作成します')">アカウント作成</a>
         </div>
     </div>
 </div>
@@ -381,10 +420,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(function(alert) {
         // 5秒後に自動で閉じる（エラーメッセージは除く）
-        if (!alert.classList.contains('alert-danger')) {
+        if (!alert.classList.contains('alert-error')) {
             setTimeout(function() {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
             }, 5000);
         }
     });
