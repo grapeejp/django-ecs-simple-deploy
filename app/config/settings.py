@@ -264,8 +264,8 @@ X_FRAME_OPTIONS = 'DENY'
 # @grapee.co.jpドメインのみ許可（拡張ユーザー管理対応）
 # ステージング環境テスト用：一時的にデフォルトアダプターを使用
 if DEBUG:
-    # ローカル環境では拡張アダプターを使用
-    SOCIALACCOUNT_ADAPTER = 'core.adapters.ExtendedGrapeeWorkspaceAdapter'
+    # ローカル環境ではドメインチェックのみ行うアダプターを使用
+    SOCIALACCOUNT_ADAPTER = 'core.adapters.GrapeeWorkspaceAdapter'
 else:
     # ステージング環境では一時的にデフォルトアダプターを使用（デバッグ用）
     SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
@@ -307,6 +307,37 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'TIMEOUT': 300,  # 5分
     }
+}
+
+# ロギング設定（デバッグ用）
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'core': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
+        },
+    },
 }
 
 # Chatwork通知用ルームID（.envまたは環境変数から取得、なければデフォルト値）

@@ -91,6 +91,7 @@ def check_auth_status(request):
             'test@grapee.co.jp',
             'yanagimoto@grapee.co.jp',
             'yasutoshi.yanagimoto@grapee.co.jp',
+            'test@example.com',  # テスト用
         ]
         
         if request.user.email in allowed_emails:
