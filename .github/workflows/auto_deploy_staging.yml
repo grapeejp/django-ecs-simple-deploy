@@ -1,4 +1,4 @@
-name: Auto Deploy to Staging
+name: Deploy to Staging (Option B)
 
 on:
   workflow_run:
@@ -7,156 +7,92 @@ on:
     types:
       - completed
 
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: django-ecs-app
+  ECS_CLUSTER: django-ecs-cluster-staging
+  ECS_SERVICE: django-ecs-service-staging
+  TASK_DEFINITION_FAMILY: django-app-staging
+
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop' }}
     runs-on: ubuntu-latest
     environment: staging
+    
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'ap-northeast-1'
-      
-      - name: Setup Debug Logging
-        run: |
-          echo "AWS_STS_REGIONAL_ENDPOINTS=regional" >> $GITHUB_ENV
-          echo "AWS_SDK_LOAD_CONFIG=1" >> $GITHUB_ENV
-          echo "AWS_PAGER=" >> $GITHUB_ENV  # AWSのページャーを無効化して全出力を表示
-          mkdir -p logs
-      
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
-      
-      - name: Set up variables
-        run: |
-          echo "ECR_REPOSITORY=django-ecs-app" >> $GITHUB_ENV
-          echo "IMAGE_TAG=sha-$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_ENV
-          echo "AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_ENV
-          echo "AWS_REGION=ap-northeast-1" >> $GITHUB_ENV
-          echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-          echo "STACK_NAME=django-ecs-service-staging-$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-          echo "SERVICE_NAME=django-ecs-service-staging" >> $GITHUB_ENV
-      
-      - name: Build, tag, and push image
-        run: |
-          docker build -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
-          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-      
-      - name: Deploy ECS Cluster
-        run: |
-          set -x  # デバッグ出力を有効化
-          aws cloudformation deploy \
-            --stack-name django-ecs-cluster-staging \
-            --template-file cloudformation/ecs-cluster.yml \
-            --capabilities CAPABILITY_IAM \
-            --no-fail-on-empty-changeset \
-            --debug 2>&1 | tee logs/cluster-deploy.log
-          set +x
-      
-      - name: Check and Clean Existing ECS Services
-        run: |
-          echo "既存のECSサービスを確認しています..."
-          EXISTING_SERVICES=$(aws ecs list-services --cluster django-ecs-cluster-staging --output json | jq -r '.serviceArns[]' | grep django-ecs-service-staging || echo "")
-          
-          if [ ! -z "$EXISTING_SERVICES" ]; then
-            echo "以下の既存サービスを削除します:"
-            echo "$EXISTING_SERVICES"
-            
-            for SERVICE_ARN in $EXISTING_SERVICES; do
-              SERVICE_NAME=$(echo $SERVICE_ARN | awk -F'/' '{print $NF}')
-              echo "サービス削除中: $SERVICE_NAME"
-              
-              # サービスをドレインして削除
-              aws ecs update-service --cluster django-ecs-cluster-staging --service $SERVICE_NAME --desired-count 0
-              aws ecs wait services-stable --cluster django-ecs-cluster-staging --services $SERVICE_NAME
-              aws ecs delete-service --cluster django-ecs-cluster-staging --service $SERVICE_NAME --force
-              
-              echo "サービス削除完了: $SERVICE_NAME"
-            done
-          else
-            echo "既存のサービスが見つかりませんでした"
-          fi
-      
-      - name: Validate CloudFormation Template
-        run: |
-          echo "サービステンプレートの検証を実行します..."
-          aws cloudformation validate-template \
-            --template-body file://cloudformation/ecs-service-staging.yml \
-            2>&1 | tee logs/template-validation.log
-      
-      - name: Deploy ECS Service
-        id: deploy-service
-        run: |
-          set -x  # デバッグ出力を有効化
-          aws cloudformation deploy \
-            --stack-name ${{ env.STACK_NAME }} \
-            --template-file cloudformation/ecs-service-staging.yml \
-            --parameter-overrides \
-              ImageUrl=$IMAGE_URI \
-              TimestampSuffix=${{ env.TIMESTAMP }} \
-            --no-fail-on-empty-changeset \
-            --debug 2>&1 | tee logs/service-deploy.log
-          
-          # デプロイ成功時のスタック情報を出力
-          echo "スタック詳細情報を取得しています..."
-          aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} \
-            --query "Stacks[0]" --output json | tee logs/stack-details.json
-          set +x
-      
-      - name: Handle CloudFormation Failure
-        if: failure()
-        run: |
-          echo "::error::CloudFormationデプロイが失敗しました。詳細なエラー情報を収集します。"
-          
-          # スタックイベント情報を取得
-          echo "スタックイベント履歴を取得しています..."
-          aws cloudformation describe-stack-events \
-            --stack-name ${{ env.STACK_NAME }} \
-            --query "StackEvents[?ResourceStatus=='CREATE_FAILED'].{Resource:LogicalResourceId,Reason:ResourceStatusReason}" \
-            --output json | tee logs/stack-failures.json
-          
-          # スタックの詳細情報を取得
-          echo "CloudFormationテンプレートで使用されている値:"
-          cat cloudformation/ecs-service-staging.yml | grep -A 5 ContainerCpu
-          cat cloudformation/ecs-service-staging.yml | grep -A 5 ContainerMemory
-          
-          echo "Fargateサポート値の確認："
-          echo "CPU/メモリ組み合わせ: 256/512, 256/1024, 512/1024, 512/2048, 1024/2048, 1024/3072, 1024/4096..."
-          
-          # CloudWatchログの確認
-          echo "CloudWatchログを確認しています..."
-          aws logs describe-log-groups \
-            --log-group-name-prefix "/ecs/django-app-staging" \
-            --output json | tee logs/log-groups.json
-      
-      - name: Announce URL
-        if: success()
-        run: |
-          ALB_DNS=$(aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" --output text)
-          echo "::notice ::ステージングURL: http://$ALB_DNS"
-      
-      - name: Upload Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-logs-${{ env.TIMESTAMP }}
-          path: logs/
-          retention-days: 7
-      
-      - name: Notify Slack
-        if: always()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          mention: 'here'
-          if_mention: failure
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        continue-on-error: true 
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+      run: |
+        # Build docker image
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f docker/Dockerfile .
+        
+        # Push image to ECR
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        
+        # Output image URI
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+    
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition ${{ env.TASK_DEFINITION_FAMILY }} \
+          --query taskDefinition > task-definition.json
+    
+    - name: Fill in the new image ID in the task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: django-app
+        image: ${{ steps.build-image.outputs.image }}
+        environment-variables: |
+          ALLOWED_HOSTS=*.elb.amazonaws.com,staging.grape-app.jp
+          DEBUG=0
+    
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+    
+    - name: Get service info
+      if: success()
+      run: |
+        # Get ALB DNS
+        ALB_DNS=$(aws cloudformation describe-stacks \
+          --stack-name django-ecs-cluster-staging \
+          --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue" \
+          --output text)
+        
+        echo "::notice ::ステージング環境にデプロイ完了"
+        echo "::notice ::URL: http://$ALB_DNS"
+        echo "::notice ::カスタムドメイン: https://staging.grape-app.jp"
+    
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          ステージング環境へのデプロイが${{ job.status == 'success' && '成功しました ✅' || '失敗しました ❌' }}
+          コミット: ${{ github.event.workflow_run.head_sha }}
+        webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true 
