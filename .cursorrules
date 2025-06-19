@@ -158,6 +158,13 @@ AWS ECSデプロイ関連の支援をリクエストする際は以下の形式�
        run: ruff check app
      ``` 
 
+## ステージングデプロイ必読
+- **デプロイ作業前に必ず `docs/staging-deploy.md` を参照すること**
+- **Option B（ハイブリッド方式）に従い、VPCの新規作成は行わない**
+- **タイムスタンプ付きスタック名は使用禁止**
+- 固定リソース名を使用: `django-ecs-cluster-staging`, `django-ecs-service-staging`
+- 基盤インフラは1回だけ作成、以降はアプリケーションのみ更新
+
 # AWS ECS デプロイ競合問題 - 技術書
 ## 重要：生成AI必読！このセクションを理解してからECSデプロイ支援を行うこと
 
