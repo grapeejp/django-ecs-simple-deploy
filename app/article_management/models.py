@@ -6,6 +6,212 @@ from django.utils import timezone
 User = get_user_model()
 
 
+class PersonalSNSAccount(models.Model):
+    """個人SNSアカウント管理"""
+    
+    PLATFORM_CHOICES = [
+        ('twitter', 'X (Twitter)'),
+        ('instagram', 'Instagram'),
+        ('threads', 'Threads'),
+        ('tiktok', 'TikTok'),
+        ('youtube', 'YouTube'),
+        ('blog', 'ブログ'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('ok', 'OK（使用可）'),
+        ('conditional', '条件付きOK'),
+        ('ng', 'NG（使用不可）'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('manga', '漫画ネタ'),
+        ('animal', '動物ネタ'),
+        ('celebrity', '芸能人'),
+        ('other', 'その他'),
+    ]
+    
+    # 基本情報
+    handle_name = models.CharField(
+        max_length=100,
+        verbose_name='ハンドルネーム'
+    )
+    real_name = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='本名'
+    )
+    platform = models.CharField(
+        max_length=20,
+        choices=PLATFORM_CHOICES,
+        verbose_name='プラットフォーム'
+    )
+    url = models.URLField(
+        verbose_name='プロフィールURL'
+    )
+    
+    # ステータス
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ok',
+        verbose_name='ステータス'
+    )
+    status_date = models.DateField(
+        auto_now_add=True,
+        verbose_name='ステータス変更日'
+    )
+    
+    # 詳細
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        blank=True,
+        verbose_name='カテゴリ'
+    )
+    reason = models.TextField(
+        blank=True,
+        verbose_name='NG理由/条件'
+    )
+    conditions = models.TextField(
+        blank=True,
+        verbose_name='利用条件'
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name='備考'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['handle_name', 'platform']
+        ordering = ['handle_name']
+        verbose_name = '個人SNSアカウント'
+        verbose_name_plural = '個人SNSアカウント'
+    
+    def __str__(self):
+        return f"{self.handle_name} ({self.get_platform_display()}) - {self.get_status_display()}"
+
+
+class CorporateSNSAccount(models.Model):
+    """企業SNSアカウント管理"""
+    
+    STATUS_CHOICES = [
+        ('ok', 'OK'),
+        ('checking', '確認中'),
+        ('ng', 'NG'),
+    ]
+    
+    # 企業情報
+    company_name = models.CharField(
+        max_length=200,
+        verbose_name='企業名'
+    )
+    account_name = models.CharField(
+        max_length=100,
+        verbose_name='アカウント名'
+    )
+    platform = models.CharField(
+        max_length=20,
+        choices=PersonalSNSAccount.PLATFORM_CHOICES,
+        verbose_name='プラットフォーム'
+    )
+    url = models.URLField(
+        verbose_name='URL'
+    )
+    
+    # ステータス（部門別）
+    sales_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='checking',
+        verbose_name='営業ステータス'
+    )
+    editorial_status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='checking',
+        verbose_name='編集ステータス'
+    )
+    
+    # 利用条件フラグ
+    require_prior_approval = models.BooleanField(
+        default=False,
+        verbose_name='事前確認必須'
+    )
+    require_post_report = models.BooleanField(
+        default=False,
+        verbose_name='事後報告必須'
+    )
+    embed_only = models.BooleanField(
+        default=False,
+        verbose_name='埋め込みのみ'
+    )
+    allow_image_download = models.BooleanField(
+        default=True,
+        verbose_name='画像DL可'
+    )
+    allow_screenshot = models.BooleanField(
+        default=True,
+        verbose_name='スクショ可'
+    )
+    
+    # 詳細条件
+    credit_format = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name='クレジット表記形式'
+    )
+    excluded_content = models.TextField(
+        blank=True,
+        verbose_name='使用不可コンテンツ'
+    )
+    special_conditions = models.TextField(
+        blank=True,
+        verbose_name='特殊条件'
+    )
+    
+    # 連絡先
+    primary_contact = models.TextField(
+        verbose_name='主要連絡先'
+    )
+    pr_agency = models.TextField(
+        blank=True,
+        verbose_name='PR会社情報'
+    )
+    contact_notes = models.TextField(
+        blank=True,
+        verbose_name='連絡時の注意事項'
+    )
+    
+    # その他
+    notes = models.TextField(
+        blank=True,
+        verbose_name='補足'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['company_name', 'account_name', 'platform']
+        ordering = ['company_name', 'account_name']
+        verbose_name = '企業SNSアカウント'
+        verbose_name_plural = '企業SNSアカウント'
+    
+    def __str__(self):
+        return f"{self.company_name} - {self.account_name} ({self.get_platform_display()})"
+    
+    def get_overall_status(self):
+        """営業と編集の厳しい方のステータスを返す"""
+        if self.sales_status == 'ng' or self.editorial_status == 'ng':
+            return 'ng'
+        elif self.sales_status == 'checking' or self.editorial_status == 'checking':
+            return 'checking'
+        return 'ok'
+
+
 class SocialMediaUser(models.Model):
     """SNSユーザー管理モデル"""
     
@@ -103,7 +309,17 @@ class Article(models.Model):
         ('need_permission', '要許可'),
         ('no_apply', '申請不要'),
         ('published', '公開済'),
-        ('unknown', '不明'),
+        ('info_provided', '情報提供'),
+        ('-', '-'),
+        ('post_report', '事後報告'),
+        ('original', '独自記事'),
+    ]
+    
+    REPORT_STATUS_CHOICES = [
+        ('not_required', '不要'),
+        ('sent', '送信済み'),
+        ('ready_with_x', '準備完了Xあり'),
+        ('ready_without_x', '準備完了Xなし'),
     ]
     
     article_id = models.CharField(
@@ -131,6 +347,12 @@ class Article(models.Model):
         choices=STATUS_CHOICES,
         default='draft',
         verbose_name='ステータス'
+    )
+    report_status = models.CharField(
+        max_length=20,
+        choices=REPORT_STATUS_CHOICES,
+        default='not_required',
+        verbose_name='掲載報告'
     )
     title = models.CharField(
         max_length=200,
@@ -230,7 +452,10 @@ class Article(models.Model):
             'need_permission': 'warning',
             'no_apply': 'info',
             'published': 'success',
-            'unknown': 'secondary',
+            'info_provided': 'primary',
+            '-': 'light',
+            'post_report': 'info',
+            'original': 'dark',
         }
         return color_map.get(self.status, 'secondary')
 

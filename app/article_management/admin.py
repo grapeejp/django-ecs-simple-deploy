@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Article, SocialMediaUser, ArticleHistory
+from .models import (
+    Article, SocialMediaUser, ArticleHistory,
+    PersonalSNSAccount, CorporateSNSAccount
+)
 
 
 @admin.register(SocialMediaUser)
@@ -171,3 +174,91 @@ class ArticleHistoryAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         """履歴は編集不可"""
         return False
+
+
+@admin.register(PersonalSNSAccount)
+class PersonalSNSAccountAdmin(admin.ModelAdmin):
+    list_display = ['handle_name', 'platform', 'category', 'status_badge', 'status_date']
+    list_filter = ['status', 'platform', 'category', 'status_date']
+    search_fields = ['handle_name', 'real_name', 'reason', 'notes']
+    ordering = ['handle_name']
+    
+    fieldsets = (
+        ('基本情報', {
+            'fields': ('handle_name', 'real_name', 'platform', 'url', 'category')
+        }),
+        ('ステータス', {
+            'fields': ('status', 'reason', 'conditions')
+        }),
+        ('備考', {
+            'fields': ('notes',)
+        }),
+    )
+    
+    def status_badge(self, obj):
+        colors = {
+            'ok': 'green',
+            'conditional': 'orange',
+            'ng': 'red'
+        }
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            colors.get(obj.status, 'black'),
+            obj.get_status_display()
+        )
+    status_badge.short_description = 'ステータス'
+
+
+@admin.register(CorporateSNSAccount)
+class CorporateSNSAccountAdmin(admin.ModelAdmin):
+    list_display = [
+        'company_name', 'account_name', 'platform', 
+        'overall_status', 'require_prior_approval', 'embed_only'
+    ]
+    list_filter = [
+        'sales_status', 'editorial_status', 'platform', 
+        'require_prior_approval', 'embed_only'
+    ]
+    search_fields = ['company_name', 'account_name', 'primary_contact', 'notes']
+    ordering = ['company_name', 'account_name']
+    
+    fieldsets = (
+        ('企業情報', {
+            'fields': ('company_name', 'account_name', 'platform', 'url')
+        }),
+        ('ステータス', {
+            'fields': ('sales_status', 'editorial_status')
+        }),
+        ('利用条件', {
+            'fields': (
+                'require_prior_approval', 'require_post_report', 'embed_only', 
+                'allow_image_download', 'allow_screenshot', 'credit_format',
+                'excluded_content', 'special_conditions'
+            )
+        }),
+        ('連絡先', {
+            'fields': ('primary_contact', 'pr_agency', 'contact_notes')
+        }),
+        ('備考', {
+            'fields': ('notes',)
+        }),
+    )
+    
+    def overall_status(self, obj):
+        status = obj.get_overall_status()
+        colors = {
+            'ok': 'green',
+            'checking': 'orange',
+            'ng': 'red'
+        }
+        labels = {
+            'ok': 'OK',
+            'checking': '確認中',
+            'ng': 'NG'
+        }
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            colors.get(status, 'black'),
+            labels.get(status, status)
+        )
+    overall_status.short_description = '総合ステータス'

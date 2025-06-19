@@ -20,15 +20,9 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from health_check import health_check
 from core.views import custom_logout
-import sys
-import os
-
-# welcome_viewをインポートするためにappディレクトリをパスに追加
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from welcome_view import welcome
 
 urlpatterns = [
-    path("", welcome, name="welcome"),  # ウェルカムページを復活
+    path("", RedirectView.as_view(url='/articles/', permanent=False), name="welcome"),  # 記事一覧へリダイレクト
     path("admin/", admin.site.urls),
     path("health/", health_check, name="health_check"),
     # カスタムログアウトを優先

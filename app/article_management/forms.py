@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Article, SocialMediaUser
+from .models import Article, SocialMediaUser, PersonalSNSAccount, CorporateSNSAccount
 
 
 class ArticleForm(forms.ModelForm):
@@ -36,7 +36,7 @@ class ArticleForm(forms.ModelForm):
                 'class': 'form-control'
             }),
             'social_media_users': forms.SelectMultiple(attrs={
-                'class': 'form-control select2',
+                'class': 'form-control',
                 'size': 10
             }),
             'facebook_text': forms.Textarea(attrs={
@@ -147,3 +147,171 @@ class SocialMediaUserForm(forms.ModelForm):
             })
         
         return cleaned_data
+
+
+class PersonalSNSAccountForm(forms.ModelForm):
+    """個人SNSアカウントフォーム"""
+    
+    class Meta:
+        model = PersonalSNSAccount
+        fields = [
+            'handle_name',
+            'real_name',
+            'platform',
+            'url',
+            'status',
+            'category',
+            'reason',
+            'conditions',
+            'notes',
+        ]
+        widgets = {
+            'handle_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '@username または ハンドルネーム'
+            }),
+            'real_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '本名（省略可）'
+            }),
+            'platform': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://twitter.com/username'
+            }),
+            'status': forms.RadioSelect(attrs={
+                'class': 'form-check-input'
+            }),
+            'category': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'reason': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'NGまたは条件付きの理由'
+            }),
+            'conditions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '利用条件（クレジット表記など）'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '備考・メモ'
+            }),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        reason = cleaned_data.get('reason')
+        
+        # NGまたは条件付きの場合は理由を必須に
+        if status in ['ng', 'conditional'] and not reason:
+            raise ValidationError({
+                'reason': f'{self.fields["status"].choices[self.fields["status"].choices.index((status, ""))][1]}の場合は理由を入力してください。'
+            })
+        
+        return cleaned_data
+
+
+class CorporateSNSAccountForm(forms.ModelForm):
+    """企業SNSアカウントフォーム"""
+    
+    class Meta:
+        model = CorporateSNSAccount
+        fields = [
+            'company_name',
+            'account_name',
+            'platform',
+            'url',
+            'sales_status',
+            'editorial_status',
+            'require_prior_approval',
+            'require_post_report',
+            'embed_only',
+            'allow_image_download',
+            'allow_screenshot',
+            'credit_format',
+            'excluded_content',
+            'special_conditions',
+            'primary_contact',
+            'pr_agency',
+            'contact_notes',
+            'notes',
+        ]
+        widgets = {
+            'company_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '企業名'
+            }),
+            'account_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'アカウント名'
+            }),
+            'platform': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://twitter.com/company'
+            }),
+            'sales_status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'editorial_status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'require_prior_approval': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'require_post_report': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'embed_only': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'allow_image_download': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'allow_screenshot': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'credit_format': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'クレジット表記の形式（例：〇〇提供）'
+            }),
+            'excluded_content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '使用不可のコンテンツ（例：競合他社関連、特定の投稿）'
+            }),
+            'special_conditions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'その他の特殊条件'
+            }),
+            'primary_contact': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '主要連絡先（担当者名、メールアドレス、電話番号など）'
+            }),
+            'pr_agency': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'PR会社情報（省略可）'
+            }),
+            'contact_notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '連絡時の注意事項（省略可）'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': '補足情報'
+            }),
+        }

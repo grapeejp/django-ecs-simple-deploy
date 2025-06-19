@@ -7,8 +7,15 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.utils import timezone
 from datetime import timedelta
-from .models import Article, SocialMediaUser, ArticleHistory
-from .forms import ArticleForm, SocialMediaUserForm
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+from .models import (
+    Article, SocialMediaUser, ArticleHistory,
+    PersonalSNSAccount, CorporateSNSAccount
+)
+from .forms import ArticleForm, SocialMediaUserForm, PersonalSNSAccountForm, CorporateSNSAccountForm
+from .utils import SNSAccountChecker
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -57,7 +64,7 @@ class ArticleListView(LoginRequiredMixin, ListView):
     model = Article
     template_name = 'article_management/article_list.html'
     context_object_name = 'articles'
-    paginate_by = 20
+    paginate_by = 300
     
     def get_queryset(self):
         queryset = Article.objects.select_related(
@@ -123,7 +130,9 @@ class ArticleCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('article_management:article_list')
     
     def form_valid(self, form):
+        # 申請者を現在のユーザーに設定
         form.instance.applicant = self.request.user
+        
         response = super().form_valid(form)
         
         # 履歴を記録
@@ -256,3 +265,366 @@ def check_social_users(request):
         })
     
     return JsonResponse({'users': result})
+
+
+class PersonalSNSAccountListView(LoginRequiredMixin, ListView):
+    """個人SNSアカウント一覧"""
+    model = PersonalSNSAccount
+    template_name = 'article_management/personal_account_list.html'
+    context_object_name = 'accounts'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        queryset = PersonalSNSAccount.objects.all()
+        
+        # ステータスフィルター
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # プラットフォームフィルター
+        platform = self.request.GET.get('platform')
+        if platform:
+            queryset = queryset.filter(platform=platform)
+        
+        # カテゴリフィルター
+        category = self.request.GET.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        # 検索
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(handle_name__icontains=search) |
+                Q(real_name__icontains=search) |
+                Q(reason__icontains=search) |
+                Q(conditions__icontains=search) |
+                Q(notes__icontains=search)
+            )
+        
+        return queryset.order_by('-status', 'handle_name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 統計情報
+        all_accounts = PersonalSNSAccount.objects.all()
+        context['stats'] = {
+            'total': all_accounts.count(),
+            'ok': all_accounts.filter(status='ok').count(),
+            'conditional': all_accounts.filter(status='conditional').count(),
+            'ng': all_accounts.filter(status='ng').count(),
+        }
+        
+        # フィルター選択肢
+        context['status_choices'] = PersonalSNSAccount.STATUS_CHOICES
+        context['platform_choices'] = PersonalSNSAccount.PLATFORM_CHOICES
+        context['category_choices'] = PersonalSNSAccount.CATEGORY_CHOICES
+        
+        return context
+
+
+class CorporateSNSAccountListView(LoginRequiredMixin, ListView):
+    """企業SNSアカウント一覧"""
+    model = CorporateSNSAccount
+    template_name = 'article_management/corporate_account_list.html'
+    context_object_name = 'accounts'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        queryset = CorporateSNSAccount.objects.all()
+        
+        # 総合ステータスフィルター
+        status = self.request.GET.get('status')
+        if status:
+            if status == 'ok':
+                queryset = queryset.filter(sales_status='ok', editorial_status='ok')
+            elif status == 'ng':
+                queryset = queryset.filter(
+                    Q(sales_status='ng') | Q(editorial_status='ng')
+                )
+            elif status == 'checking':
+                queryset = queryset.filter(
+                    Q(sales_status='checking') | Q(editorial_status='checking')
+                ).exclude(
+                    Q(sales_status='ng') | Q(editorial_status='ng')
+                )
+        
+        # プラットフォームフィルター
+        platform = self.request.GET.get('platform')
+        if platform:
+            queryset = queryset.filter(platform=platform)
+        
+        # 条件フィルター
+        if self.request.GET.get('require_prior_approval'):
+            queryset = queryset.filter(require_prior_approval=True)
+        if self.request.GET.get('embed_only'):
+            queryset = queryset.filter(embed_only=True)
+        
+        # 検索
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(company_name__icontains=search) |
+                Q(account_name__icontains=search) |
+                Q(primary_contact__icontains=search) |
+                Q(notes__icontains=search)
+            )
+        
+        return queryset.order_by('company_name', 'account_name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 統計情報
+        all_accounts = CorporateSNSAccount.objects.all()
+        ok_count = all_accounts.filter(sales_status='ok', editorial_status='ok').count()
+        ng_count = all_accounts.filter(
+            Q(sales_status='ng') | Q(editorial_status='ng')
+        ).count()
+        checking_count = all_accounts.count() - ok_count - ng_count
+        
+        context['stats'] = {
+            'total': all_accounts.count(),
+            'ok': ok_count,
+            'checking': checking_count,
+            'ng': ng_count,
+        }
+        
+        # フィルター選択肢
+        context['platform_choices'] = PersonalSNSAccount.PLATFORM_CHOICES
+        
+        return context
+
+
+@login_required
+def check_sns_url(request):
+    """URLからSNSアカウントの利用可否をチェックするAPI"""
+    url = request.GET.get('url', '')
+    
+    if not url:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'URLが指定されていません'
+        })
+    
+    result = SNSAccountChecker.check_url(url)
+    
+    # アカウント情報を追加
+    if result['account']:
+        account = result['account']
+        if result['type'] == 'personal':
+            result['account_info'] = {
+                'handle_name': account.handle_name,
+                'platform': account.get_platform_display(),
+                'category': account.get_category_display() if account.category else None,
+            }
+        else:  # corporate
+            result['account_info'] = {
+                'company_name': account.company_name,
+                'account_name': account.account_name,
+                'platform': account.get_platform_display(),
+                'sales_status': account.get_sales_status_display(),
+                'editorial_status': account.get_editorial_status_display(),
+            }
+    
+    # アカウントインスタンスは削除（JSONシリアライズできないため）
+    result.pop('account', None)
+    
+    return JsonResponse(result)
+
+
+@login_required
+@require_POST
+def update_report_status(request):
+    """掲載報告ステータスを更新するAPI"""
+    try:
+        data = json.loads(request.body)
+        article_id = data.get('article_id')
+        report_status = data.get('report_status')
+        
+        # 記事を取得
+        article = get_object_or_404(Article, article_id=article_id)
+        
+        # 権限チェック（スタッフまたは申請者/ライター）
+        if not (request.user.is_staff or 
+                article.applicant == request.user or 
+                article.writer == request.user):
+            return JsonResponse({'success': False, 'error': '権限がありません'}, status=403)
+        
+        # ステータスを更新
+        article.report_status = report_status
+        article.save()
+        
+        # 履歴を記録
+        ArticleHistory.objects.create(
+            article=article,
+            user=request.user,
+            action='掲載報告ステータス変更',
+            new_value=dict(Article.REPORT_STATUS_CHOICES).get(report_status, report_status)
+        )
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+class PersonalSNSAccountListView(LoginRequiredMixin, ListView):
+    """個人SNSアカウント一覧"""
+    model = PersonalSNSAccount
+    template_name = 'article_management/personal_account_list.html'
+    context_object_name = 'accounts'
+    paginate_by = 300
+    
+    def get_queryset(self):
+        queryset = PersonalSNSAccount.objects.all()
+        
+        # 検索
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(handle_name__icontains=search) |
+                Q(real_name__icontains=search) |
+                Q(notes__icontains=search)
+            )
+        
+        # ステータスフィルター
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # プラットフォームフィルター
+        platform = self.request.GET.get('platform')
+        if platform:
+            queryset = queryset.filter(platform=platform)
+        
+        # カテゴリフィルター
+        category = self.request.GET.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        return queryset.order_by('handle_name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 統計情報
+        all_accounts = PersonalSNSAccount.objects.all()
+        context['stats'] = {
+            'total': all_accounts.count(),
+            'ok': all_accounts.filter(status='ok').count(),
+            'conditional': all_accounts.filter(status='conditional').count(),
+            'ng': all_accounts.filter(status='ng').count(),
+        }
+        
+        # フィルター用の選択肢
+        context['status_choices'] = PersonalSNSAccount.STATUS_CHOICES
+        context['platform_choices'] = PersonalSNSAccount.PLATFORM_CHOICES
+        context['category_choices'] = PersonalSNSAccount.CATEGORY_CHOICES
+        
+        return context
+
+
+class PersonalSNSAccountCreateView(LoginRequiredMixin, CreateView):
+    """個人SNSアカウント作成"""
+    model = PersonalSNSAccount
+    form_class = PersonalSNSAccountForm
+    template_name = 'article_management/personal_account_form.html'
+    success_url = reverse_lazy('article_management:personal_account_list')
+
+
+class PersonalSNSAccountUpdateView(LoginRequiredMixin, UpdateView):
+    """個人SNSアカウント編集"""
+    model = PersonalSNSAccount
+    form_class = PersonalSNSAccountForm
+    template_name = 'article_management/personal_account_form.html'
+    success_url = reverse_lazy('article_management:personal_account_list')
+
+
+class CorporateSNSAccountListView(LoginRequiredMixin, ListView):
+    """企業SNSアカウント一覧"""
+    model = CorporateSNSAccount
+    template_name = 'article_management/corporate_account_list.html'
+    context_object_name = 'accounts'
+    paginate_by = 300
+    
+    def get_queryset(self):
+        queryset = CorporateSNSAccount.objects.all()
+        
+        # 検索
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(company_name__icontains=search) |
+                Q(account_name__icontains=search) |
+                Q(notes__icontains=search)
+            )
+        
+        # ステータスフィルター（厳しい方を採用）
+        status = self.request.GET.get('status')
+        if status == 'ok':
+            queryset = queryset.filter(sales_status='ok', editorial_status='ok')
+        elif status == 'checking':
+            queryset = queryset.filter(
+                Q(sales_status='checking') | Q(editorial_status='checking')
+            ).exclude(sales_status='ng', editorial_status='ng')
+        elif status == 'ng':
+            queryset = queryset.filter(
+                Q(sales_status='ng') | Q(editorial_status='ng')
+            )
+        
+        # プラットフォームフィルター
+        platform = self.request.GET.get('platform')
+        if platform:
+            queryset = queryset.filter(platform=platform)
+        
+        # 条件フィルター
+        if self.request.GET.get('require_prior_approval'):
+            queryset = queryset.filter(require_prior_approval=True)
+        if self.request.GET.get('embed_only'):
+            queryset = queryset.filter(embed_only=True)
+        
+        return queryset.order_by('company_name', 'account_name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 統計情報
+        all_accounts = CorporateSNSAccount.objects.all()
+        ok_count = all_accounts.filter(sales_status='ok', editorial_status='ok').count()
+        checking_count = all_accounts.filter(
+            Q(sales_status='checking') | Q(editorial_status='checking')
+        ).exclude(Q(sales_status='ng') | Q(editorial_status='ng')).count()
+        ng_count = all_accounts.filter(
+            Q(sales_status='ng') | Q(editorial_status='ng')
+        ).count()
+        
+        context['stats'] = {
+            'total': all_accounts.count(),
+            'ok': ok_count,
+            'checking': checking_count,
+            'ng': ng_count,
+        }
+        
+        # フィルター用の選択肢
+        context['platform_choices'] = PersonalSNSAccount.PLATFORM_CHOICES
+        
+        return context
+
+
+class CorporateSNSAccountCreateView(LoginRequiredMixin, CreateView):
+    """企業SNSアカウント作成"""
+    model = CorporateSNSAccount
+    form_class = CorporateSNSAccountForm
+    template_name = 'article_management/corporate_account_form.html'
+    success_url = reverse_lazy('article_management:corporate_account_list')
+
+
+class CorporateSNSAccountUpdateView(LoginRequiredMixin, UpdateView):
+    """企業SNSアカウント編集"""
+    model = CorporateSNSAccount
+    form_class = CorporateSNSAccountForm
+    template_name = 'article_management/corporate_account_form.html'
+    success_url = reverse_lazy('article_management:corporate_account_list')

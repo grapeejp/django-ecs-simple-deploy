@@ -7,12 +7,9 @@
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="display-4 text-white">記事一覧</h1>
+            <h1 class="display-4">記事一覧</h1>
         </div>
         <div class="col-auto">
-            <a href="{% url 'article_management:dashboard' %}" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-tachometer-alt"></i> ダッシュボード
-            </a>
             <a href="{% url 'article_management:article_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> 新規記事作成
             </a>
@@ -20,15 +17,15 @@
     </div>
 
     <!-- 検索・フィルター -->
-    <div class="card bg-dark text-white mb-4">
+    <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-4">
-                    <input type="text" name="search" class="form-control bg-dark text-white border-secondary" 
+                    <input type="text" name="search" class="form-control" 
                            placeholder="内容、記事番号、ID で検索" value="{{ request.GET.search }}">
                 </div>
                 <div class="col-md-3">
-                    <select name="status" class="form-control bg-dark text-white border-secondary">
+                    <select name="status" class="form-control">
                         <option value="">すべてのステータス</option>
                         <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>申請中</option>
                         <option value="through" {% if request.GET.status == 'through' %}selected{% endif %}>スルー</option>
@@ -36,12 +33,15 @@
                         <option value="need_permission" {% if request.GET.status == 'need_permission' %}selected{% endif %}>要許可</option>
                         <option value="no_apply" {% if request.GET.status == 'no_apply' %}selected{% endif %}>申請不要</option>
                         <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>公開済</option>
-                        <option value="unknown" {% if request.GET.status == 'unknown' %}selected{% endif %}>不明</option>
+                        <option value="info_provided" {% if request.GET.status == 'info_provided' %}selected{% endif %}>情報提供</option>
+                        <option value="-" {% if request.GET.status == '-' %}selected{% endif %}>-</option>
+                        <option value="post_report" {% if request.GET.status == 'post_report' %}selected{% endif %}>事後報告</option>
+                        <option value="original" {% if request.GET.status == 'original' %}selected{% endif %}>独自記事</option>
                     </select>
                 </div>
                 {% if user.is_staff %}
                 <div class="col-md-3">
-                    <select name="writer" class="form-control bg-dark text-white border-secondary">
+                    <select name="writer" class="form-control">
                         <option value="">すべてのライター</option>
                         {% for writer in writers %}
                         <option value="{{ writer.id }}" {% if request.GET.writer == writer.id|stringformat:"s" %}selected{% endif %}>
@@ -62,17 +62,23 @@
 
     <!-- 記事一覧テーブル -->
     <div class="table-responsive">
-        <table class="table table-dark table-hover">
+        <table class="table table-hover">
             <thead>
                 <tr>
                     <th>記事番号</th>
-                    <th>内容</th>
-                    <th>申請日</th>
-                    <th>ライター</th>
+                    <th>掲載報告</th>
                     <th>ステータス</th>
-                    <th>記事URL</th>
-                    <th>ID（IGは手打ち）</th>
+                    <th>公開日</th>
+                    <th>申請日</th>
+                    <th style="white-space: nowrap;">提案者</th>
+                    <th>ライター</th>
+                    <th>内容</th>
+                    <th>Facebookテキスト</th>
+                    <th>SNS</th>
+                    <th>参照記事URL</th>
+                    <th>元ネタの作成者ID</th>
                     <th>操作</th>
+                    <th>備考</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,21 +86,55 @@
                 <tr>
                     <td>{{ article.article_id }}</td>
                     <td>
-                        <a href="{% url 'article_management:article_detail' article.article_id %}" class="text-decoration-none text-info">
-                            {{ article.content|truncatechars:50 }}
-                        </a>
+                        <select class="form-control form-control-sm report-status-select" 
+                                data-article-id="{{ article.article_id }}"
+                                style="width: auto; min-width: 140px;">
+                            <option value="not_required" {% if article.report_status == 'not_required' %}selected{% endif %}>不要</option>
+                            <option value="sent" {% if article.report_status == 'sent' %}selected{% endif %}>送信済み</option>
+                            <option value="ready_with_x" {% if article.report_status == 'ready_with_x' %}selected{% endif %}>準備完了Xあり</option>
+                            <option value="ready_without_x" {% if article.report_status == 'ready_without_x' %}selected{% endif %}>準備完了Xなし</option>
+                        </select>
                     </td>
-                    <td>{{ article.applicant.username }}</td>
-                    <td>{{ article.writer.username|default:"-" }}</td>
                     <td>
                         <span class="badge bg-{{ article.get_status_color }}">
                             {{ article.get_status_display }}
                         </span>
                     </td>
+                    <td>{{ article.published_at|date:"m/d"|default:"-" }}</td>
+                    <td>{{ article.created_at|date:"m/d" }}</td>
+                    <td>{{ article.applicant.username }}</td>
+                    <td>{{ article.writer.username|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'article_management:article_detail' article.article_id %}" class="text-decoration-none text-info">
+                            {{ article.content|truncatechars:50 }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ article.facebook_text|truncatechars:30|default:"-" }}
+                    </td>
+                    <td>
+                        {% if article.reference_url %}
+                            {% if 'youtube.com' in article.reference_url or 'youtu.be' in article.reference_url %}
+                                <i class="fab fa-youtube text-danger" title="YouTube"></i>
+                            {% elif 'x.com' in article.reference_url or 'twitter.com' in article.reference_url %}
+                                <i class="fab fa-twitter text-info" title="X (Twitter)"></i>
+                            {% elif 'instagram.com' in article.reference_url %}
+                                <i class="fab fa-instagram text-warning" title="Instagram"></i>
+                            {% elif 'threads.com' in article.reference_url %}
+                                <i class="fas fa-at text-dark" title="Threads"></i>
+                            {% elif 'tiktok.com' in article.reference_url %}
+                                <i class="fab fa-tiktok" title="TikTok"></i>
+                            {% else %}
+                                <i class="fas fa-globe text-secondary" title="Web"></i>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if article.reference_url %}
                             <a href="{{ article.reference_url }}" target="_blank" class="text-info">
-                                <i class="fas fa-external-link-alt"></i> 記事を見る
+                                <i class="fas fa-external-link-alt"></i> 見る
                             </a>
                         {% else %}
                             <span class="text-muted">-</span>
@@ -115,10 +155,11 @@
                             {% endif %}
                         </div>
                     </td>
+                    <td>{{ article.notes|truncatechars:30|default:"-" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="text-center py-4">
+                    <td colspan="14" class="text-center py-4">
                         <p class="mb-0">記事が見つかりませんでした。</p>
                         <a href="{% url 'article_management:article_create' %}" class="btn btn-primary mt-2">
                             <i class="fas fa-plus"></i> 新規記事を作成
@@ -136,12 +177,12 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                     最初
                 </a>
             </li>
             <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                     前へ
                 </a>
             </li>
@@ -155,12 +196,12 @@
             
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                     次へ
                 </a>
             </li>
             <li class="page-item">
-                <a class="page-link bg-dark text-white border-secondary" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
                     最後
                 </a>
             </li>
@@ -176,4 +217,51 @@
     cursor: help;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 掲載報告ステータスの変更を処理
+    const reportStatusSelects = document.querySelectorAll('.report-status-select');
+    
+    reportStatusSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const articleId = this.dataset.articleId;
+            const newStatus = this.value;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            
+            // APIリクエストを送信
+            fetch(`/articles/api/update-report-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    article_id: articleId,
+                    report_status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 成功時の視覚的フィードバック
+                    this.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 1000);
+                } else {
+                    // エラー時は元の値に戻す
+                    alert('更新に失敗しました: ' + (data.error || 'Unknown error'));
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('エラーが発生しました');
+                location.reload();
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,242 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}個人SNSアカウント一覧 - Grape{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">個人SNSアカウント一覧</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'article_management:personal_account_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> アカウント追加
+            </a>
+            <a href="{% url 'article_management:article_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 記事一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- 統計情報 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">総数</h5>
+                    <h2 class="mb-0">{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">OK</h5>
+                    <h2 class="mb-0">{{ stats.ok }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">条件付き</h5>
+                    <h2 class="mb-0">{{ stats.conditional }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">NG</h5>
+                    <h2 class="mb-0">{{ stats.ng }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索・フィルター -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="検索..." value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-control">
+                        <option value="">すべてのステータス</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="platform" class="form-control">
+                        <option value="">すべてのプラットフォーム</option>
+                        {% for value, label in platform_choices %}
+                        <option value="{{ value }}" {% if request.GET.platform == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="category" class="form-control">
+                        <option value="">すべてのカテゴリ</option>
+                        {% for value, label in category_choices %}
+                        <option value="{{ value }}" {% if request.GET.category == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                </div>
+                <div class="col-md-1">
+                    <a href="{% url 'article_management:personal_account_list' %}" class="btn btn-secondary w-100">
+                        クリア
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- アカウント一覧 -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ステータス</th>
+                    <th>ハンドル名</th>
+                    <th>本名</th>
+                    <th>プラットフォーム</th>
+                    <th>カテゴリ</th>
+                    <th>理由/条件</th>
+                    <th>ステータス変更日</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr class="{% if account.status == 'ng' %}table-danger{% elif account.status == 'conditional' %}table-warning{% endif %}">
+                    <td>
+                        <span class="badge bg-{% if account.status == 'ok' %}success{% elif account.status == 'conditional' %}warning{% else %}danger{% endif %}">
+                            {{ account.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ account.handle_name }}</strong>
+                    </td>
+                    <td>{{ account.real_name|default:"-" }}</td>
+                    <td>
+                        {% if account.platform == 'twitter' %}
+                            <i class="fab fa-twitter text-info"></i>
+                        {% elif account.platform == 'instagram' %}
+                            <i class="fab fa-instagram text-warning"></i>
+                        {% elif account.platform == 'threads' %}
+                            <i class="fas fa-at text-white"></i>
+                        {% elif account.platform == 'tiktok' %}
+                            <i class="fab fa-tiktok"></i>
+                        {% elif account.platform == 'youtube' %}
+                            <i class="fab fa-youtube text-danger"></i>
+                        {% else %}
+                            <i class="fas fa-globe text-secondary"></i>
+                        {% endif %}
+                        {{ account.get_platform_display }}
+                    </td>
+                    <td>{{ account.get_category_display|default:"-" }}</td>
+                    <td>
+                        {% if account.status == 'ng' %}
+                            <span class="text-white fw-bold">{{ account.reason|truncatechars:50 }}</span>
+                        {% elif account.status == 'conditional' %}
+                            <span class="text-white fw-bold">{{ account.conditions|truncatechars:50 }}</span>
+                        {% else %}
+                            {{ account.conditions|truncatechars:50|default:"-" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ account.status_date|date:"Y/m/d" }}</td>
+                    <td>
+                        {% if account.url %}
+                        <a href="{{ account.url }}" target="_blank" class="btn btn-sm btn-outline-info" title="プロフィールを見る">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'article_management:personal_account_edit' account.id %}" 
+                           class="btn btn-sm btn-outline-warning" title="編集">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <p class="mb-0">アカウントが見つかりませんでした。</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ページネーション -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    最初
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    前へ
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link bg-primary border-primary">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    次へ
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    最後
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.table-danger {
+    --bs-table-bg: #ce2837;
+}
+.table-warning {
+    --bs-table-bg: #ffc107;
+}
+.table-danger td, .table-warning td {
+    color: #fff;
+}
+</style>
+{% endblock %}

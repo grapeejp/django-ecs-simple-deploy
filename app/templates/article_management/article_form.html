@@ -9,7 +9,7 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-lg-8 mx-auto">
-            <div class="card bg-dark text-white">
+            <div class="card">
                 <div class="card-header">
                     <h2 class="mb-0">
                         {% if form.instance.pk %}
@@ -57,6 +57,7 @@
                             {% if form.reference_url.errors %}
                             <div class="text-danger small">{{ form.reference_url.errors }}</div>
                             {% endif %}
+                            <div id="url-check-result" class="mt-2"></div>
                         </div>
 
                         <div class="mb-3">
@@ -136,7 +137,7 @@
             </div>
 
             {% if form.instance.pk %}
-            <div class="card bg-dark text-white mt-3">
+            <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">記事情報</h5>
                 </div>
@@ -175,9 +176,77 @@ document.addEventListener('DOMContentLoaded', function() {
     // フォームのスタイル調整
     const inputs = document.querySelectorAll('.form-control');
     inputs.forEach(input => {
-        input.classList.add('bg-dark', 'text-white', 'border-secondary');
+        // Remove dark theme styling
     });
+    
+    // 参照URLフィールドの変更を監視
+    const referenceUrlInput = document.getElementById('{{ form.reference_url.id_for_label }}');
+    if (referenceUrlInput) {
+        referenceUrlInput.addEventListener('blur', checkReferenceUrl);
+    }
 });
+
+// 参照URLをチェック
+function checkReferenceUrl() {
+    const urlInput = document.getElementById('{{ form.reference_url.id_for_label }}');
+    const url = urlInput.value.trim();
+    const resultDiv = document.getElementById('url-check-result');
+    
+    if (!url) {
+        resultDiv.innerHTML = '';
+        return;
+    }
+    
+    fetch(`{% url 'article_management:check_sns_url' %}?url=${encodeURIComponent(url)}`)
+        .then(response => response.json())
+        .then(data => {
+            let html = '';
+            
+            if (data.type === 'unknown') {
+                html = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> 未登録のアカウントです</div>';
+            } else {
+                const statusColors = {
+                    'ok': 'success',
+                    'conditional': 'warning',
+                    'ng': 'danger',
+                    'checking': 'warning',
+                    'unknown': 'secondary'
+                };
+                
+                const color = statusColors[data.status] || 'secondary';
+                
+                html = `<div class="alert alert-${color}">`;
+                
+                if (data.type === 'personal') {
+                    html += `<strong>個人アカウント: ${data.account_info.handle_name}</strong><br>`;
+                } else {
+                    html += `<strong>企業アカウント: ${data.account_info.company_name} - ${data.account_info.account_name}</strong><br>`;
+                }
+                
+                html += `ステータス: ${data.message}<br>`;
+                
+                if (data.conditions && data.conditions.length > 0) {
+                    html += `条件: <ul class="mb-0">`;
+                    data.conditions.forEach(condition => {
+                        html += `<li>${condition}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+                
+                if (data.contact) {
+                    html += `<br>連絡先: ${data.contact}`;
+                }
+                
+                html += `</div>`;
+            }
+            
+            resultDiv.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resultDiv.innerHTML = '<div class="alert alert-danger">チェック中にエラーが発生しました</div>';
+        });
+}
 
 // SNSユーザーの許諾状況をチェック
 function checkSocialUsers() {

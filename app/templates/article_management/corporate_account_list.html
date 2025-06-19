@@ -1,0 +1,278 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}企業SNSアカウント一覧 - Grape{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">企業SNSアカウント一覧</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'article_management:corporate_account_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> アカウント追加
+            </a>
+            <a href="{% url 'article_management:article_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 記事一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- 統計情報 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">総数</h5>
+                    <h2 class="mb-0">{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">OK</h5>
+                    <h2 class="mb-0">{{ stats.ok }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">確認中</h5>
+                    <h2 class="mb-0">{{ stats.checking }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">NG</h5>
+                    <h2 class="mb-0">{{ stats.ng }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索・フィルター -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="企業名・アカウント名で検索..." value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-control">
+                        <option value="">すべてのステータス</option>
+                        <option value="ok" {% if request.GET.status == 'ok' %}selected{% endif %}>OK</option>
+                        <option value="checking" {% if request.GET.status == 'checking' %}selected{% endif %}>確認中</option>
+                        <option value="ng" {% if request.GET.status == 'ng' %}selected{% endif %}>NG</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="platform" class="form-control">
+                        <option value="">すべてのプラットフォーム</option>
+                        {% for value, label in platform_choices %}
+                        <option value="{{ value }}" {% if request.GET.platform == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="require_prior_approval" value="1" 
+                               id="requirePriorApproval" {% if request.GET.require_prior_approval %}checked{% endif %}>
+                        <label class="form-check-label" for="requirePriorApproval">
+                            事前確認必須
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="embed_only" value="1" 
+                               id="embedOnly" {% if request.GET.embed_only %}checked{% endif %}>
+                        <label class="form-check-label" for="embedOnly">
+                            埋め込みのみ
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- アカウント一覧 -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>企業名</th>
+                    <th>アカウント名</th>
+                    <th>プラットフォーム</th>
+                    <th>営業</th>
+                    <th>編集</th>
+                    <th>条件</th>
+                    <th>連絡先</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                {% with overall_status=account.get_overall_status %}
+                <tr class="{% if overall_status == 'ng' %}table-danger{% elif overall_status == 'checking' %}table-warning{% endif %}">
+                    <td><strong>{{ account.company_name }}</strong></td>
+                    <td>{{ account.account_name }}</td>
+                    <td>
+                        {% if account.platform == 'twitter' %}
+                            <i class="fab fa-twitter text-info"></i>
+                        {% elif account.platform == 'instagram' %}
+                            <i class="fab fa-instagram text-warning"></i>
+                        {% elif account.platform == 'threads' %}
+                            <i class="fas fa-at text-white"></i>
+                        {% elif account.platform == 'tiktok' %}
+                            <i class="fab fa-tiktok"></i>
+                        {% elif account.platform == 'youtube' %}
+                            <i class="fab fa-youtube text-danger"></i>
+                        {% else %}
+                            <i class="fas fa-globe text-secondary"></i>
+                        {% endif %}
+                        {{ account.get_platform_display }}
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if account.sales_status == 'ok' %}success{% elif account.sales_status == 'checking' %}warning{% else %}danger{% endif %}">
+                            {{ account.get_sales_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if account.editorial_status == 'ok' %}success{% elif account.editorial_status == 'checking' %}warning{% else %}danger{% endif %}">
+                            {{ account.get_editorial_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if account.require_prior_approval %}
+                            <span class="badge bg-info" title="事前確認必須">事前</span>
+                        {% endif %}
+                        {% if account.require_post_report %}
+                            <span class="badge bg-info" title="事後報告必須">事後</span>
+                        {% endif %}
+                        {% if account.embed_only %}
+                            <span class="badge bg-warning text-dark" title="埋め込みのみ">埋込</span>
+                        {% endif %}
+                        {% if not account.allow_image_download %}
+                            <span class="badge bg-danger" title="画像DL不可">DL×</span>
+                        {% endif %}
+                        {% if not account.allow_screenshot %}
+                            <span class="badge bg-danger" title="スクショ不可">SS×</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if account.primary_contact %}
+                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                    data-bs-toggle="popover" 
+                                    data-bs-placement="left"
+                                    data-bs-html="true"
+                                    title="連絡先情報"
+                                    data-bs-content="<strong>主要連絡先:</strong><br>{{ account.primary_contact|linebreaksbr }}<br><br><strong>特殊条件:</strong><br>{{ account.special_conditions|default:'なし'|linebreaksbr }}">
+                                <i class="fas fa-info-circle"></i> 詳細
+                            </button>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if account.url %}
+                        <a href="{{ account.url }}" target="_blank" class="btn btn-sm btn-outline-info" title="アカウントを見る">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'article_management:corporate_account_edit' account.id %}" 
+                           class="btn btn-sm btn-outline-warning" title="編集">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <p class="mb-0">アカウントが見つかりませんでした。</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ページネーション -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    最初
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    前へ
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link bg-primary border-primary">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    次へ
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" 
+                   href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    最後
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+}
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+}
+.table-danger td, .table-warning td {
+    color: #fff;
+}
+</style>
+
+<script>
+// Bootstrap Popoverを初期化
+document.addEventListener('DOMContentLoaded', function() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    })
+});
+</script>
+{% endblock %}

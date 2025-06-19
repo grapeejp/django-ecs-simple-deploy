@@ -1,0 +1,210 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}
+{% if form.instance.pk %}個人SNSアカウント編集{% else %}個人SNSアカウント追加{% endif %} - Grape
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        {% if form.instance.pk %}
+                        個人SNSアカウント編集
+                        {% else %}
+                        個人SNSアカウント追加
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.handle_name.id_for_label }}" class="form-label">
+                                        {{ form.handle_name.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.handle_name }}
+                                    {% if form.handle_name.errors %}
+                                    <div class="text-danger small">{{ form.handle_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.real_name.id_for_label }}" class="form-label">
+                                        {{ form.real_name.label }}
+                                    </label>
+                                    {{ form.real_name }}
+                                    {% if form.real_name.errors %}
+                                    <div class="text-danger small">{{ form.real_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.platform.id_for_label }}" class="form-label">
+                                        {{ form.platform.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.platform }}
+                                    {% if form.platform.errors %}
+                                    <div class="text-danger small">{{ form.platform.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        {{ form.category.label }}
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.url.id_for_label }}" class="form-label">
+                                {{ form.url.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.url }}
+                            {% if form.url.errors %}
+                            <div class="text-danger small">{{ form.url.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                {{ form.status.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex gap-4">
+                                {% for radio in form.status %}
+                                <div class="form-check">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.status.errors %}
+                            <div class="text-danger small">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                {{ form.reason.label }}
+                                <small class="text-muted">（NGまたは条件付きの場合は必須）</small>
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                            <div class="text-danger small">{{ form.reason.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.conditions.id_for_label }}" class="form-label">
+                                {{ form.conditions.label }}
+                            </label>
+                            {{ form.conditions }}
+                            {% if form.conditions.errors %}
+                            <div class="text-danger small">{{ form.conditions.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger small">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'article_management:personal_account_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}更新{% else %}登録{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if form.instance.pk %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">アカウント情報</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">ステータス変更日</dt>
+                        <dd class="col-sm-9">{{ form.instance.status_date|date:"Y年m月d日" }}</dd>
+                        
+                        <dt class="col-sm-3">作成日時</dt>
+                        <dd class="col-sm-9">{{ form.instance.created_at|date:"Y年m月d日 H:i" }}</dd>
+                        
+                        <dt class="col-sm-3">更新日時</dt>
+                        <dd class="col-sm-9">{{ form.instance.updated_at|date:"Y年m月d日 H:i" }}</dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // フォームのスタイル調整
+    const inputs = document.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        // Remove dark theme styling
+    });
+    
+    // ステータスによる理由フィールドの表示制御
+    const statusRadios = document.querySelectorAll('input[name="status"]');
+    const reasonField = document.getElementById('{{ form.reason.id_for_label }}');
+    const reasonLabel = reasonField.closest('.mb-3').querySelector('label');
+    
+    function toggleReasonField() {
+        const selectedStatus = document.querySelector('input[name="status"]:checked');
+        if (selectedStatus && (selectedStatus.value === 'ng' || selectedStatus.value === 'conditional')) {
+            reasonField.setAttribute('required', 'required');
+            reasonLabel.querySelector('.text-muted').textContent = '（必須）';
+        } else {
+            reasonField.removeAttribute('required');
+            reasonLabel.querySelector('.text-muted').textContent = '（NGまたは条件付きの場合は必須）';
+        }
+    }
+    
+    statusRadios.forEach(radio => {
+        radio.addEventListener('change', toggleReasonField);
+    });
+    
+    // 初期状態をチェック
+    toggleReasonField();
+});
+</script>
+{% endblock %}
