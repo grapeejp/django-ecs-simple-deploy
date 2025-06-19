@@ -52,7 +52,7 @@ jobs:
         aws cloudformation deploy \
           --stack-name django-ecs-cluster-staging-v2 \
           --template-file cloudformation/ecs-cluster.yml \
-          --parameters ParameterKey=Environment,ParameterValue=staging \
+          --parameter-overrides Environment=staging \
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset
           
@@ -67,13 +67,13 @@ jobs:
           aws cloudformation update-stack \
             --stack-name $STACK_NAME \
             --template-body file://cloudformation/ecs-service-staging-simple.yml \
-            --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI
+            --parameter-overrides ImageUrl=$IMAGE_URI
         else
           echo "Creating new stack: $STACK_NAME"
           aws cloudformation create-stack \
             --stack-name $STACK_NAME \
             --template-body file://cloudformation/ecs-service-staging-simple.yml \
-            --parameters ParameterKey=ImageUrl,ParameterValue=$IMAGE_URI
+            --parameter-overrides ImageUrl=$IMAGE_URI
         fi
           
     - name: Get Application URL
