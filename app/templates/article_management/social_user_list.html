@@ -1,0 +1,236 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}SNSユーザー管理 - Grape{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 text-white">SNSユーザー管理</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'article_management:dashboard' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-tachometer-alt"></i> ダッシュボード
+            </a>
+            <a href="{% url 'article_management:social_user_create' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> 新規ユーザー追加
+            </a>
+        </div>
+    </div>
+
+    <!-- 統計情報 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title">OKユーザー</h5>
+                    <p class="card-text display-4">{{ ok_users_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-danger">
+                <div class="card-body text-center">
+                    <h5 class="card-title">NGユーザー</h5>
+                    <p class="card-text display-4">{{ ng_users_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Twitter</h5>
+                    <p class="card-text display-4">{{ twitter_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Instagram</h5>
+                    <p class="card-text display-4">{{ instagram_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索・フィルター -->
+    <div class="card bg-dark text-white mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control bg-dark text-white border-secondary" 
+                           placeholder="ハンドルネーム、備考で検索" value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="platform" class="form-control bg-dark text-white border-secondary">
+                        <option value="">すべてのプラットフォーム</option>
+                        <option value="twitter" {% if request.GET.platform == 'twitter' %}selected{% endif %}>Twitter</option>
+                        <option value="instagram" {% if request.GET.platform == 'instagram' %}selected{% endif %}>Instagram</option>
+                        <option value="tiktok" {% if request.GET.platform == 'tiktok' %}selected{% endif %}>TikTok</option>
+                        <option value="youtube" {% if request.GET.platform == 'youtube' %}selected{% endif %}>YouTube</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-control bg-dark text-white border-secondary">
+                        <option value="">すべてのステータス</option>
+                        <option value="ok" {% if request.GET.status == 'ok' %}selected{% endif %}>OK（使用可）</option>
+                        <option value="ng" {% if request.GET.status == 'ng' %}selected{% endif %}>NG（使用不可）</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ユーザー一覧 -->
+    <div class="table-responsive">
+        <table class="table table-dark table-hover">
+            <thead>
+                <tr>
+                    <th>プラットフォーム</th>
+                    <th>ハンドルネーム</th>
+                    <th>ステータス</th>
+                    <th>許諾取得日</th>
+                    <th>許諾期限</th>
+                    <th>利用条件</th>
+                    <th>備考</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr {% if user.status == 'ng' %}class="table-danger"{% elif not user.is_permission_valid %}class="table-warning"{% endif %}>
+                    <td>
+                        <span class="badge bg-secondary">
+                            {{ user.get_platform_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.profile_url %}
+                        <a href="{{ user.profile_url }}" target="_blank" class="text-info text-decoration-none">
+                            <i class="fas fa-external-link-alt"></i> {{ user.handle_name }}
+                        </a>
+                        {% else %}
+                        {{ user.handle_name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.status == 'ok' %}
+                            {% if user.is_permission_valid %}
+                            <span class="badge bg-success">OK</span>
+                            {% else %}
+                            <span class="badge bg-warning">期限切れ</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="badge bg-danger">NG</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.permission_date|date:"Y/m/d"|default:"-" }}</td>
+                    <td>
+                        {% if user.permission_expires %}
+                            {% if user.permission_expires < today %}
+                            <span class="text-danger">{{ user.permission_expires|date:"Y/m/d" }}</span>
+                            {% else %}
+                            {{ user.permission_expires|date:"Y/m/d" }}
+                            {% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.status == 'ng' %}
+                        <span class="text-danger" title="{{ user.ng_reason }}">
+                            NG理由: {{ user.ng_reason|truncatechars:20 }}
+                        </span>
+                        {% else %}
+                        {{ user.usage_conditions|truncatechars:30|default:"-" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ user.notes|truncatechars:30|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'article_management:social_user_edit' user.pk %}" 
+                           class="btn btn-sm btn-outline-warning" title="編集">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <p class="mb-0">SNSユーザーが登録されていません。</p>
+                        <a href="{% url 'article_management:social_user_create' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-user-plus"></i> 新規ユーザーを追加
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ページネーション -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" 
+                   href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.platform %}&platform={{ request.GET.platform }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    最初
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" 
+                   href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.platform %}&platform={{ request.GET.platform }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    前へ
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link bg-primary border-primary">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" 
+                   href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.platform %}&platform={{ request.GET.platform }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    次へ
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" 
+                   href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.platform %}&platform={{ request.GET.platform }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    最後
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+/* NGユーザーの行を目立たせる */
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+}
+
+/* ツールチップ表示 */
+[title]:hover {
+    cursor: help;
+}
+</style>
+{% endblock %}

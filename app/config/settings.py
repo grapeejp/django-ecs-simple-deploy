@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     "proofreading_ai",
     "tags",
     "grapecheck",  # グレイプらしさチェッカー
+    "article_management",  # 記事管理システム
 ]
 
 MIDDLEWARE = [

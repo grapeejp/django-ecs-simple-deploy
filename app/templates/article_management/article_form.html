@@ -1,0 +1,243 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}
+{% if form.instance.pk %}記事編集{% else %}新規記事作成{% endif %} - Grape
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        {% if form.instance.pk %}
+                        記事編集: {{ form.instance.article_id }}
+                        {% else %}
+                        新規記事作成
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="articleForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">
+                                {{ form.title.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger small">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.content.id_for_label }}" class="form-label">
+                                {{ form.content.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                            <div class="text-danger small">{{ form.content.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.reference_url.id_for_label }}" class="form-label">
+                                {{ form.reference_url.label }}
+                            </label>
+                            {{ form.reference_url }}
+                            {% if form.reference_url.errors %}
+                            <div class="text-danger small">{{ form.reference_url.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.writer.id_for_label }}" class="form-label">
+                                {{ form.writer.label }}
+                            </label>
+                            {{ form.writer }}
+                            {% if form.writer.errors %}
+                            <div class="text-danger small">{{ form.writer.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.social_media_users.id_for_label }}" class="form-label">
+                                {{ form.social_media_users.label }}
+                                <button type="button" class="btn btn-sm btn-info ms-2" onclick="checkSocialUsers()">
+                                    <i class="fas fa-check"></i> 許諾状況を確認
+                                </button>
+                            </label>
+                            {{ form.social_media_users }}
+                            {% if form.social_media_users.errors %}
+                            <div class="text-danger small">{{ form.social_media_users.errors }}</div>
+                            {% endif %}
+                            <div id="socialUserAlert" class="alert alert-danger mt-2 d-none">
+                                <strong>⚠️ 警告:</strong> <span id="alertMessage"></span>
+                            </div>
+                            <small class="text-muted">
+                                Ctrlキー（Macの場合はCmd）を押しながらクリックで複数選択できます
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.facebook_text.id_for_label }}" class="form-label">
+                                {{ form.facebook_text.label }}
+                            </label>
+                            {{ form.facebook_text }}
+                            {% if form.facebook_text.errors %}
+                            <div class="text-danger small">{{ form.facebook_text.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger small">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if form.instance.pk %}
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                {{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="text-danger small">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        {{ form.status }}
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'article_management:article_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}更新{% else %}作成{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if form.instance.pk %}
+            <div class="card bg-dark text-white mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">記事情報</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">記事番号</dt>
+                        <dd class="col-sm-9">{{ form.instance.article_id }}</dd>
+                        
+                        <dt class="col-sm-3">申請者</dt>
+                        <dd class="col-sm-9">{{ form.instance.applicant.username }}</dd>
+                        
+                        <dt class="col-sm-3">作成日時</dt>
+                        <dd class="col-sm-9">{{ form.instance.created_at|date:"Y年m月d日 H:i" }}</dd>
+                        
+                        <dt class="col-sm-3">更新日時</dt>
+                        <dd class="col-sm-9">{{ form.instance.updated_at|date:"Y年m月d日 H:i" }}</dd>
+                        
+                        {% if form.instance.approved_by %}
+                        <dt class="col-sm-3">承認者</dt>
+                        <dd class="col-sm-9">{{ form.instance.approved_by.username }}</dd>
+                        
+                        <dt class="col-sm-3">承認日時</dt>
+                        <dd class="col-sm-9">{{ form.instance.approved_at|date:"Y年m月d日 H:i" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Select2の初期化（複数選択を使いやすくする）
+document.addEventListener('DOMContentLoaded', function() {
+    // フォームのスタイル調整
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.classList.add('bg-dark', 'text-white', 'border-secondary');
+    });
+});
+
+// SNSユーザーの許諾状況をチェック
+function checkSocialUsers() {
+    const select = document.getElementById('{{ form.social_media_users.id_for_label }}');
+    const selectedOptions = Array.from(select.selectedOptions);
+    const userIds = selectedOptions.map(option => option.value);
+    
+    if (userIds.length === 0) {
+        alert('SNSユーザーを選択してください。');
+        return;
+    }
+    
+    fetch(`{% url 'article_management:check_social_users' %}?${userIds.map(id => 'user_ids[]=' + id).join('&')}`)
+        .then(response => response.json())
+        .then(data => {
+            const alertDiv = document.getElementById('socialUserAlert');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            const ngUsers = data.users.filter(user => user.status === 'ng');
+            const expiredUsers = data.users.filter(user => !user.is_valid && user.status !== 'ng');
+            
+            if (ngUsers.length > 0 || expiredUsers.length > 0) {
+                let messages = [];
+                
+                if (ngUsers.length > 0) {
+                    const ngList = ngUsers.map(user => 
+                        `${user.platform} - ${user.handle_name} (理由: ${user.ng_reason || '記載なし'})`
+                    ).join('、');
+                    messages.push(`NGユーザーが含まれています: ${ngList}`);
+                }
+                
+                if (expiredUsers.length > 0) {
+                    const expiredList = expiredUsers.map(user => 
+                        `${user.platform} - ${user.handle_name}`
+                    ).join('、');
+                    messages.push(`許諾期限切れのユーザーが含まれています: ${expiredList}`);
+                }
+                
+                alertMessage.innerHTML = messages.join('<br>');
+                alertDiv.classList.remove('d-none');
+            } else {
+                alertMessage.textContent = '';
+                alertDiv.classList.add('d-none');
+                alert('選択されたユーザーはすべて使用可能です。');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('エラーが発生しました。');
+        });
+}
+
+// フォーム送信前の確認
+document.getElementById('articleForm').addEventListener('submit', function(e) {
+    const alertDiv = document.getElementById('socialUserAlert');
+    if (!alertDiv.classList.contains('d-none')) {
+        if (!confirm('NGユーザーまたは許諾期限切れのユーザーが含まれています。\n本当に送信しますか？')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

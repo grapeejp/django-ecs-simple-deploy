@@ -38,4 +38,5 @@ urlpatterns = [
     path('proofreading_ai/', include('proofreading_ai.urls')),  # 校正AIアプリ
     path('tags/', include('tags.urls')),  # タグ推薦アプリ
     path('grapecheck/', include('grapecheck.urls')),  # グレイプらしさチェッカー
+    path('articles/', include('article_management.urls')),  # 記事管理システム
 ]

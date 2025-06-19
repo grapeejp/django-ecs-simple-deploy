@@ -1,0 +1,229 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}
+{% if form.instance.pk %}SNSユーザー編集{% else %}新規SNSユーザー追加{% endif %} - Grape
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        {% if form.instance.pk %}
+                        SNSユーザー編集
+                        {% else %}
+                        新規SNSユーザー追加
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="socialUserForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.handle_name.id_for_label }}" class="form-label">
+                                {{ form.handle_name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.handle_name }}
+                            {% if form.handle_name.errors %}
+                            <div class="text-danger small">{{ form.handle_name.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">例: @username, username123</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.platform.id_for_label }}" class="form-label">
+                                {{ form.platform.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.platform }}
+                            {% if form.platform.errors %}
+                            <div class="text-danger small">{{ form.platform.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.profile_url.id_for_label }}" class="form-label">
+                                {{ form.profile_url.label }}
+                            </label>
+                            {{ form.profile_url }}
+                            {% if form.profile_url.errors %}
+                            <div class="text-danger small">{{ form.profile_url.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                {{ form.status.label }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex gap-4">
+                                {% for radio in form.status %}
+                                <div class="form-check">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.status.errors %}
+                            <div class="text-danger small">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.permission_date.id_for_label }}" class="form-label">
+                                {{ form.permission_date.label }}
+                            </label>
+                            {{ form.permission_date }}
+                            {% if form.permission_date.errors %}
+                            <div class="text-danger small">{{ form.permission_date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.permission_expires.id_for_label }}" class="form-label">
+                                {{ form.permission_expires.label }}
+                            </label>
+                            {{ form.permission_expires }}
+                            {% if form.permission_expires.errors %}
+                            <div class="text-danger small">{{ form.permission_expires.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">期限がない場合は空欄にしてください</small>
+                        </div>
+
+                        <div class="mb-3" id="usageConditionsDiv">
+                            <label for="{{ form.usage_conditions.id_for_label }}" class="form-label">
+                                {{ form.usage_conditions.label }}
+                            </label>
+                            {{ form.usage_conditions }}
+                            {% if form.usage_conditions.errors %}
+                            <div class="text-danger small">{{ form.usage_conditions.errors }}</div>
+                            {% endif %}
+                            <small class="text-muted">クレジット表記など特別な利用条件があれば記載</small>
+                        </div>
+
+                        <div class="mb-3" id="ngReasonDiv" style="display: none;">
+                            <label for="{{ form.ng_reason.id_for_label }}" class="form-label">
+                                {{ form.ng_reason.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.ng_reason }}
+                            {% if form.ng_reason.errors %}
+                            <div class="text-danger small">{{ form.ng_reason.errors }}</div>
+                            {% endif %}
+                            <div class="alert alert-danger mt-2">
+                                <strong>⚠️ 注意:</strong> NGユーザーに設定すると、このユーザーを使用した記事作成時に警告が表示されます。
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="text-danger small">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'article_management:social_user_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}更新{% else %}登録{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if form.instance.pk %}
+            <div class="card bg-dark text-white mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">使用状況</h5>
+                </div>
+                <div class="card-body">
+                    <p>このユーザーは <strong>{{ form.instance.articles.count }}</strong> 件の記事で使用されています。</p>
+                    {% if form.instance.articles.exists %}
+                    <div class="list-group list-group-flush">
+                        {% for article in form.instance.articles.all|slice:":5" %}
+                        <a href="{% url 'article_management:article_detail' article.article_id %}" 
+                           class="list-group-item list-group-item-action bg-dark text-white">
+                            {{ article.article_id }} - {{ article.title|truncatechars:30 }}
+                        </a>
+                        {% endfor %}
+                        {% if form.instance.articles.count > 5 %}
+                        <div class="list-group-item bg-dark text-white">
+                            他 {{ form.instance.articles.count|add:"-5" }} 件
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // フォームのスタイル調整
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.classList.add('bg-dark', 'text-white', 'border-secondary');
+    });
+    
+    // ステータスに応じてNG理由フィールドの表示/非表示を切り替え
+    const statusRadios = document.querySelectorAll('input[name="status"]');
+    const ngReasonDiv = document.getElementById('ngReasonDiv');
+    const usageConditionsDiv = document.getElementById('usageConditionsDiv');
+    
+    function toggleNgReason() {
+        const selectedStatus = document.querySelector('input[name="status"]:checked');
+        if (selectedStatus && selectedStatus.value === 'ng') {
+            ngReasonDiv.style.display = 'block';
+            usageConditionsDiv.style.display = 'none';
+        } else {
+            ngReasonDiv.style.display = 'none';
+            usageConditionsDiv.style.display = 'block';
+        }
+    }
+    
+    statusRadios.forEach(radio => {
+        radio.addEventListener('change', toggleNgReason);
+    });
+    
+    // 初期表示
+    toggleNgReason();
+    
+    // フォーム送信前の確認
+    document.getElementById('socialUserForm').addEventListener('submit', function(e) {
+        const selectedStatus = document.querySelector('input[name="status"]:checked');
+        if (selectedStatus && selectedStatus.value === 'ng') {
+            const ngReason = document.getElementById('{{ form.ng_reason.id_for_label }}').value.trim();
+            if (!ngReason) {
+                e.preventDefault();
+                alert('NGの場合は理由を入力してください。');
+                return false;
+            }
+            
+            if (!confirm('このユーザーをNGに設定しますか？\n既存の記事で使用されている場合は警告が表示されるようになります。')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

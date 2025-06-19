@@ -1,0 +1,231 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}記事詳細: {{ article.title }} - Grape{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 記事詳細 -->
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">{{ article.title }}</h2>
+                    <span class="badge bg-{{ article.get_status_color }} fs-6">
+                        {{ article.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">記事番号</small>
+                            <p class="mb-2">{{ article.article_id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">作成日時</small>
+                            <p class="mb-2">{{ article.created_at|date:"Y年m月d日 H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>記事内容・概要</h5>
+                        <div class="p-3 bg-secondary bg-opacity-25 rounded">
+                            {{ article.content|linebreaks }}
+                        </div>
+                    </div>
+
+                    {% if article.reference_url %}
+                    <div class="mb-4">
+                        <h5>参考URL</h5>
+                        <a href="{{ article.reference_url }}" target="_blank" class="text-info">
+                            <i class="fas fa-external-link-alt"></i> {{ article.reference_url }}
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if article.facebook_text %}
+                    <div class="mb-4">
+                        <h5>Facebook投稿テキスト</h5>
+                        <div class="p-3 bg-primary bg-opacity-10 rounded">
+                            {{ article.facebook_text|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if article.notes %}
+                    <div class="mb-4">
+                        <h5>備考</h5>
+                        <div class="p-3 bg-warning bg-opacity-10 rounded">
+                            {{ article.notes|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- SNSユーザー -->
+                    <div class="mb-4">
+                        <h5>使用SNSユーザー</h5>
+                        {% if article.social_media_users.exists %}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>プラットフォーム</th>
+                                        <th>ハンドルネーム</th>
+                                        <th>ステータス</th>
+                                        <th>利用条件</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in article.social_media_users.all %}
+                                    <tr {% if user.status == 'ng' %}class="table-danger"{% endif %}>
+                                        <td>{{ user.get_platform_display }}</td>
+                                        <td>
+                                            {% if user.profile_url %}
+                                            <a href="{{ user.profile_url }}" target="_blank" class="text-info">
+                                                {{ user.handle_name }}
+                                            </a>
+                                            {% else %}
+                                            {{ user.handle_name }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.status == 'ok' %}
+                                            <span class="badge bg-success">OK</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">NG</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.status == 'ng' %}
+                                            <span class="text-danger">{{ user.ng_reason }}</span>
+                                            {% else %}
+                                            {{ user.usage_conditions|default:"-" }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">SNSユーザーは設定されていません。</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- アクションボタン -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'article_management:article_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 一覧に戻る
+                        </a>
+                        <div>
+                            {% if user.is_staff or article.applicant == user or article.writer == user %}
+                            <a href="{% url 'article_management:article_edit' article.article_id %}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> 編集
+                            </a>
+                            {% endif %}
+                            {% if user.is_staff %}
+                            <a href="{% url 'admin:article_management_article_change' article.pk %}" class="btn btn-info">
+                                <i class="fas fa-cog"></i> 管理画面
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- 記事情報サイドバー -->
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">記事情報</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">申請者</dt>
+                        <dd class="col-sm-7">{{ article.applicant.username }}</dd>
+                        
+                        <dt class="col-sm-5">ライター</dt>
+                        <dd class="col-sm-7">{{ article.writer.username|default:"-" }}</dd>
+                        
+                        <dt class="col-sm-5">更新日時</dt>
+                        <dd class="col-sm-7">{{ article.updated_at|date:"Y/m/d H:i" }}</dd>
+                        
+                        {% if article.approved_by %}
+                        <dt class="col-sm-5">承認者</dt>
+                        <dd class="col-sm-7">{{ article.approved_by.username }}</dd>
+                        
+                        <dt class="col-sm-5">承認日時</dt>
+                        <dd class="col-sm-7">{{ article.approved_at|date:"Y/m/d H:i" }}</dd>
+                        {% endif %}
+                        
+                        {% if article.published_at %}
+                        <dt class="col-sm-5">公開日時</dt>
+                        <dd class="col-sm-7">{{ article.published_at|date:"Y/m/d H:i" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- 変更履歴 -->
+            <div class="card bg-dark text-white">
+                <div class="card-header">
+                    <h5 class="mb-0">変更履歴</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if histories %}
+                    <div class="timeline">
+                        {% for history in histories %}
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ history.action }}</strong>
+                                    <small class="text-muted d-block">
+                                        {{ history.user.username }} - {{ history.created_at|date:"Y/m/d H:i" }}
+                                    </small>
+                                    {% if history.old_value or history.new_value %}
+                                    <div class="mt-1">
+                                        {% if history.old_value %}
+                                        <span class="text-danger">{{ history.old_value }}</span>
+                                        {% endif %}
+                                        {% if history.old_value and history.new_value %}
+                                        →
+                                        {% endif %}
+                                        {% if history.new_value %}
+                                        <span class="text-success">{{ history.new_value }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">履歴はありません。</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    padding-left: 20px;
+    border-left: 2px solid #6c757d;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6c757d;
+}
+</style>
+{% endblock %}

@@ -299,6 +299,206 @@ aws logs tail /ecs/django-app-staging --follow
 2. Djangoアプリケーションが正しく起動しているか
 3. ALLOWED_HOSTSにALBのDNS名が含まれているか
 
+**よくある原因：ALLOWED_HOSTS設定**
+```bash
+# 現在のタスク定義のALLOWED_HOSTSを確認
+aws ecs describe-task-definition --task-definition django-app-staging-simple \
+  --query 'taskDefinition.containerDefinitions[0].environment[?name==`ALLOWED_HOSTS`].value' \
+  --output text
+
+# ALBのDNS名を取得
+aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-v2 \
+  --query "Stacks[0].Outputs[?OutputKey=='ApplicationLoadBalancer'].OutputValue" \
+  --output text | xargs -I {} aws elbv2 describe-load-balancers \
+  --load-balancer-arns {} --query "LoadBalancers[0].DNSName" --output text
+```
+
+**解決方法**：
+- 一時的な解決: ALLOWED_HOSTS="*" に設定
+- 恒久的な解決: ALBのDNS名を含める（例：*.elb.amazonaws.com）
+
+**よくある原因：ALLOWED_HOSTS設定**
+```bash
+# 現在のタスク定義のALLOWED_HOSTSを確認
+aws ecs describe-task-definition --task-definition django-app-staging-simple \
+  --query 'taskDefinition.containerDefinitions[0].environment[?name==`ALLOWED_HOSTS`].value' \
+  --output text
+
+# ALBのDNS名を取得
+aws cloudformation describe-stacks --stack-name django-ecs-cluster-staging-v2 \
+  --query "Stacks[0].Outputs[?OutputKey=='ApplicationLoadBalancer'].OutputValue" \
+  --output text | xargs -I {} aws elbv2 describe-load-balancers \
+  --load-balancer-arns {} --query "LoadBalancers[0].DNSName" --output text
+```
+
+**解決方法**：
+- 一時的な解決: ALLOWED_HOSTS="*" に設定
+- 恒久的な解決: ALBのDNS名を含める（例：*.elb.amazonaws.com）
+
+### 6.5 複数ECSサービスの競合
+
+**症状**：
+- 同じALBに複数のECSサービスが接続されている
+- アクセスするたびに異なるバージョンが表示される
+
+```bash
+# すべてのECSサービスを確認
+aws ecs list-services --cluster django-ecs-cluster-staging --output table
+
+# 各サービスのターゲットグループを確認
+aws ecs describe-services --cluster django-ecs-cluster-staging \
+  --services $(aws ecs list-services --cluster django-ecs-cluster-staging --query 'serviceArns' --output text) \
+  --query 'services[*].{ServiceName:serviceName,TargetGroup:loadBalancers[0].targetGroupArn}' \
+  --output table
+```
+
+**解決方法**：
+```bash
+# 古いサービスを停止
+aws ecs update-service --cluster django-ecs-cluster-staging \
+  --service <OLD_SERVICE_NAME> --desired-count 0
+
+# 古いサービスを削除
+aws ecs delete-service --cluster django-ecs-cluster-staging \
+  --service <OLD_SERVICE_NAME> --force
+```
+
+### 6.6 CloudFormation UPDATE_IN_PROGRESS問題
+
+**症状**：
+- CloudFormationスタックが何時間もUPDATE_IN_PROGRESSのまま
+- ECSサービスが安定化しない
+
+**根本原因**：
+- ヘルスチェックの失敗により、タスクが起動と停止を繰り返す
+- CloudFormationは最大3時間待機してからタイムアウト
+
+**即座の解決方法**：
+```bash
+# Option 1: CloudFormationを使わずに直接更新
+# 1. タスク定義を取得
+aws ecs describe-task-definition --task-definition <TASK_FAMILY> \
+  --query taskDefinition > task-def.json
+
+# 2. 必要な修正を実施（例：ALLOWED_HOSTS="*"）
+# 3. 不要なフィールドを削除
+jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' task-def.json > task-def-new.json
+
+# 4. 新しいタスク定義を登録
+aws ecs register-task-definition --cli-input-json file://task-def-new.json
+
+# 5. サービスを更新
+aws ecs update-service --cluster django-ecs-cluster-staging \
+  --service django-ecs-service-staging-simple \
+  --task-definition <NEW_TASK_DEFINITION_ARN>
+```
+
+### 6.7 Dockerイメージのバージョン不一致
+
+**症状**：
+- デプロイは成功したが、変更が反映されない
+- 古いバージョンが表示される
+
+**確認方法**：
+```bash
+# 現在実行中のタスクのイメージを確認
+aws ecs list-tasks --cluster django-ecs-cluster-staging \
+  --service-name django-ecs-service-staging-simple \
+  --query 'taskArns[0]' --output text | xargs -I {} \
+  aws ecs describe-tasks --cluster django-ecs-cluster-staging \
+  --tasks {} --query 'tasks[0].containers[0].image' --output text
+
+# イメージの内容を確認（ローカル）
+docker run --rm <IMAGE_URL> cat /path/to/expected/file | grep "expected-content"
+```
+
+**解決方法**：
+1. 正しいコミットからDockerイメージを再ビルド
+2. 新しいタグでECRにプッシュ
+3. タスク定義を更新してデプロイ
+
+### 6.5 複数ECSサービスの競合
+
+**症状**：
+- 同じALBに複数のECSサービスが接続されている
+- アクセスするたびに異なるバージョンが表示される
+
+```bash
+# すべてのECSサービスを確認
+aws ecs list-services --cluster django-ecs-cluster-staging --output table
+
+# 各サービスのターゲットグループを確認
+aws ecs describe-services --cluster django-ecs-cluster-staging \
+  --services $(aws ecs list-services --cluster django-ecs-cluster-staging --query 'serviceArns' --output text) \
+  --query 'services[*].{ServiceName:serviceName,TargetGroup:loadBalancers[0].targetGroupArn}' \
+  --output table
+```
+
+**解決方法**：
+```bash
+# 古いサービスを停止
+aws ecs update-service --cluster django-ecs-cluster-staging \
+  --service <OLD_SERVICE_NAME> --desired-count 0
+
+# 古いサービスを削除
+aws ecs delete-service --cluster django-ecs-cluster-staging \
+  --service <OLD_SERVICE_NAME> --force
+```
+
+### 6.6 CloudFormation UPDATE_IN_PROGRESS問題
+
+**症状**：
+- CloudFormationスタックが何時間もUPDATE_IN_PROGRESSのまま
+- ECSサービスが安定化しない
+
+**根本原因**：
+- ヘルスチェックの失敗により、タスクが起動と停止を繰り返す
+- CloudFormationは最大3時間待機してからタイムアウト
+
+**即座の解決方法**：
+```bash
+# Option 1: CloudFormationを使わずに直接更新
+# 1. タスク定義を取得
+aws ecs describe-task-definition --task-definition <TASK_FAMILY> \
+  --query taskDefinition > task-def.json
+
+# 2. 必要な修正を実施（例：ALLOWED_HOSTS="*"）
+# 3. 不要なフィールドを削除
+jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' task-def.json > task-def-new.json
+
+# 4. 新しいタスク定義を登録
+aws ecs register-task-definition --cli-input-json file://task-def-new.json
+
+# 5. サービスを更新
+aws ecs update-service --cluster django-ecs-cluster-staging \
+  --service django-ecs-service-staging-simple \
+  --task-definition <NEW_TASK_DEFINITION_ARN>
+```
+
+### 6.7 Dockerイメージのバージョン不一致
+
+**症状**：
+- デプロイは成功したが、変更が反映されない
+- 古いバージョンが表示される
+
+**確認方法**：
+```bash
+# 現在実行中のタスクのイメージを確認
+aws ecs list-tasks --cluster django-ecs-cluster-staging \
+  --service-name django-ecs-service-staging-simple \
+  --query 'taskArns[0]' --output text | xargs -I {} \
+  aws ecs describe-tasks --cluster django-ecs-cluster-staging \
+  --tasks {} --query 'tasks[0].containers[0].image' --output text
+
+# イメージの内容を確認（ローカル）
+docker run --rm <IMAGE_URL> cat /path/to/expected/file | grep "expected-content"
+```
+
+**解決方法**：
+1. 正しいコミットからDockerイメージを再ビルド
+2. 新しいタグでECRにプッシュ
+3. タスク定義を更新してデプロイ
+
 ## 7. ベストプラクティス
 
 ### 7.1 リソース命名規則
@@ -309,13 +509,51 @@ aws logs tail /ecs/django-app-staging --follow
 タスク定義: django-app-{environment}
 ```
 
-### 7.2 セキュリティ
+**重要**: サービス名は環境内で一意にし、複数のサービスが同じALBを使用しないように注意
+
+### 7.2 デプロイ前チェックリスト
+
+```bash
+# 1. 既存サービスの確認
+aws ecs list-services --cluster django-ecs-cluster-staging
+
+# 2. 実行中のタスクの確認
+aws ecs list-tasks --cluster django-ecs-cluster-staging
+
+# 3. ALBターゲットグループの状態確認
+aws elbv2 describe-target-health --target-group-arn <TARGET_GROUP_ARN>
+
+# 4. 最新のDockerイメージがECRに存在するか確認
+aws ecr describe-images --repository-name django-ecs-app \
+  --query 'sort_by(imageDetails, &imagePushedAt)[-5:].imageTags[]'
+```
+
+**重要**: サービス名は環境内で一意にし、複数のサービスが同じALBを使用しないように注意
+
+### 7.2 デプロイ前チェックリスト
+
+```bash
+# 1. 既存サービスの確認
+aws ecs list-services --cluster django-ecs-cluster-staging
+
+# 2. 実行中のタスクの確認
+aws ecs list-tasks --cluster django-ecs-cluster-staging
+
+# 3. ALBターゲットグループの状態確認
+aws elbv2 describe-target-health --target-group-arn <TARGET_GROUP_ARN>
+
+# 4. 最新のDockerイメージがECRに存在するか確認
+aws ecr describe-images --repository-name django-ecs-app \
+  --query 'sort_by(imageDetails, &imagePushedAt)[-5:].imageTags[]'
+```
+
+### 7.3 セキュリティ
 
 - IAMロールは最小権限の原則に従う
 - Secrets ManagerまたはSSM Parameter Storeで機密情報を管理
 - プライベートサブネットでタスクを実行
 
-### 7.3 監視
+### 7.4 監視
 
 - CloudWatch Logsでアプリケーションログを確認
 - CloudWatch Metricsでリソース使用率を監視

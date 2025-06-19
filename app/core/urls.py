@@ -3,6 +3,8 @@ from django.utils.decorators import method_decorator
 from .views import DashboardView, create_users_debug, custom_logout, check_auth_status
 from .decorators import basic_auth_required
 
+app_name = 'core'
+
 urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
     path('debug/create-users/', create_users_debug, name='create_users_debug'),

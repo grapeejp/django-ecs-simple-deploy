@@ -1,0 +1,202 @@
+{% extends 'base/base_bootstrap.html' %}
+{% load static %}
+
+{% block title %}記事管理ダッシュボード - Grape{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 text-white">記事管理ダッシュボード</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'article_management:article_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 新規記事作成
+            </a>
+        </div>
+    </div>
+
+    <!-- 統計カード -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-primary">
+                <div class="card-body">
+                    <h5 class="card-title">申請中</h5>
+                    <p class="card-text display-4">{{ pending_count }}</p>
+                    <a href="{% url 'article_management:article_list' %}?status=pending" class="btn btn-sm btn-outline-light">一覧を見る</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-success">
+                <div class="card-body">
+                    <h5 class="card-title">承認済み</h5>
+                    <p class="card-text display-4">{{ approved_count }}</p>
+                    <a href="{% url 'article_management:article_list' %}?status=approved" class="btn btn-sm btn-outline-light">一覧を見る</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-info">
+                <div class="card-body">
+                    <h5 class="card-title">本日の記事</h5>
+                    <p class="card-text display-4">{{ today_articles }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white border-warning">
+                <div class="card-body">
+                    <h5 class="card-title">NGユーザー含む</h5>
+                    <p class="card-text display-4">{{ ng_articles|length }}</p>
+                    <a href="{% url 'article_management:article_list' %}" class="btn btn-sm btn-outline-light">確認する</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if my_articles %}
+    <!-- 自分の記事統計 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-white">自分の記事</h3>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h6 class="card-title">総記事数</h6>
+                    <p class="card-text h3">{{ my_articles.total }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h6 class="card-title">申請中</h6>
+                    <p class="card-text h3">{{ my_articles.pending }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h6 class="card-title">承認済み</h6>
+                    <p class="card-text h3">{{ my_articles.approved }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 最近の記事 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-white">最近の記事</h3>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>記事番号</th>
+                            <th>タイトル</th>
+                            <th>申請者</th>
+                            <th>ステータス</th>
+                            <th>作成日時</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in recent_articles %}
+                        <tr>
+                            <td>{{ article.article_id }}</td>
+                            <td>{{ article.title|truncatechars:30 }}</td>
+                            <td>{{ article.applicant.username }}</td>
+                            <td>
+                                <span class="badge bg-{{ article.get_status_color }}">
+                                    {{ article.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ article.created_at|date:"Y/m/d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'article_management:article_detail' article.article_id %}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">記事がありません</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end">
+                <a href="{% url 'article_management:article_list' %}" class="btn btn-outline-primary">
+                    すべての記事を見る →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if ng_articles %}
+    <!-- NGユーザーを含む記事 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-white text-danger">⚠️ NGユーザーを含む記事</h3>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>記事番号</th>
+                            <th>タイトル</th>
+                            <th>NGユーザー</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in ng_articles %}
+                        <tr class="table-danger">
+                            <td>{{ article.article_id }}</td>
+                            <td>{{ article.title|truncatechars:30 }}</td>
+                            <td>
+                                {% for user in article.social_media_users.all %}
+                                    {% if user.status == 'ng' %}
+                                        <span class="badge bg-danger">
+                                            {{ user.get_platform_display }} - {{ user.handle_name }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{% url 'article_management:article_detail' article.article_id %}" class="btn btn-sm btn-outline-warning">
+                                    確認する
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- クイックアクセス -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="text-white">クイックアクセス</h3>
+            <div class="btn-group" role="group">
+                <a href="{% url 'article_management:article_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-list"></i> 記事一覧
+                </a>
+                <a href="{% url 'article_management:social_user_list' %}" class="btn btn-outline-info">
+                    <i class="fas fa-users"></i> SNSユーザー管理
+                </a>
+                <a href="{% url 'admin:article_management_article_changelist' %}" class="btn btn-outline-warning">
+                    <i class="fas fa-cog"></i> 管理画面
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
