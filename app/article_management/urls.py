@@ -25,6 +25,7 @@ urlpatterns = [
     # API
     path('api/check-social-users/', views.check_social_users, name='check_social_users'),
     path('api/check-sns-url/', views.check_sns_url, name='check_sns_url'),
+    path('api/check-sns-id/', views.check_sns_id, name='check_sns_id'),
     path('api/update-report-status/', views.update_report_status, name='update_report_status'),
     
     # 記事詳細系（最後に配置して他のパスを優先）

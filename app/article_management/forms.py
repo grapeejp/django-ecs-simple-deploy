@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import Article, SocialMediaUser, PersonalSNSAccount, CorporateSNSAccount
+import re
 
 
 class ArticleForm(forms.ModelForm):
@@ -12,6 +13,8 @@ class ArticleForm(forms.ModelForm):
             'title',
             'content',
             'reference_url',
+            'grape_article_url',
+            'social_media_id',
             'writer',
             'social_media_users',
             'facebook_text',
@@ -30,7 +33,15 @@ class ArticleForm(forms.ModelForm):
             }),
             'reference_url': forms.URLInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'https://example.com'
+                'placeholder': '参照元のSNS投稿URL等'
+            }),
+            'grape_article_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://grapee.jp/...'
+            }),
+            'social_media_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'SNS投稿のID（Instagramは手動入力）'
             }),
             'writer': forms.Select(attrs={
                 'class': 'form-control'
@@ -41,8 +52,8 @@ class ArticleForm(forms.ModelForm):
             }),
             'facebook_text': forms.Textarea(attrs={
                 'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Facebook投稿用のテキスト（省略可）'
+                'rows': 2,
+                'placeholder': 'Facebook投稿用のテキスト（1行24文字以内、最大2行）'
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -77,6 +88,47 @@ class ArticleForm(forms.ModelForm):
                     f'NGユーザーが含まれています: {ng_names}'
                 )
         return users
+    
+    def clean_facebook_text(self):
+        """Facebook投稿テキストのバリデーション（1行24文字以内、最大2行）"""
+        facebook_text = self.cleaned_data.get('facebook_text', '')
+        if not facebook_text:
+            return facebook_text
+        
+        # 改行で分割
+        lines = facebook_text.strip().split('\n')
+        
+        # 3行以上はエラー
+        if len(lines) > 2:
+            raise ValidationError('Facebook投稿は最大2行までです。')
+        
+        # 各行が24文字以内かチェック
+        for i, line in enumerate(lines, 1):
+            if len(line) > 24:
+                raise ValidationError(f'{i}行目が24文字を超えています（{len(line)}文字）。1行は24文字以内にしてください。')
+        
+        return facebook_text
+    
+    def clean_reference_url(self):
+        """参考記事URLの重複チェック"""
+        reference_url = self.cleaned_data.get('reference_url')
+        if not reference_url:
+            return reference_url
+        
+        # 既存の記事で同じURLが使用されているかチェック
+        existing_articles = Article.objects.filter(reference_url=reference_url)
+        
+        # 編集時は自分自身を除外
+        if self.instance.pk:
+            existing_articles = existing_articles.exclude(pk=self.instance.pk)
+        
+        if existing_articles.exists():
+            existing_article = existing_articles.first()
+            raise ValidationError(
+                f'このURLは既に記事番号 {existing_article.article_id} で使用されています。'
+            )
+        
+        return reference_url
 
 
 class SocialMediaUserForm(forms.ModelForm):

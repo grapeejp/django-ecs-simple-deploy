@@ -6,6 +6,24 @@
 {% endblock %}
 
 {% block content %}
+<!-- SNS詳細表示用モーダル -->
+<div class="modal fade" id="snsDetailModal" tabindex="-1" aria-labelledby="snsDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <h5 class="modal-title" id="snsDetailModalLabel">アカウント詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 動的にコンテンツが挿入される -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container mt-4">
     <div class="row">
         <div class="col-lg-8 mx-auto">
@@ -61,6 +79,26 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="{{ form.grape_article_url.id_for_label }}" class="form-label">
+                                {{ form.grape_article_url.label }}
+                            </label>
+                            {{ form.grape_article_url }}
+                            {% if form.grape_article_url.errors %}
+                            <div class="text-danger small">{{ form.grape_article_url.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.social_media_id.id_for_label }}" class="form-label">
+                                {{ form.social_media_id.label }}
+                            </label>
+                            {{ form.social_media_id }}
+                            {% if form.social_media_id.errors %}
+                            <div class="text-danger small">{{ form.social_media_id.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
                             <label for="{{ form.writer.id_for_label }}" class="form-label">
                                 {{ form.writer.label }}
                             </label>
@@ -71,29 +109,52 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="{{ form.social_media_users.id_for_label }}" class="form-label">
-                                {{ form.social_media_users.label }}
-                                <button type="button" class="btn btn-sm btn-info ms-2" onclick="checkSocialUsers()">
-                                    <i class="fas fa-check"></i> 許諾状況を確認
+                            <label class="form-label">
+                                使用SNSアカウント
+                                <button type="button" class="btn btn-sm btn-primary ms-2" onclick="addSnsIdField()">
+                                    <i class="fas fa-plus"></i> アカウント追加
                                 </button>
                             </label>
-                            {{ form.social_media_users }}
-                            {% if form.social_media_users.errors %}
-                            <div class="text-danger small">{{ form.social_media_users.errors }}</div>
-                            {% endif %}
-                            <div id="socialUserAlert" class="alert alert-danger mt-2 d-none">
-                                <strong>⚠️ 警告:</strong> <span id="alertMessage"></span>
+                            
+                            <div id="sns-id-container">
+                                <!-- SNS ID入力フィールドがここに動的に追加される -->
                             </div>
+                            
+                            <!-- 既存のsocial_media_usersフィールドは非表示 -->
+                            <div style="display: none;">
+                                {{ form.social_media_users }}
+                            </div>
+                            
                             <small class="text-muted">
-                                Ctrlキー（Macの場合はCmd）を押しながらクリックで複数選択できます
+                                SNSアカウントのIDを入力してください（例: @username）
                             </small>
                         </div>
 
                         <div class="mb-3">
                             <label for="{{ form.facebook_text.id_for_label }}" class="form-label">
                                 {{ form.facebook_text.label }}
+                                <small class="text-muted">（最大2行、1行24文字まで）</small>
                             </label>
                             {{ form.facebook_text }}
+                            <div id="facebook-text-counter" class="mt-2">
+                                <small class="text-muted">
+                                    <span id="line-count">0行</span> / 
+                                    <span id="char-details"></span>
+                                </small>
+                            </div>
+                            <!-- 原稿用紙風表示 -->
+                            <div id="manuscript-paper" class="mt-3">
+                                <div class="manuscript-row" id="manuscript-row-1">
+                                    <span class="row-label">1行目:</span>
+                                    <div class="character-boxes" id="boxes-row-1"></div>
+                                    <span class="char-count" id="count-row-1">(0/24)</span>
+                                </div>
+                                <div class="manuscript-row" id="manuscript-row-2">
+                                    <span class="row-label">2行目:</span>
+                                    <div class="character-boxes" id="boxes-row-2"></div>
+                                    <span class="char-count" id="count-row-2">(0/24)</span>
+                                </div>
+                            </div>
                             {% if form.facebook_text.errors %}
                             <div class="text-danger small">{{ form.facebook_text.errors }}</div>
                             {% endif %}
@@ -170,6 +231,100 @@
     </div>
 </div>
 
+<style>
+/* 原稿用紙風スタイル */
+#manuscript-paper {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.manuscript-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.row-label {
+    width: 60px;
+    font-weight: bold;
+    color: #666;
+}
+
+.character-boxes {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 2px;
+    margin: 0 10px;
+}
+
+.char-box {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #ccc;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-family: 'MS Gothic', 'ヒラギノ角ゴ Pro', monospace;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.char-box.filled {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+
+.char-box.over-limit {
+    border-color: #dc3545;
+    background-color: #fee;
+    color: #dc3545;
+}
+
+.char-box.current {
+    border-color: #28a745;
+    border-width: 2px;
+    box-shadow: 0 0 3px rgba(40, 167, 69, 0.5);
+}
+
+.char-count {
+    font-size: 12px;
+    color: #666;
+    margin-left: 5px;
+}
+
+.char-count.warning {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.char-count.danger {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .char-box {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+    }
+    
+    .character-boxes {
+        gap: 1px;
+    }
+    
+    .row-label {
+        font-size: 12px;
+        width: 45px;
+    }
+}
+</style>
+
 <script>
 // Select2の初期化（複数選択を使いやすくする）
 document.addEventListener('DOMContentLoaded', function() {
@@ -184,6 +339,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (referenceUrlInput) {
         referenceUrlInput.addEventListener('blur', checkReferenceUrl);
     }
+    
+    // Facebook投稿テキストの文字数カウンター
+    const facebookTextInput = document.getElementById('{{ form.facebook_text.id_for_label }}');
+    if (facebookTextInput) {
+        facebookTextInput.addEventListener('input', updateFacebookTextCounter);
+        updateFacebookTextCounter(); // 初期表示
+    }
+    
+    // 編集時は既存のSNSユーザーを表示
+    {% if form.instance.pk and form.instance.social_media_users.exists %}
+        {% for user in form.instance.social_media_users.all %}
+        addSnsIdField();
+        const fieldId = snsIdFieldCount - 1;
+        document.getElementById(`handle-${fieldId}`).value = '{{ user.handle_name }}';
+        checkSnsId(fieldId);
+        {% endfor %}
+    {% else %}
+        // 新規作成時は空のフィールドを1つ追加
+        addSnsIdField();
+    {% endif %}
 });
 
 // 参照URLをチェック
@@ -202,7 +377,13 @@ function checkReferenceUrl() {
         .then(data => {
             let html = '';
             
-            if (data.type === 'unknown') {
+            // まず重複チェック
+            if (data.duplicate_article) {
+                html = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>警告:</strong> このURLは既に記事番号 ${data.duplicate_article} で使用されています。
+                </div>`;
+            } else if (data.type === 'unknown') {
                 html = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> 未登録のアカウントです</div>';
             } else {
                 const statusColors = {
@@ -248,65 +429,412 @@ function checkReferenceUrl() {
         });
 }
 
-// SNSユーザーの許諾状況をチェック
-function checkSocialUsers() {
-    const select = document.getElementById('{{ form.social_media_users.id_for_label }}');
-    const selectedOptions = Array.from(select.selectedOptions);
-    const userIds = selectedOptions.map(option => option.value);
+// SNS IDフィールドのカウンター
+let snsIdFieldCount = 0;
+
+// SNS IDフィールドを追加
+function addSnsIdField() {
+    const container = document.getElementById('sns-id-container');
+    const fieldId = snsIdFieldCount++;
     
-    if (userIds.length === 0) {
-        alert('SNSユーザーを選択してください。');
+    const fieldHtml = `
+        <div class="row mb-3" id="sns-field-${fieldId}">
+            <div class="col-md-6">
+                <input type="text" class="form-control sns-handle" id="handle-${fieldId}" 
+                       placeholder="@username または アカウント名" 
+                       onblur="checkSnsId(${fieldId})"
+                       onkeyup="debounceCheck(${fieldId})">
+            </div>
+            <div class="col-md-5">
+                <div id="status-${fieldId}" class="form-text"></div>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeSnsIdField(${fieldId})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', fieldHtml);
+}
+
+// SNS IDフィールドを削除
+function removeSnsIdField(fieldId) {
+    const field = document.getElementById(`sns-field-${fieldId}`);
+    if (field) {
+        field.remove();
+    }
+}
+
+// デバウンス用のタイマー
+let debounceTimers = {};
+
+// デバウンス処理
+function debounceCheck(fieldId) {
+    clearTimeout(debounceTimers[fieldId]);
+    debounceTimers[fieldId] = setTimeout(() => {
+        checkSnsId(fieldId);
+    }, 500);
+}
+
+// SNS IDをチェック
+function checkSnsId(fieldId) {
+    const handle = document.getElementById(`handle-${fieldId}`).value.trim();
+    const statusDiv = document.getElementById(`status-${fieldId}`);
+    
+    if (!handle) {
+        statusDiv.innerHTML = '';
         return;
     }
     
-    fetch(`{% url 'article_management:check_social_users' %}?${userIds.map(id => 'user_ids[]=' + id).join('&')}`)
+    // ローディング表示
+    statusDiv.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin"></i> 検索中...</span>';
+    
+    fetch(`{% url 'article_management:check_sns_id' %}?handle_name=${encodeURIComponent(handle)}`)
         .then(response => response.json())
         .then(data => {
-            const alertDiv = document.getElementById('socialUserAlert');
-            const alertMessage = document.getElementById('alertMessage');
+            let html = '';
             
-            const ngUsers = data.users.filter(user => user.status === 'ng');
-            const expiredUsers = data.users.filter(user => !user.is_valid && user.status !== 'ng');
-            
-            if (ngUsers.length > 0 || expiredUsers.length > 0) {
-                let messages = [];
-                
-                if (ngUsers.length > 0) {
-                    const ngList = ngUsers.map(user => 
-                        `${user.platform} - ${user.handle_name} (理由: ${user.ng_reason || '記載なし'})`
-                    ).join('、');
-                    messages.push(`NGユーザーが含まれています: ${ngList}`);
-                }
-                
-                if (expiredUsers.length > 0) {
-                    const expiredList = expiredUsers.map(user => 
-                        `${user.platform} - ${user.handle_name}`
-                    ).join('、');
-                    messages.push(`許諾期限切れのユーザーが含まれています: ${expiredList}`);
-                }
-                
-                alertMessage.innerHTML = messages.join('<br>');
-                alertDiv.classList.remove('d-none');
+            if (data.status === 'error') {
+                html = `<span class="text-danger">${data.message}</span>`;
+            } else if (data.status === 'multiple') {
+                // 複数の候補がある場合
+                html = `<div class="alert alert-info p-2">
+                    <strong>${data.message}</strong><br>
+                    ${data.candidates.map(c => {
+                        const icon = getStatusIcon(c.status);
+                        return `<span class="d-block mt-1">${icon} ${c.account_info.platform} - ${c.account_info.handle_name || c.account_info.account_name}</span>`;
+                    }).join('')}
+                </div>`;
+            } else if (data.type === 'unknown') {
+                html = '<span class="text-warning"><i class="fas fa-question-circle"></i> 未登録のアカウント</span>';
             } else {
-                alertMessage.textContent = '';
-                alertDiv.classList.add('d-none');
-                alert('選択されたユーザーはすべて使用可能です。');
+                const icon = getStatusIcon(data.status);
+                const platform = data.account_info.platform;
+                
+                if (data.type === 'personal') {
+                    html = `<div class="d-flex align-items-start">
+                        <span>${icon} ${platform} - ${data.account_info.handle_name}</span>`;
+                    
+                    if (data.account_info.real_name) {
+                        html += ` <small class="text-muted">(${data.account_info.real_name})</small>`;
+                    }
+                } else {
+                    html = `<div class="d-flex align-items-start">
+                        <span>${icon} ${platform} - ${data.account_info.company_name}</span>`;
+                }
+                
+                // 条件やNG理由をモーダルで表示
+                if (data.status === 'conditional' || data.status === 'ng') {
+                    const buttonClass = data.status === 'ng' ? 'btn-danger' : 'btn-warning';
+                    html += ` <button type="button" class="btn ${buttonClass} btn-sm ms-2" 
+                             onclick="showDetailModal('${escapeHtml(JSON.stringify(data))}')">
+                        <i class="fas fa-info-circle"></i> 詳細を見る
+                    </button>`;
+                }
+                
+                html += '</div>';
+                
+                // データ属性として保存
+                const handleInput = document.getElementById(`handle-${fieldId}`);
+                handleInput.setAttribute('data-status', data.status);
+                handleInput.setAttribute('data-type', data.type);
+                handleInput.setAttribute('data-platform', data.account_info.platform_value || 'unknown');
             }
+            
+            statusDiv.innerHTML = html;
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('エラーが発生しました。');
+            statusDiv.innerHTML = '<span class="text-danger">チェック中にエラーが発生しました</span>';
         });
 }
 
-// フォーム送信前の確認
-document.getElementById('articleForm').addEventListener('submit', function(e) {
-    const alertDiv = document.getElementById('socialUserAlert');
-    if (!alertDiv.classList.contains('d-none')) {
-        if (!confirm('NGユーザーまたは許諾期限切れのユーザーが含まれています。\n本当に送信しますか？')) {
-            e.preventDefault();
+// ステータスアイコンを取得
+function getStatusIcon(status) {
+    const statusIcons = {
+        'ok': '<i class="fas fa-check-circle text-success"></i>',
+        'conditional': '<i class="fas fa-exclamation-circle text-warning"></i>',
+        'ng': '<i class="fas fa-times-circle text-danger"></i>',
+        'checking': '<i class="fas fa-clock text-warning"></i>'
+    };
+    return statusIcons[status] || '<i class="fas fa-question-circle"></i>';
+}
+
+// 詳細モーダルを表示
+function showDetailModal(dataJson) {
+    const data = JSON.parse(dataJson);
+    const modal = new bootstrap.Modal(document.getElementById('snsDetailModal'));
+    const modalHeader = document.getElementById('modalHeader');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('snsDetailModalLabel');
+    
+    // ヘッダーのスタイルを設定
+    modalHeader.className = 'modal-header';
+    if (data.status === 'ng') {
+        modalHeader.classList.add('bg-danger', 'text-white');
+    } else if (data.status === 'conditional') {
+        modalHeader.classList.add('bg-warning');
+    }
+    
+    // タイトルを設定
+    const accountName = data.account_info.handle_name || data.account_info.account_name;
+    const platform = data.account_info.platform;
+    modalTitle.innerHTML = `
+        ${getStatusIcon(data.status)} 
+        ${platform} - ${accountName}
+        ${data.account_info.real_name ? `<small class="ms-2">(${data.account_info.real_name})</small>` : ''}
+    `;
+    
+    // 本文を設定
+    let bodyHtml = '<div class="p-3">';
+    
+    if (data.status === 'ng') {
+        bodyHtml += `
+            <div class="alert alert-danger">
+                <h5 class="alert-heading mb-3">
+                    <i class="fas fa-ban"></i> このアカウントは使用できません
+                </h5>
+                <hr>
+                <p class="mb-2 fs-5"><strong>理由:</strong></p>
+                <p class="fs-5">${data.message || 'NG理由の記載がありません'}</p>
+            </div>
+        `;
+    } else if (data.status === 'conditional') {
+        bodyHtml += `
+            <div class="alert alert-warning">
+                <h5 class="alert-heading mb-3">
+                    <i class="fas fa-exclamation-triangle"></i> 条件付きで使用可能です
+                </h5>
+                <hr>
+                <p class="mb-2 fs-5"><strong>使用条件:</strong></p>
+                <ul class="fs-5">
+        `;
+        
+        if (data.conditions && data.conditions.length > 0) {
+            data.conditions.forEach(condition => {
+                bodyHtml += `<li class="mb-2">${condition}</li>`;
+            });
+        } else {
+            bodyHtml += `<li>特に条件の記載はありません</li>`;
+        }
+        
+        bodyHtml += `</ul></div>`;
+    }
+    
+    // 企業アカウントの場合、追加情報を表示
+    if (data.type === 'corporate') {
+        bodyHtml += `
+            <div class="mt-3">
+                <h6>アカウント情報</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 30%;">企業名</th>
+                        <td>${data.account_info.company_name}</td>
+                    </tr>
+                    <tr>
+                        <th>営業ステータス</th>
+                        <td>${data.account_info.sales_status}</td>
+                    </tr>
+                    <tr>
+                        <th>編集ステータス</th>
+                        <td>${data.account_info.editorial_status}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+    
+    // 連絡先情報
+    if (data.contact) {
+        bodyHtml += `
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="mb-2"><i class="fas fa-phone"></i> 連絡先</h6>
+                <p class="mb-0">${data.contact.replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+    }
+    
+    bodyHtml += '</div>';
+    
+    modalBody.innerHTML = bodyHtml;
+    modal.show();
+}
+
+// HTMLエスケープ
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Facebook投稿テキストの文字数カウンター
+function updateFacebookTextCounter() {
+    const textarea = document.getElementById('{{ form.facebook_text.id_for_label }}');
+    const lineCountSpan = document.getElementById('line-count');
+    const charDetailsSpan = document.getElementById('char-details');
+    
+    const text = textarea.value;
+    const lines = text.split('\n');
+    
+    // 行数を更新
+    lineCountSpan.textContent = `${lines.length}行`;
+    
+    // 各行の文字数を表示
+    const charCounts = lines.map((line, index) => {
+        const count = line.length;
+        const isOver = count > 24;
+        const color = isOver ? 'text-danger' : (count > 20 ? 'text-warning' : 'text-muted');
+        return `<span class="${color}">${index + 1}行目: ${count}文字</span>`;
+    });
+    
+    charDetailsSpan.innerHTML = charCounts.join(' / ');
+    
+    // 全体的なバリデーション表示
+    const counterDiv = document.getElementById('facebook-text-counter');
+    if (lines.length > 2) {
+        counterDiv.classList.add('text-danger');
+    } else if (lines.some(line => line.length > 24)) {
+        counterDiv.classList.add('text-danger');
+    } else {
+        counterDiv.classList.remove('text-danger');
+    }
+    
+    // 原稿用紙を更新
+    updateManuscriptPaper(lines);
+}
+
+// 原稿用紙風表示を更新
+function updateManuscriptPaper(lines) {
+    // 2行分の処理
+    for (let rowIndex = 0; rowIndex < 2; rowIndex++) {
+        const boxesContainer = document.getElementById(`boxes-row-${rowIndex + 1}`);
+        const countSpan = document.getElementById(`count-row-${rowIndex + 1}`);
+        
+        // コンテナをクリア
+        boxesContainer.innerHTML = '';
+        
+        const lineText = lines[rowIndex] || '';
+        const charCount = lineText.length;
+        
+        // 文字数に応じてボックスを作成（最大24文字分は常に表示、超過分も表示）
+        const boxCount = Math.max(24, charCount);
+        
+        for (let i = 0; i < boxCount; i++) {
+            const box = document.createElement('div');
+            box.className = 'char-box';
+            
+            if (i < charCount) {
+                // 文字がある場合
+                box.textContent = lineText[i];
+                box.classList.add('filled');
+                
+                if (i >= 24) {
+                    // 24文字を超えた場合
+                    box.classList.add('over-limit');
+                }
+            } else if (i >= 24) {
+                // 24文字以降の空白ボックスは作らない
+                break;
+            }
+            
+            boxesContainer.appendChild(box);
+        }
+        
+        // 文字数表示を更新
+        countSpan.textContent = `(${charCount}/24)`;
+        countSpan.className = 'char-count';
+        
+        if (charCount > 24) {
+            countSpan.classList.add('danger');
+        } else if (charCount > 20) {
+            countSpan.classList.add('warning');
+        }
+        
+        // 3行目以降がある場合の警告（既存の警告を削除してから追加）
+        const existingWarning = document.querySelector(`#manuscript-row-${rowIndex + 1} .extra-lines-warning`);
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+        
+        if (rowIndex === 1 && lines.length > 2) {
+            const extraLinesWarning = document.createElement('span');
+            extraLinesWarning.className = 'text-danger ms-2 extra-lines-warning';
+            extraLinesWarning.textContent = `（${lines.length - 2}行分が超過しています）`;
+            countSpan.parentNode.appendChild(extraLinesWarning);
         }
     }
+}
+
+// フォーム送信前の処理
+document.getElementById('articleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // SNS IDフィールドから既存のSNSユーザーを収集
+    const snsHandles = document.querySelectorAll('.sns-handle');
+    
+    let hasNgUsers = false;
+    let ngMessages = [];
+    
+    // 各SNS IDをチェック
+    for (let i = 0; i < snsHandles.length; i++) {
+        const handle = snsHandles[i].value.trim();
+        const status = snsHandles[i].getAttribute('data-status');
+        const platform = snsHandles[i].getAttribute('data-platform') || 'unknown';
+        
+        if (handle) {
+            if (status === 'ng') {
+                hasNgUsers = true;
+                ngMessages.push(`${platform} - ${handle}`);
+            }
+        }
+    }
+    
+    // NGユーザーがいる場合は確認
+    if (hasNgUsers) {
+        if (!confirm(`NGユーザーが含まれています:\n${ngMessages.join('\n')}\n\n本当に送信しますか？`)) {
+            return;
+        }
+    }
+    
+    // SNS IDの情報を隠しフィールドに追加
+    const form = e.target;
+    
+    // 既存の隠しフィールドを削除
+    const existingFields = form.querySelectorAll('input[name^="sns_ids"]');
+    existingFields.forEach(field => field.remove());
+    
+    // 新しい隠しフィールドを追加
+    let validCount = 0;
+    for (let i = 0; i < snsHandles.length; i++) {
+        const handle = snsHandles[i].value.trim();
+        const platform = snsHandles[i].getAttribute('data-platform') || 'unknown';
+        
+        if (handle && platform !== 'unknown') {
+            const platformField = document.createElement('input');
+            platformField.type = 'hidden';
+            platformField.name = `sns_ids[${validCount}][platform]`;
+            platformField.value = platform;
+            form.appendChild(platformField);
+            
+            const handleField = document.createElement('input');
+            handleField.type = 'hidden';
+            handleField.name = `sns_ids[${validCount}][handle]`;
+            handleField.value = handle;
+            form.appendChild(handleField);
+            
+            validCount++;
+        }
+    }
+    
+    // フォームを送信
+    form.submit();
 });
 </script>
 {% endblock %}

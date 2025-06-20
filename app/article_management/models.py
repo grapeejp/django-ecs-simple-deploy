@@ -362,7 +362,11 @@ class Article(models.Model):
         verbose_name='記事内容・概要'
     )
     reference_url = models.URLField(
-        verbose_name='記事URL',
+        verbose_name='参照ネタURL',
+        blank=True
+    )
+    grape_article_url = models.URLField(
+        verbose_name='グレイプ記事リンク',
         blank=True
     )
     social_media_id = models.CharField(

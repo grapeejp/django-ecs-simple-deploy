@@ -97,7 +97,22 @@ class ArticleListView(LoginRequiredMixin, ListView):
                 Q(applicant=self.request.user) | Q(writer=self.request.user)
             )
         
-        return queryset.order_by('-created_at')
+        # ソート処理
+        sort = self.request.GET.get('sort', '-created_at')
+        if sort in ['created_at', '-created_at', 'published_at', '-published_at']:
+            # 公開日ソートの場合、NULL値を最後に
+            if 'published_at' in sort:
+                from django.db.models import F
+                if sort == 'published_at':
+                    queryset = queryset.order_by(F('published_at').asc(nulls_last=True))
+                else:
+                    queryset = queryset.order_by(F('published_at').desc(nulls_last=True))
+            else:
+                queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-created_at')
+        
+        return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -105,6 +120,51 @@ class ArticleListView(LoginRequiredMixin, ListView):
             from django.contrib.auth import get_user_model
             User = get_user_model()
             context['writers'] = User.objects.filter(is_active=True).order_by('username')
+        
+        # social_media_idのステータスを一括取得
+        articles = context['object_list']
+        social_media_ids = [article.social_media_id for article in articles if article.social_media_id]
+        
+        # 個人アカウントを検索
+        personal_statuses = {}
+        if social_media_ids:
+            personal_accounts = PersonalSNSAccount.objects.filter(
+                handle_name__in=social_media_ids
+            ).values('handle_name', 'status', 'platform')
+            for account in personal_accounts:
+                key = account['handle_name']
+                personal_statuses[key] = {
+                    'status': account['status'],
+                    'platform': account['platform'],
+                    'type': 'personal'
+                }
+        
+        # 企業アカウントを検索
+        corporate_statuses = {}
+        if social_media_ids:
+            corporate_accounts = CorporateSNSAccount.objects.filter(
+                account_name__in=social_media_ids
+            ).values('account_name', 'sales_status', 'editorial_status', 'platform')
+            for account in corporate_accounts:
+                key = account['account_name']
+                # 営業と編集の厳しい方を採用
+                if account['sales_status'] == 'ng' or account['editorial_status'] == 'ng':
+                    status = 'ng'
+                elif account['sales_status'] == 'checking' or account['editorial_status'] == 'checking':
+                    status = 'checking'
+                else:
+                    status = 'ok'
+                corporate_statuses[key] = {
+                    'status': status,
+                    'platform': account['platform'],
+                    'type': 'corporate'
+                }
+        
+        # 統合してJSON形式で渡す
+        all_statuses = {**personal_statuses, **corporate_statuses}
+        import json
+        context['social_media_statuses_json'] = json.dumps(all_statuses)
+        
         return context
 
 
@@ -133,17 +193,48 @@ class ArticleCreateView(LoginRequiredMixin, CreateView):
         # 申請者を現在のユーザーに設定
         form.instance.applicant = self.request.user
         
-        response = super().form_valid(form)
+        # SNS IDの処理
+        article = form.save(commit=False)
+        article.save()
+        
+        # SNS IDから既存のSNSユーザーを検索・作成
+        sns_ids = []
+        i = 0
+        while True:
+            platform = self.request.POST.get(f'sns_ids[{i}][platform]')
+            handle = self.request.POST.get(f'sns_ids[{i}][handle]')
+            
+            if not platform or not handle:
+                break
+                
+            # @マークを除去
+            handle = handle.replace('@', '')
+            
+            # 既存のSNSユーザーを検索、なければ作成
+            sns_user, created = SocialMediaUser.objects.get_or_create(
+                platform=platform,
+                handle_name=handle,
+                defaults={
+                    'status': 'ok',
+                    'notes': '記事作成時に自動追加'
+                }
+            )
+            sns_ids.append(sns_user.id)
+            i += 1
+        
+        # ManyToManyフィールドを更新
+        if sns_ids:
+            article.social_media_users.set(sns_ids)
         
         # 履歴を記録
         ArticleHistory.objects.create(
-            article=self.object,
+            article=article,
             user=self.request.user,
             action='記事作成',
-            new_value=self.object.title
+            new_value=article.title
         )
         
-        return response
+        return redirect(self.success_url)
 
 
 class ArticleUpdateView(LoginRequiredMixin, UpdateView):
@@ -168,19 +259,50 @@ class ArticleUpdateView(LoginRequiredMixin, UpdateView):
         # 変更前の状態を保存
         old_status = self.object.status
         
-        response = super().form_valid(form)
+        # 記事を保存
+        article = form.save()
+        
+        # SNS IDの処理
+        sns_ids = []
+        i = 0
+        while True:
+            platform = self.request.POST.get(f'sns_ids[{i}][platform]')
+            handle = self.request.POST.get(f'sns_ids[{i}][handle]')
+            
+            if not platform or not handle:
+                break
+                
+            # @マークを除去
+            handle = handle.replace('@', '')
+            
+            # 既存のSNSユーザーを検索、なければ作成
+            sns_user, created = SocialMediaUser.objects.get_or_create(
+                platform=platform,
+                handle_name=handle,
+                defaults={
+                    'status': 'ok',
+                    'notes': '記事編集時に自動追加'
+                }
+            )
+            sns_ids.append(sns_user.id)
+            i += 1
+        
+        # ManyToManyフィールドを更新
+        article.social_media_users.clear()
+        if sns_ids:
+            article.social_media_users.set(sns_ids)
         
         # ステータス変更の履歴を記録
-        if old_status != self.object.status:
+        if old_status != article.status:
             ArticleHistory.objects.create(
-                article=self.object,
+                article=article,
                 user=self.request.user,
                 action='ステータス変更',
                 old_value=dict(Article.STATUS_CHOICES)[old_status],
-                new_value=self.object.get_status_display()
+                new_value=article.get_status_display()
             )
         
-        return response
+        return redirect(self.success_url)
 
 
 class SocialMediaUserListView(LoginRequiredMixin, ListView):
@@ -433,6 +555,86 @@ def check_sns_url(request):
     result.pop('account', None)
     
     return JsonResponse(result)
+
+
+@login_required
+def check_sns_id(request):
+    """SNS IDからアカウントの利用可否をチェックするAPI（全プラットフォーム検索対応）"""
+    handle_name = request.GET.get('handle_name', '').strip()
+    
+    if not handle_name:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'IDを指定してください'
+        })
+    
+    # @マークを除去
+    handle_name = handle_name.replace('@', '')
+    
+    results = []
+    
+    # 個人アカウントを全プラットフォームで検索
+    personal_accounts = PersonalSNSAccount.objects.filter(
+        Q(handle_name__iexact=handle_name) |
+        Q(handle_name__icontains=handle_name)
+    ).distinct()[:5]  # 最大5件まで
+    
+    for account in personal_accounts:
+        result = SNSAccountChecker._format_personal_response(account)
+        result['account_info'] = {
+            'handle_name': account.handle_name,
+            'platform': account.get_platform_display(),
+            'platform_value': account.platform,  # プラットフォームの値も追加
+            'category': account.get_category_display() if account.category else None,
+            'real_name': account.real_name,
+        }
+        result['match_type'] = 'exact' if account.handle_name.lower() == handle_name.lower() else 'partial'
+        result.pop('account', None)
+        results.append(result)
+    
+    # 企業アカウントを全プラットフォームで検索
+    corporate_accounts = CorporateSNSAccount.objects.filter(
+        Q(account_name__iexact=handle_name) |
+        Q(account_name__icontains=handle_name)
+    ).distinct()[:5]  # 最大5件まで
+    
+    for account in corporate_accounts:
+        result = SNSAccountChecker._format_corporate_response(account)
+        result['account_info'] = {
+            'company_name': account.company_name,
+            'account_name': account.account_name,
+            'platform': account.get_platform_display(),
+            'platform_value': account.platform,  # プラットフォームの値も追加
+            'sales_status': account.get_sales_status_display(),
+            'editorial_status': account.get_editorial_status_display(),
+        }
+        result['match_type'] = 'exact' if account.account_name.lower() == handle_name.lower() else 'partial'
+        result.pop('account', None)
+        results.append(result)
+    
+    # 結果を返す
+    if results:
+        # 完全一致を優先
+        exact_matches = [r for r in results if r.get('match_type') == 'exact']
+        if exact_matches:
+            return JsonResponse(exact_matches[0])
+        else:
+            # 部分一致の場合は候補リストを返す
+            return JsonResponse({
+                'status': 'multiple',
+                'candidates': results,
+                'message': f'{len(results)}件の候補が見つかりました'
+            })
+    
+    # 見つからない場合
+    return JsonResponse({
+        'type': 'unknown',
+        'status': 'unknown',
+        'account': None,
+        'message': '登録されていないアカウントです',
+        'conditions': [],
+        'contact': None
+    })
 
 
 @login_required

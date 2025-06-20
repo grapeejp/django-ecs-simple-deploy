@@ -1,13 +1,31 @@
 {% extends 'base/base_bootstrap.html' %}
 {% load static %}
 
-{% block title %}記事一覧 - Grape{% endblock %}
+{% block title %}ネタ管理一覧 - Grape{% endblock %}
 
 {% block content %}
+<!-- SNS詳細表示用モーダル -->
+<div class="modal fade" id="snsDetailModal" tabindex="-1" aria-labelledby="snsDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <h5 class="modal-title" id="snsDetailModalLabel">アカウント詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 動的にコンテンツが挿入される -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="display-4">記事一覧</h1>
+            <h1 class="display-4">ネタ管理一覧</h1>
         </div>
         <div class="col-auto">
             <a href="{% url 'article_management:article_create' %}" class="btn btn-primary">
@@ -60,6 +78,28 @@
         </div>
     </div>
 
+    <!-- ソートボタン -->
+    <div class="mb-3">
+        <div class="btn-group" role="group" aria-label="Sort options">
+            <a href="?sort=-created_at{% for key, value in request.GET.items %}{% if key != 'sort' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="btn btn-sm {% if request.GET.sort == '-created_at' or not request.GET.sort %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                申請日 ↓
+            </a>
+            <a href="?sort=created_at{% for key, value in request.GET.items %}{% if key != 'sort' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="btn btn-sm {% if request.GET.sort == 'created_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                申請日 ↑
+            </a>
+            <a href="?sort=-published_at{% for key, value in request.GET.items %}{% if key != 'sort' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="btn btn-sm {% if request.GET.sort == '-published_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                公開日 ↓
+            </a>
+            <a href="?sort=published_at{% for key, value in request.GET.items %}{% if key != 'sort' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+               class="btn btn-sm {% if request.GET.sort == 'published_at' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                公開日 ↑
+            </a>
+        </div>
+    </div>
+
     <!-- 記事一覧テーブル -->
     <div class="table-responsive">
         <table class="table table-hover">
@@ -75,7 +115,8 @@
                     <th>内容</th>
                     <th>Facebookテキスト</th>
                     <th>SNS</th>
-                    <th>参照記事URL</th>
+                    <th>参照ネタURL</th>
+                    <th>グレイプ記事</th>
                     <th>元ネタの作成者ID</th>
                     <th>操作</th>
                     <th>備考</th>
@@ -140,7 +181,28 @@
                             <span class="text-muted">-</span>
                         {% endif %}
                     </td>
-                    <td>{{ article.social_media_id|default:"-" }}</td>
+                    <td>
+                        {% if article.grape_article_url %}
+                            <a href="{{ article.grape_article_url }}" target="_blank" class="text-success">
+                                <i class="fas fa-external-link-alt"></i> 見る
+                            </a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if article.social_media_id %}
+                            <span class="badge bg-secondary" id="sns-badge-{{ article.article_id }}">
+                                <i class="fas fa-question-circle" id="sns-icon-{{ article.article_id }}"></i>
+                                <a href="#" class="text-white text-decoration-none" 
+                                   onclick="checkAndShowSnsDetail('{{ article.social_media_id|escapejs }}'); return false;">
+                                    {{ article.social_media_id }}
+                                </a>
+                            </span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <div class="btn-group" role="group">
                             <a href="{% url 'article_management:article_detail' article.article_id %}" 
@@ -159,7 +221,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="14" class="text-center py-4">
+                    <td colspan="15" class="text-center py-4">
                         <p class="mb-0">記事が見つかりませんでした。</p>
                         <a href="{% url 'article_management:article_create' %}" class="btn btn-primary mt-2">
                             <i class="fas fa-plus"></i> 新規記事を作成
@@ -219,7 +281,219 @@
 </style>
 
 <script>
+// SNS IDの詳細を確認して表示
+function checkAndShowSnsDetail(handle_name) {
+    if (!handle_name) return;
+    
+    // ローディング表示
+    const modal = new bootstrap.Modal(document.getElementById('snsDetailModal'));
+    const modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-3">読み込み中...</p></div>';
+    modal.show();
+    
+    // APIでステータスを取得
+    fetch(`{% url 'article_management:check_sns_id' %}?handle_name=${encodeURIComponent(handle_name)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'error' || data.type === 'unknown') {
+                // 未登録の場合
+                showUnknownAccountModal(handle_name);
+            } else if (data.status === 'multiple') {
+                // 複数候補がある場合（本来は起きないが念のため）
+                showDetailModal(JSON.stringify(data.candidates[0]));
+            } else {
+                // 詳細を表示
+                showDetailModal(JSON.stringify(data));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">エラーが発生しました</div>';
+        });
+}
+
+// 未登録アカウントのモーダル表示
+function showUnknownAccountModal(handle_name) {
+    const modalHeader = document.getElementById('modalHeader');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('snsDetailModalLabel');
+    
+    modalHeader.className = 'modal-header bg-secondary text-white';
+    modalTitle.innerHTML = `<i class="fas fa-question-circle"></i> ${handle_name}`;
+    
+    modalBody.innerHTML = `
+        <div class="p-3">
+            <div class="alert alert-info">
+                <h5 class="alert-heading">
+                    <i class="fas fa-info-circle"></i> 未登録のアカウントです
+                </h5>
+                <hr>
+                <p>このIDは個人・企業アカウントデータベースに登録されていません。</p>
+                <p class="mb-0">使用可否を確認する場合は、管理者にお問い合わせください。</p>
+            </div>
+        </div>
+    `;
+}
+
+// 詳細モーダルを表示（記事作成フォームから流用）
+function showDetailModal(dataJson) {
+    const data = JSON.parse(dataJson);
+    const modalHeader = document.getElementById('modalHeader');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('snsDetailModalLabel');
+    
+    // ヘッダーのスタイルを設定
+    modalHeader.className = 'modal-header';
+    if (data.status === 'ng') {
+        modalHeader.classList.add('bg-danger', 'text-white');
+    } else if (data.status === 'conditional') {
+        modalHeader.classList.add('bg-warning');
+    } else if (data.status === 'ok') {
+        modalHeader.classList.add('bg-success', 'text-white');
+    }
+    
+    // タイトルを設定
+    const accountName = data.account_info.handle_name || data.account_info.account_name;
+    const platform = data.account_info.platform;
+    modalTitle.innerHTML = `
+        ${getStatusIcon(data.status)} 
+        ${platform} - ${accountName}
+        ${data.account_info.real_name ? `<small class="ms-2">(${data.account_info.real_name})</small>` : ''}
+    `;
+    
+    // 本文を設定
+    let bodyHtml = '<div class="p-3">';
+    
+    if (data.status === 'ng') {
+        bodyHtml += `
+            <div class="alert alert-danger">
+                <h5 class="alert-heading mb-3">
+                    <i class="fas fa-ban"></i> このアカウントは使用できません
+                </h5>
+                <hr>
+                <p class="mb-2 fs-5"><strong>理由:</strong></p>
+                <p class="fs-5">${data.message || 'NG理由の記載がありません'}</p>
+            </div>
+        `;
+    } else if (data.status === 'conditional') {
+        bodyHtml += `
+            <div class="alert alert-warning">
+                <h5 class="alert-heading mb-3">
+                    <i class="fas fa-exclamation-triangle"></i> 条件付きで使用可能です
+                </h5>
+                <hr>
+                <p class="mb-2 fs-5"><strong>使用条件:</strong></p>
+                <ul class="fs-5">
+        `;
+        
+        if (data.conditions && data.conditions.length > 0) {
+            data.conditions.forEach(condition => {
+                bodyHtml += `<li class="mb-2">${condition}</li>`;
+            });
+        } else {
+            bodyHtml += `<li>特に条件の記載はありません</li>`;
+        }
+        
+        bodyHtml += `</ul></div>`;
+    } else if (data.status === 'ok') {
+        bodyHtml += `
+            <div class="alert alert-success">
+                <h5 class="alert-heading mb-3">
+                    <i class="fas fa-check-circle"></i> このアカウントは使用可能です
+                </h5>
+                <hr>
+                <p class="fs-5">このアカウントのコンテンツは自由に使用できます。</p>
+            </div>
+        `;
+    }
+    
+    // 企業アカウントの場合、追加情報を表示
+    if (data.type === 'corporate') {
+        bodyHtml += `
+            <div class="mt-3">
+                <h6>アカウント情報</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 30%;">企業名</th>
+                        <td>${data.account_info.company_name}</td>
+                    </tr>
+                    <tr>
+                        <th>営業ステータス</th>
+                        <td>${data.account_info.sales_status}</td>
+                    </tr>
+                    <tr>
+                        <th>編集ステータス</th>
+                        <td>${data.account_info.editorial_status}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+    
+    // 連絡先情報
+    if (data.contact) {
+        bodyHtml += `
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6 class="mb-2"><i class="fas fa-phone"></i> 連絡先</h6>
+                <p class="mb-0">${data.contact.replace(/\n/g, '<br>')}</p>
+            </div>
+        `;
+    }
+    
+    bodyHtml += '</div>';
+    
+    modalBody.innerHTML = bodyHtml;
+}
+
+// ステータスアイコンを取得
+function getStatusIcon(status) {
+    const statusIcons = {
+        'ok': '<i class="fas fa-check-circle text-white"></i>',
+        'conditional': '<i class="fas fa-exclamation-circle"></i>',
+        'ng': '<i class="fas fa-times-circle text-white"></i>',
+        'checking': '<i class="fas fa-clock"></i>'
+    };
+    return statusIcons[status] || '<i class="fas fa-question-circle"></i>';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // social_media_idのステータスを反映
+    const socialMediaStatuses = {{ social_media_statuses_json|safe }};
+    
+    // 各記事のsocial_media_idのバッジを更新
+    {% for article in articles %}
+        {% if article.social_media_id %}
+        (function() {
+            const socialMediaId = '{{ article.social_media_id|escapejs }}';
+            const articleId = '{{ article.article_id }}';
+            const statusInfo = socialMediaStatuses[socialMediaId];
+            
+            if (statusInfo) {
+                const badge = document.getElementById('sns-badge-' + articleId);
+                const icon = document.getElementById('sns-icon-' + articleId);
+                
+                if (badge && icon) {
+                    // バッジのクラスを更新
+                    badge.className = 'badge';
+                    if (statusInfo.status === 'ng') {
+                        badge.classList.add('bg-danger');
+                        icon.className = 'fas fa-times-circle';
+                    } else if (statusInfo.status === 'conditional') {
+                        badge.classList.add('bg-warning', 'text-dark');
+                        icon.className = 'fas fa-exclamation-circle';
+                    } else if (statusInfo.status === 'ok') {
+                        badge.classList.add('bg-success');
+                        icon.className = 'fas fa-check-circle';
+                    } else {
+                        badge.classList.add('bg-secondary');
+                        icon.className = 'fas fa-question-circle';
+                    }
+                }
+            }
+        })();
+        {% endif %}
+    {% endfor %}
+    
     // 掲載報告ステータスの変更を処理
     const reportStatusSelects = document.querySelectorAll('.report-status-select');
     

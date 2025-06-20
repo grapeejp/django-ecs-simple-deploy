@@ -27,6 +27,11 @@
             min-height: 100vh;
         }
         
+        /* Container width for 24-inch monitor support */
+        .container {
+            max-width: 95% !important;
+        }
+        
         .navbar {
             background-color: #343a40 !important;
             border-bottom: 1px solid #dee2e6;
@@ -91,7 +96,7 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'article_management:article_list' %}">
-                            <i class="fas fa-list"></i> 記事一覧
+                            <i class="fas fa-list"></i> ネタ管理一覧
                         </a>
                     </li>
                     <li class="nav-item">
